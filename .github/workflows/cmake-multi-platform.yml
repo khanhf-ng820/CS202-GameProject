@@ -52,7 +52,7 @@ jobs:
 
     - name: Install Linux Dependencies
       if: runner.os == 'Linux'
-      run: sudo apt-get update && sudo apt-get install libx11-dev libxrandr-dev libxcursor-dev libxi-dev libudev-dev libflac-dev libvorbis-dev libgl1-mesa-dev libegl1-mesa-dev libfreetype-dev
+      run: sudo apt-get update && sudo apt-get install -y build-essential cmake git libasound2-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev libgl1-mesa-dev libglu1-mesa-dev libudev-dev libflac-dev libvorbis-dev libegl1-mesa-dev libfreetype-dev
 
     - name: Checkout repository and submodules
       uses: actions/checkout@v4 # Use a recent version of actions/checkout
@@ -85,6 +85,7 @@ jobs:
         # -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -S ${{ github.workspace }}
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
