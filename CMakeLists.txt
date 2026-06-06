@@ -15,15 +15,14 @@ include(FetchContent)
 # ---------------------------------------------------------
 # Dependency: raylib
 # ---------------------------------------------------------
-# Turn off building examples and games bundled with the raylib source code
 set(BUILD_EXAMPLES OFF CACHE BOOL "Disable raylib examples" FORCE)
 set(BUILD_GAMES OFF CACHE BOOL "Disable raylib games" FORCE)
 
 FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG        5.0 # Compiles via the stable v5.0 milestone
-	GIT_SHALLOW    TRUE # Only fetch the latest commit for the specified tag to speed up the process
+    GIT_TAG        5.0 # Stable milestone matching raygui 4.0
+	GIT_SHALLOW    TRUE
 )
 
 # ---------------------------------------------------------
@@ -32,12 +31,20 @@ FetchContent_Declare(
 FetchContent_Declare(
     raygui
     GIT_REPOSITORY https://github.com/raysan5/raygui.git
-    GIT_TAG        4.0 # Pin to stable v4.0 to match raylib 5.0 seamlessly
-	GIT_SHALLOW    TRUE # Only fetch the latest commit for the specified tag to speed up the process
+    GIT_TAG        4.0 # Pin to stable v4.0 to match raylib 5.0
+	GIT_SHALLOW    TRUE
 )
 
-# Download and load both libraries into the build environment
-FetchContent_MakeAvailable(raylib raygui)
+# ---------------------------------------------------------
+# Dependency: nlohmann_json (Data Serialization Engine)
+# ---------------------------------------------------------
+FetchContent_Declare(
+    json
+    URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+)
+
+# Download and load all libraries into the active build environment
+FetchContent_MakeAvailable(raylib raygui json)
 
 # ---------------------------------------------------------
 # Target Configuration
@@ -53,5 +60,10 @@ add_library(raygui_interface INTERFACE)
 target_include_directories(raygui_interface INTERFACE ${raygui_SOURCE_DIR}/src)
 
 # Link dependencies to your game target
-# Note: raylib handles system graphics layers (OpenGL, GLFW) transparently under the hood
-target_link_libraries(${PROJECT_NAME} PRIVATE raylib raygui_interface)
+# Note: nlohmann_json exports the namespaced interface target 'nlohmann_json::nlohmann_json'
+target_link_libraries(${PROJECT_NAME} 
+    PRIVATE 
+        raylib 
+        raygui_interface
+        nlohmann_json::nlohmann_json
+)

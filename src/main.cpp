@@ -4,44 +4,85 @@
 #define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
+// Include standard file streams and nlohmann/json
+#include <fstream>
+#include <iostream>
+#include <nlohmann/json.hpp>
+
+// Type alias for convenience
+using json = nlohmann::json;
+
+// Simple save profile structure
+struct GameProfile {
+    int currentScore = 0;
+    bool isFeatureActive = false;
+};
+
 int main() {
-    // 1. Core Window Initialization
+    // 1. Window Initialization
     const int screenWidth = 800;
     const int screenHeight = 450;
-    InitWindow(screenWidth, screenHeight, "C++20 OOP Engine: raylib + raygui Setup");
+    InitWindow(screenWidth, screenHeight, "C++20 Engine: raylib + raygui + json");
     SetTargetFPS(60);
 
-    // 2. Local State Control Variables
-    bool interactState = false;
+    // Local runtime variables managed by structural state
+    GameProfile profile;
 
-    // 3. Main Frame Loop
+    // 2. Main Frame Loop
     while (!WindowShouldClose()) {
-        // --- Update Logic Space ---
-        // (State machines and entity updates live here)
-
         // --- Render Presentation Space ---
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        DrawText("C++20 Game Infrastructure Initialized Successfully!", 150, 140, 20, DARKGRAY);
+        DrawText("C++20 Engine Infrastructure Initialized!", 150, 100, 20, DARKGRAY);
+        DrawText(TextFormat("Current State Score: %d", profile.currentScore), 150, 140, 20, BLUE);
 
-        // Immediate Mode GUI Element Rendering
-        // Returns true instantly when clicked
-        if (GuiButton(Rectangle{ 325, 210, 150, 40 }, interactState ? "Status: ACTIVE" : "Click To Activate")) {
-            interactState = !interactState;
+        // Immediate Mode Button 1: Increment values to create save state changes
+        if (GuiButton(Rectangle{ 150, 210, 200, 40 }, "Action: Accumulate Points")) {
+            profile.currentScore += 15;
         }
 
-        // Draw basic status indicators based on tool state
-        if (interactState) {
-            DrawRectangle(325, 270, 150, 10, GREEN);
+        // Immediate Mode Button 2: Serialize structural state to a local text file
+        if (GuiButton(Rectangle{ 380, 210, 120, 40 }, "Save Progress")) {
+            json saveFile;
+            saveFile["score"] = profile.currentScore;
+            saveFile["feature_state"] = profile.isFeatureActive;
+
+            std::ofstream outStream("save_slot_0.json");
+            if (outStream.is_open()) {
+                outStream << saveFile.dump(4); // Pretty print with 4-space indent
+                outStream.close();
+                std::cout << "Data serialization operation completed successfully!\n";
+            }
+        }
+
+        // Immediate Mode Button 3: De-serialize and load progress
+        if (GuiButton(Rectangle{ 510, 210, 120, 40 }, "Load Progress")) {
+            std::ifstream inStream("save_slot_0.json");
+            if (inStream.is_open()) {
+                json loadFile;
+                inStream >> loadFile;
+                inStream.close();
+
+                profile.currentScore = loadFile.value("score", 0);
+                profile.isFeatureActive = loadFile.value("feature_state", false);
+                std::cout << "Data retrieval operation completed successfully!\n";
+            }
+        }
+
+        // Immediate Mode Toggle checkbox element mapped directly to object reference
+        GuiCheckBox(Rectangle{ 150, 270, 20, 20 }, "Toggle Status Flag Modifier", &profile.isFeatureActive);
+
+        if (profile.isFeatureActive) {
+            DrawRectangle(150, 310, 480, 10, GREEN);
         } else {
-            DrawRectangle(325, 270, 150, 10, MAROON);
+            DrawRectangle(150, 310, 480, 10, MAROON);
         }
 
         EndDrawing();
     }
 
-    // 4. Resource Allocation Deconstruction
+    // 3. Resource Destruction
     CloseWindow();
     return 0;
 }
