@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.20)
 project(PvZGame LANGUAGES CXX)
 
+# Force CMake 4.0+ to treat legacy third-party configurations as CMake 3.5+
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 # Force the modern C++20 Standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
