@@ -1,88 +1,138 @@
 #include "raylib.h"
-
-// Define the raygui implementation token ONLY here
-#define RAYGUI_IMPLEMENTATION
-#include "raygui.h"
-
-// Include standard file streams and nlohmann/json
-#include <fstream>
+#include "resources.h"
+#include "Reanimation.h"
+#include "PeaShooter.h"
+#include "SnowPea.h"
+#include "Projectile.h"
 #include <iostream>
-#include <nlohmann/json.hpp>
+#include <vector>
+#include <string>
+#include <algorithm>
+#pragma once 
 
-// Type alias for convenience
-using json = nlohmann::json;
-
-// Simple save profile structure
-struct GameProfile {
-    int currentScore = 0;
-    bool isFeatureActive = false;
-};
+// Draw a simple button and return true if clicked
+bool DrawButton(Rectangle rect, const char* text, Color baseColor, Color hoverColor, Color textColor) {
+    Vector2 mousePos = GetMousePosition();
+    bool hovered = CheckCollisionPointRec(mousePos, rect);
+    Color col = hovered ? hoverColor : baseColor;
+    
+    DrawRectangleRec(rect, col);
+    DrawRectangleLinesEx(rect, 2.0f, ColorAlpha(textColor, 0.5f));
+    
+    int fontSize = 18;
+    int textWidth = MeasureText(text, fontSize);
+    DrawText(text, rect.x + (rect.width - textWidth)/2, rect.y + (rect.height - fontSize)/2, fontSize, textColor);
+    
+    return hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+}
 
 int main() {
-    // 1. Window Initialization
-    const int screenWidth = 800;
-    const int screenHeight = 450;
-    InitWindow(screenWidth, screenHeight, "C++20 Engine: raylib + raygui + json");
+    // Enable config flags for high quality drawing
+    SetConfigFlags(FLAG_MSAA_4X_HINT);
+    InitWindow(1280, 768, "Plants vs. Zombies Reanim Visualizer - C++ & Raylib");
     SetTargetFPS(60);
+    SetTraceLogLevel(LOG_WARNING);
 
-    // Local runtime variables managed by structural state
-    GameProfile profile;
+    Resources& res = Resources::GetInstance();
+    std::string reanimDir = res.GetAssetPath("assets/reanim");
+    res.LoadAll(reanimDir);
+    std::string imagesDir = res.GetAssetPath("assets/images");
+    res.LoadAll(imagesDir);
 
-    // 2. Main Frame Loop
+    SnowPea mySnowPea(res, 550, 420);
+    std::vector<Projectile> projectiles;
+
+
     while (!WindowShouldClose()) {
-        // --- Render Presentation Space ---
+        // --- Update ---
+        float dt = GetFrameTime();
+        
+        // Relocate zombie on click (if not clicking the UI panel on the left
+        mySnowPea.update(dt, projectiles);
+
+        for (auto& p : projectiles) {
+            p.update(dt);
+        }
+        
+        // Cọn dẹp các viên đạn đã bay ra ngoài màn hình
+        projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+            [](const Projectile& p) { return !p.isActive(); }), projectiles.end());
+
+        // --- Draw ---
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        ClearBackground(DARKGRAY);
 
-        DrawText("C++20 Engine Infrastructure Initialized!", 150, 100, 20, DARKGRAY);
-        DrawText(TextFormat("Current State Score: %d", profile.currentScore), 150, 140, 20, BLUE);
-
-        // Immediate Mode Button 1: Increment values to create save state changes
-        if (GuiButton(Rectangle{ 150, 210, 200, 40 }, "Action: Accumulate Points")) {
-            profile.currentScore += 15;
-        }
-
-        // Immediate Mode Button 2: Serialize structural state to a local text file
-        if (GuiButton(Rectangle{ 380, 210, 120, 40 }, "Save Progress")) {
-            json saveFile;
-            saveFile["score"] = profile.currentScore;
-            saveFile["feature_state"] = profile.isFeatureActive;
-
-            std::ofstream outStream("save_slot_0.json");
-            if (outStream.is_open()) {
-                outStream << saveFile.dump(4); // Pretty print with 4-space indent
-                outStream.close();
-                std::cout << "Data serialization operation completed successfully!\n";
-            }
-        }
-
-        // Immediate Mode Button 3: De-serialize and load progress
-        if (GuiButton(Rectangle{ 510, 210, 120, 40 }, "Load Progress")) {
-            std::ifstream inStream("save_slot_0.json");
-            if (inStream.is_open()) {
-                json loadFile;
-                inStream >> loadFile;
-                inStream.close();
-
-                profile.currentScore = loadFile.value("score", 0);
-                profile.isFeatureActive = loadFile.value("feature_state", false);
-                std::cout << "Data retrieval operation completed successfully!\n";
-            }
-        }
-
-        // Immediate Mode Toggle checkbox element mapped directly to object reference
-        GuiCheckBox(Rectangle{ 150, 270, 20, 20 }, "Toggle Status Flag Modifier", &profile.isFeatureActive);
-
-        if (profile.isFeatureActive) {
-            DrawRectangle(150, 310, 480, 10, GREEN);
+        // 1. Draw Lawn Background (Scale to fit screen)
+        Texture2D bgTex = res.GetBackground();
+        if (bgTex.id != 0) {
+            DrawTexturePro(
+                bgTex,
+                { 0.0f, 0.0f, (float)bgTex.width, (float)bgTex.height },
+                { 0.0f, 0.0f, (float)GetScreenWidth(), (float)GetScreenHeight() },
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
         } else {
-            DrawRectangle(150, 310, 480, 10, MAROON);
+            // Fallback: draw green lawn grid
+            for (int y = 0; y < GetScreenHeight(); y += 80) {
+                for (int x = 0; x < GetScreenWidth(); x += 80) {
+                    DrawRectangle(x, y, 80, 80, ((x/80 + y/80) % 2 == 0) ? GREEN : DARKGREEN);
+                }
+            }
         }
 
+        mySnowPea.draw();
+        
+        for (const auto& p : projectiles) {
+            p.draw();
+        }
+
+        // 3. Draw Controls UI Panel (Glassmorphism overlay on the left)
+        DrawRectangleRec({ 0, 0, 320, (float)GetScreenHeight() }, ColorAlpha(DARKBLUE, 0.75f));
+        DrawRectangleLines(0, 0, 320, GetScreenHeight(), ColorAlpha(WHITE, 0.3f));
+
+        // Title
+        DrawText("PLANT REANIMATOR", 20, 20, 22, SKYBLUE);
+        DrawText("C++ & Raylib Visualizer (OOP)", 20, 48, 14, GRAY);
+        DrawLine(20, 72, 300, 72, ColorAlpha(WHITE, 0.2f));
+        DrawLine(20, 195, 300, 195, ColorAlpha(WHITE, 0.2f));
+        DrawLine(20, 400, 300, 400, ColorAlpha(WHITE, 0.2f));
+
+        // Animations list header
+        DrawText("Select Animation:", 20, 415, 16, SKYBLUE);
+
+        // Draw a list of animation buttons
+        int startY = 445;
+        const auto& anims = mySnowPea.getAnim().GetAnimations();
+        for (size_t i = 0; i < anims.size(); ++i) {
+            std::string label = res.FormatAnimName(anims[i].name);
+            bool isCurrent = ((int)i == mySnowPea.getAnim().GetCurrentAnimIndex());
+            Color baseCol = isCurrent ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f);
+            Color hoverCol = isCurrent ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f);
+
+            // Break if we exceed screen bounds
+            if (startY + 35 > GetScreenHeight() - 50) {
+                DrawText("...", 20, startY, 14, GRAY);
+                break;
+            }
+
+            if (DrawButton({ 20, (float)startY, 280, 30 }, label.c_str(), baseCol, hoverCol, WHITE)) {
+                mySnowPea.getAnim().SetAnimationIndex((int)i);
+            }
+            startY += 35;
+        }
+
+        // Footer instructions
+        DrawRectangleRec({ 340, 20, 450, 40 }, ColorAlpha(BLACK, 0.5f));
+        DrawText("Click buttons on the left to switch animation.", 355, 32, 14, LIGHTGRAY);
+        
         EndDrawing();
     }
 
-    // 3. Resource Destruction
+    // Unload all resources
+    res.UnloadAll();
+
     CloseWindow();
     return 0;
 }
