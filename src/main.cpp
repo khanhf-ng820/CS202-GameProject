@@ -3,6 +3,7 @@
 #include "Reanimation.h"
 #include "PeaShooter.h"
 #include "SnowPea.h"
+#include "Cornpult.h"
 #include "Projectile.h"
 #include <iostream>
 #include <vector>
@@ -39,7 +40,7 @@ int main() {
     std::string imagesDir = res.GetAssetPath("assets/images");
     res.LoadAll(imagesDir);
 
-    SnowPea mySnowPea(res, 550, 420);
+    Cornpult myCornpult(res, 550, 420);
     std::vector<Projectile> projectiles;
 
 
@@ -48,11 +49,13 @@ int main() {
         float dt = GetFrameTime();
         
         // Relocate zombie on click (if not clicking the UI panel on the left
-        mySnowPea.update(dt, projectiles);
+        myCornpult.update(dt, projectiles);
 
         for (auto& p : projectiles) {
             p.update(dt);
         }
+
+        //std::cout << "Active Projectiles: " << projectiles.size() << std::endl;
         
         // Cọn dẹp các viên đạn đã bay ra ngoài màn hình
         projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
@@ -82,7 +85,7 @@ int main() {
             }
         }
 
-        mySnowPea.draw();
+        myCornpult.draw();
         
         for (const auto& p : projectiles) {
             p.draw();
@@ -104,10 +107,10 @@ int main() {
 
         // Draw a list of animation buttons
         int startY = 445;
-        const auto& anims = mySnowPea.getAnim().GetAnimations();
+        const auto& anims = myCornpult.getAnim().GetAnimations();
         for (size_t i = 0; i < anims.size(); ++i) {
             std::string label = res.FormatAnimName(anims[i].name);
-            bool isCurrent = ((int)i == mySnowPea.getAnim().GetCurrentAnimIndex());
+            bool isCurrent = ((int)i == myCornpult.getAnim().GetCurrentAnimIndex());
             Color baseCol = isCurrent ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f);
             Color hoverCol = isCurrent ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f);
 
@@ -118,7 +121,7 @@ int main() {
             }
 
             if (DrawButton({ 20, (float)startY, 280, 30 }, label.c_str(), baseCol, hoverCol, WHITE)) {
-                mySnowPea.getAnim().SetAnimationIndex((int)i);
+                myCornpult.getAnim().SetAnimationIndex((int)i);
             }
             startY += 35;
         }
