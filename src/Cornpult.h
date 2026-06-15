@@ -9,6 +9,6 @@ public:
     Cornpult(Resources& res, int x, int y);
     ~Cornpult() override;
 
-    void update(float deltaTime, std::vector<Projectile>& outProjectiles) override;
+    void update(float deltaTime, std::vector<Projectile>& outProjectiles, std::vector<SunItem>& outSuns) override;
     void draw() override;
 };

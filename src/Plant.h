@@ -2,6 +2,7 @@
 #include "resources.h"
 #include "Reanimation.h"
 #include "Projectile.h"
+#include "SunItem.h"
 #include <string>
 #include <iostream>
 #include <vector>
@@ -25,7 +26,7 @@ public:
     
     virtual ~Plant() {}
 
-    virtual void update(float deltaTime, std::vector<Projectile>& outProjectiles) = 0;
+    virtual void update(float deltaTime, std::vector<Projectile>& outProjectiles, std::vector<SunItem>& outSuns) = 0;
     // Hàm vẽ cây lên màn hình (Mỗi cây có hình khác nhau nên cũng để virtual)
     virtual void draw() = 0;
 
@@ -35,7 +36,7 @@ public:
     int getY() const { return m_y; }
     int getHp() const { return m_hp; }
     int getSunCost() const { return m_sunCost; }
-    bool isDead() const { return m_hp <= 0; }
+    virtual bool isDead() const { return m_hp <= 0; }
     Reanimation& getAnim() { return m_anim; }
     
     // Hàm để Zombie gọi khi đang cắn cây này

@@ -11,7 +11,7 @@ PeaShooter::PeaShooter(Resources& res, int x, int y)
 PeaShooter::~PeaShooter() {
 }
 
-void PeaShooter::update(float deltaTime, std::vector<Projectile>& outProjectiles) {
+void PeaShooter::update(float deltaTime, std::vector<Projectile>& outProjectiles, std::vector<SunItem>& outSuns) {
     // Cập nhật animation
     m_anim.Update(deltaTime);
 

@@ -11,6 +11,6 @@ public:
     PeaShooter(Resources& res, int x, int y);
     ~PeaShooter() override;
 
-    void update(float deltaTime, std::vector<Projectile>& outProjectiles) override;
+    void update(float deltaTime, std::vector<Projectile>& outProjectiles, std::vector<SunItem>& outSuns) override;
     void draw() override;
 };

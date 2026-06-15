@@ -86,9 +86,19 @@ void Reanimation::Update(float dt) {
 }
 
 void Reanimation::Draw(float x, float y, float scale) const {
+    Draw(x, y, scale, WHITE);
+}
+
+void Reanimation::Draw(float x, float y, float scale, Color tint) const {
     int currentFrame = GetCurrentFrame();
 
     for (const auto& track : m_def.tracks) {
+        // Check track visibility
+        auto it = m_trackVisibility.find(track.name);
+        if (it != m_trackVisibility.end() && !it->second) {
+            continue;
+        }
+
         if (currentFrame < 0 || currentFrame >= (int)track.keyframes.size()) {
             continue;
         }
@@ -155,14 +165,18 @@ void Reanimation::Draw(float x, float y, float scale) const {
         rlMultMatrixf(mat);
 
         // Draw texture at local origin (0, 0)
-        DrawTexture(tex, 0, 0, WHITE);
+        DrawTexture(tex, 0, 0, tint);
 
         rlPopMatrix();
     }
 }
 
 void Reanimation::Draw(Vector2 position, float scale) const {
-    Draw(position.x, position.y, scale);
+    Draw(position.x, position.y, scale, WHITE);
+}
+
+void Reanimation::Draw(Vector2 position, float scale, Color tint) const {
+    Draw(position.x, position.y, scale, tint);
 }
 
 void Reanimation::SetAnimation(const std::string& animName) {
@@ -245,4 +259,12 @@ const std::vector<AnimationRange>& Reanimation::GetAnimations() const {
 
 int Reanimation::GetCurrentAnimIndex() const {
     return m_currentAnimIndex;
+}
+
+void Reanimation::SetTrackVisible(const std::string& trackName, bool visible) {
+    m_trackVisibility[trackName] = visible;
+}
+
+void Reanimation::SetFrame(float frame) {
+    m_currentFrameFloat = frame;
 }

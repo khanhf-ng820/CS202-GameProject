@@ -11,7 +11,7 @@ SnowPea::SnowPea(Resources& res, int x, int y)
 SnowPea::~SnowPea() {
 }
 
-void SnowPea::update(float deltaTime, std::vector<Projectile>& outProjectiles) {
+void SnowPea::update(float deltaTime, std::vector<Projectile>& outProjectiles, std::vector<SunItem>& outSuns) {
     // Cập nhật animation
     m_anim.Update(deltaTime);
 

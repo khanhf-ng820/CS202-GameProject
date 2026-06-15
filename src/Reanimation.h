@@ -4,6 +4,7 @@
 #include "resources.h"
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 class Reanimation {
 public:
@@ -12,7 +13,9 @@ public:
     void SetResources(const ReanimDefinition& def, const Resources& resources);
     void Update(float dt);
     void Draw(float x, float y, float scale) const;
+    void Draw(float x, float y, float scale, Color tint) const;
     void Draw(Vector2 position, float scale) const;
+    void Draw(Vector2 position, float scale, Color tint) const;
 
     // Playback control
     void SetAnimation(const std::string& animName);
@@ -24,6 +27,7 @@ public:
     void SetPaused(bool paused);
     bool IsPaused() const;
     void TogglePause();
+    void SetFrame(float frame);
 
     // Query methods
     int GetCurrentFrame() const;
@@ -32,6 +36,7 @@ public:
     std::string GetFormattedAnimName() const;
     const std::vector<AnimationRange>& GetAnimations() const;
     int GetCurrentAnimIndex() const;
+    void SetTrackVisible(const std::string& trackName, bool visible);
 
 private:
     void PopulateAnimations();
@@ -46,4 +51,5 @@ private:
     std::vector<AnimationRange> m_anims;
     float m_speedMultiplier = 1.0f;
     bool m_isPaused = false;
+    std::unordered_map<std::string, bool> m_trackVisibility;
 };
