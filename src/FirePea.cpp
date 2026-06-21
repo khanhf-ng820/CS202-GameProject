@@ -4,6 +4,8 @@ FirePea::FirePea(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 175, "FirePea") {
     // FirePea uses the PeaShooter reanim for its body structure, but shoots flaming peas
     getResources(res.GetAssetPath("assets/reanim/PeaShooter.reanim"));
+    m_anim.SetBaseAnimation("anim_idle");
+    m_anim.SetAnimation("anim_shooting");
 }
 
 FirePea::~FirePea() {

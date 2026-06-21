@@ -14,10 +14,11 @@ private:
     bool m_isLobbed;
     float m_range;
     float m_maxHeight;
+    float m_scale;
 
 public:
-    Projectile(float x, float y, float speed, Texture2D tex, bool isSnow = false, bool isLobbed = false) 
-        : m_x(x), m_y(y), m_startX(x), m_startY(y), m_speed(speed), m_tex(tex), m_active(true), m_isSnow(isSnow), m_isLobbed(isLobbed) {
+    Projectile(float x, float y, float speed, Texture2D tex, bool isSnow = false, bool isLobbed = false, float scale = 1.0f) 
+        : m_x(x), m_y(y), m_startX(x), m_startY(y), m_speed(speed), m_tex(tex), m_active(true), m_isSnow(isSnow), m_isLobbed(isLobbed), m_scale(scale) {
         m_range = 500.0f;     // Tầm bắn xa của đạn cầu vồng
         m_maxHeight = 150.0f; // Chiều cao tối đa vòng cung
     }
@@ -40,7 +41,7 @@ public:
 
     void draw() const {
         if (m_active && m_tex.id != 0) {
-            DrawTextureEx(m_tex, {m_x, m_y}, 0.0f, 1.0f, WHITE);
+            DrawTextureEx(m_tex, {m_x, m_y}, 0.0f, m_scale, WHITE);
         }
     }
 

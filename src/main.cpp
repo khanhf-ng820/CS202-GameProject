@@ -7,13 +7,19 @@
 #include "FirePea.h"
 #include "Jalapeno.h"
 #include "SunFlower.h"
+#include "GatlingPea.h"
+#include "Repeater.h"
+#include "Melonpult.h"
+#include "Wallnut.h"
+#include "CherryBomb.h"
+#include "Chomper.h"
 #include "Projectile.h"
 #include <iostream>
 #include <vector>
 #include <string>
 #include <algorithm>
 #include <memory>
-#pragma once 
+//#pragma once 
 
 // Draw a simple button and return true if clicked
 bool DrawButton(Rectangle rect, const char* text, Color baseColor, Color hoverColor, Color textColor) {
@@ -43,6 +49,8 @@ int main() {
     res.LoadAll(reanimDir);
     std::string imagesDir = res.GetAssetPath("assets/images");
     res.LoadAll(imagesDir);
+    std::string particlesDir = res.GetAssetPath("assets/particles");
+    res.LoadAll(particlesDir);
 
     int currentPlantType = 3; // Default to Fire Pea for testing
     std::unique_ptr<Plant> currentPlant = std::make_unique<FirePea>(res, 550, 420);
@@ -108,6 +116,12 @@ int main() {
                 else if (currentPlantType == 3) currentPlant = std::make_unique<FirePea>(res, 550, 420);
                 else if (currentPlantType == 4) currentPlant = std::make_unique<Jalapeno>(res, 550, 420);
                 else if (currentPlantType == 5) currentPlant = std::make_unique<SunFlower>(res, 550, 420);
+                else if (currentPlantType == 6) currentPlant = std::make_unique<GatlingPea>(res, 550, 420);
+                else if (currentPlantType == 7) currentPlant = std::make_unique<Repeater>(res, 550, 420);
+                else if (currentPlantType == 8) currentPlant = std::make_unique<Melonpult>(res, 550, 420);
+                else if (currentPlantType == 9) currentPlant = std::make_unique<Wallnut>(res, 550, 420);
+                else if (currentPlantType == 10) currentPlant = std::make_unique<CherryBomb>(res, 550, 420);
+                else if (currentPlantType == 11) currentPlant = std::make_unique<Chomper>(res, 550, 420);
                 projectiles.clear();
                 suns.clear();
             }
@@ -181,8 +195,56 @@ int main() {
                 suns.clear();
             }
         }
+        if (DrawButton({ 20, 220, 135, 30 }, "Gatling Pea", currentPlantType == 6 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 6 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentPlantType != 6) {
+                currentPlantType = 6;
+                currentPlant = std::make_unique<GatlingPea>(res, 550, 420);
+                projectiles.clear();
+                suns.clear();
+            }
+        }
+        if (DrawButton({ 165, 220, 135, 30 }, "Repeater", currentPlantType == 7 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 7 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentPlantType != 7) {
+                currentPlantType = 7;
+                currentPlant = std::make_unique<Repeater>(res, 550, 420);
+                projectiles.clear();
+                suns.clear();
+            }
+        }
+        if (DrawButton({ 20, 255, 135, 30 }, "Melon Pult", currentPlantType == 8 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 8 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentPlantType != 8) {
+                currentPlantType = 8;
+                currentPlant = std::make_unique<Melonpult>(res, 550, 420);
+                projectiles.clear();
+                suns.clear();
+            }
+        }
+        if (DrawButton({ 165, 255, 135, 30 }, "Wallnut", currentPlantType == 9 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 9 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentPlantType != 9) {
+                currentPlantType = 9;
+                currentPlant = std::make_unique<Wallnut>(res, 550, 420);
+                projectiles.clear();
+                suns.clear();
+            }
+        }
+        if (DrawButton({ 20, 290, 135, 30 }, "Cherry Bomb", currentPlantType == 10 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 10 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentPlantType != 10) {
+                currentPlantType = 10;
+                currentPlant = std::make_unique<CherryBomb>(res, 550, 420);
+                projectiles.clear();
+                suns.clear();
+            }
+        }
+        if (DrawButton({ 165, 290, 135, 30 }, "Chomper", currentPlantType == 11 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 11 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentPlantType != 11) {
+                currentPlantType = 11;
+                currentPlant = std::make_unique<Chomper>(res, 550, 420);
+                projectiles.clear();
+                suns.clear();
+            }
+        }
 
-        DrawLine(20, 225, 300, 225, ColorAlpha(WHITE, 0.2f));
+        DrawLine(20, 330, 300, 330, ColorAlpha(WHITE, 0.2f));
         DrawLine(20, 400, 300, 400, ColorAlpha(WHITE, 0.2f));
 
         // Animations list header

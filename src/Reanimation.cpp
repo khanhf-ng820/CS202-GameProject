@@ -104,32 +104,64 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
         }
 
         const ReanimKeyframe* kf_ptr = nullptr;
+        std::string resolvedImageName;
 
+        // Try overlay (current animation) frame
         if (currentFrame >= 0 && currentFrame < (int)track.keyframes.size()) {
             const auto& kf_overlay = track.keyframes[currentFrame];
-            if (kf_overlay.f != -1 && !kf_overlay.imageName.empty()) {
+            if (kf_overlay.f != -1) {
                 kf_ptr = &kf_overlay;
-            }
-        }
-
-        // Fallback to base animation if overlay frame is hidden
-        if (!kf_ptr && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
-            int baseFrame = (int)m_baseFrameFloat;
-            if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size()) {
-                const auto& kf_base = track.keyframes[baseFrame];
-                if (kf_base.f != -1 && !kf_base.imageName.empty()) {
-                    kf_ptr = &kf_base;
+                // Resolve image name: if this frame has one, use it;
+                // otherwise search backwards for the most recent image name
+                if (!kf_overlay.imageName.empty()) {
+                    resolvedImageName = kf_overlay.imageName;
+                } else {
+                    for (int j = currentFrame - 1; j >= 0; --j) {
+                        if (!track.keyframes[j].imageName.empty()) {
+                            resolvedImageName = track.keyframes[j].imageName;
+                            break;
+                        }
+                    }
                 }
             }
         }
 
-        if (!kf_ptr) {
+        // Fallback to base animation if overlay frame is hidden
+        if ((!kf_ptr || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
+            int baseFrame = (int)m_baseFrameFloat;
+            if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size()) {
+                const auto& kf_base = track.keyframes[baseFrame];
+                if (kf_base.f != -1) {
+                    if (!kf_ptr) kf_ptr = &kf_base;
+                    if (resolvedImageName.empty()) {
+                        if (!kf_base.imageName.empty()) {
+                            resolvedImageName = kf_base.imageName;
+                        } else {
+                            for (int j = baseFrame - 1; j >= 0; --j) {
+                                if (!track.keyframes[j].imageName.empty()) {
+                                    resolvedImageName = track.keyframes[j].imageName;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!kf_ptr || resolvedImageName.empty()) {
             continue;
+        }
+
+        // Apply track image override if any
+        auto imgOverrideIt = m_trackImageOverrides.find(track.name);
+        if (imgOverrideIt != m_trackImageOverrides.end()) {
+            resolvedImageName = imgOverrideIt->second;
         }
 
         const auto& kf = *kf_ptr;
 
-        Texture2D tex = m_resources->GetTexture(kf.imageName);
+        Texture2D tex = m_resources->GetTexture(resolvedImageName);
         if (tex.id == 0) {
             continue; // Texture not loaded or not found
         }
@@ -268,3 +300,21 @@ void Reanimation::SetTrackVisible(const std::string& trackName, bool visible) {
 void Reanimation::SetFrame(float frame) {
     m_currentFrameFloat = frame;
 }
+
+void Reanimation::OverrideTrackImage(const std::string& trackName, const std::string& imageName) {
+    m_trackImageOverrides[trackName] = imageName;
+}
+
+void Reanimation::ClearTrackImageOverride(const std::string& trackName) {
+    m_trackImageOverrides.erase(trackName);
+}
+
+void Reanimation::AddCustomAnimation(const std::string& newAnimName, const std::string& baseAnimName) {
+    for (const auto& anim : m_anims) {
+        if (anim.name == baseAnimName) {
+            m_anims.push_back({newAnimName, anim.startFrame, anim.endFrame});
+            return;
+        }
+    }
+}
+

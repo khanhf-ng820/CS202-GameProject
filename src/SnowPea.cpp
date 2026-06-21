@@ -4,6 +4,8 @@ SnowPea::SnowPea(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 175, "SnowPea") {
     // Nạp reanim cho SnowPea
     getResources(res.GetAssetPath("assets/reanim/SnowPea.reanim"));
+    m_anim.SetBaseAnimation("anim_idle");
+    m_anim.SetAnimation("anim_shooting");
     m_fireRate = 1.5f; // Thời gian hồi đạn chuẩn
     m_fireTimer = 0.0f;
 }

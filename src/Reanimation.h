@@ -37,6 +37,9 @@ public:
     const std::vector<AnimationRange>& GetAnimations() const;
     int GetCurrentAnimIndex() const;
     void SetTrackVisible(const std::string& trackName, bool visible);
+    void OverrideTrackImage(const std::string& trackName, const std::string& imageName);
+    void ClearTrackImageOverride(const std::string& trackName);
+    void AddCustomAnimation(const std::string& newAnimName, const std::string& baseAnimName);
 
 private:
     void PopulateAnimations();
@@ -52,4 +55,5 @@ private:
     float m_speedMultiplier = 1.0f;
     bool m_isPaused = false;
     std::unordered_map<std::string, bool> m_trackVisibility;
+    std::unordered_map<std::string, std::string> m_trackImageOverrides;
 };

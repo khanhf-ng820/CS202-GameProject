@@ -40,7 +40,7 @@ Resources& Resources::GetInstance() {
 
 void Resources::LoadAll(const std::string& filePath) {
     // Load background
-    std::string bgPath = GetAssetPath("assets/images/background1.jpg");
+    std::string bgPath = GetAssetPath("assets/images/background1.png");
     background = LoadTexture(bgPath.c_str());
     if (background.id == 0) {
         std::cerr << "Warning: Failed to load background from " << bgPath << std::endl;

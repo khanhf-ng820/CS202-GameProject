@@ -4,6 +4,8 @@ PeaShooter::PeaShooter(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 100, "PeaShooter") {
     // Gọi hàm này để nạp reanim cho Peashooter (thay đổi đường dẫn nếu cần)
     getResources(res.GetAssetPath("assets/reanim/PeaShooter.reanim"));
+    m_anim.SetBaseAnimation("anim_idle");
+    m_anim.SetAnimation("anim_shooting");
     m_fireRate = 2.08f; // Mỗi 1.5s bắn 1 viên đạn
     m_fireTimer = 0.0f;
 }
