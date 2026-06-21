@@ -19,7 +19,7 @@
 #include <string>
 #include <algorithm>
 #include <memory>
-//#pragma once 
+#pragma once 
 
 // Draw a simple button and return true if clicked
 bool DrawButton(Rectangle rect, const char* text, Color baseColor, Color hoverColor, Color textColor) {
