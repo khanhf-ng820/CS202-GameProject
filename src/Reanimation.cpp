@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <map>
 
 Reanimation::Reanimation(const ReanimDefinition& def, const Resources& resources) {
     SetResources(def, resources);
@@ -15,7 +16,7 @@ void Reanimation::SetResources(const ReanimDefinition& def, const Resources& res
     // Default to first animation if available
     if (!m_anims.empty()) {
         m_currentAnimIndex = 0;
-        m_currentFrameFloat = (float)m_anims[m_currentAnimIndex].startFrame;
+        m_currentFrameFloat = GetLoopStartTime(0);
     }
 }
 
@@ -79,9 +80,9 @@ void Reanimation::Update(float dt) {
     int end = m_anims[m_currentAnimIndex].endFrame;
 
     if (m_currentFrameFloat > (float)end) {
-        m_currentFrameFloat = (float)start; // Loop back
+        m_currentFrameFloat = GetLoopStartTime(m_currentAnimIndex); // Loop back
     } else if (m_currentFrameFloat < (float)start) {
-        m_currentFrameFloat = (float)start;
+        m_currentFrameFloat = GetLoopStartTime(m_currentAnimIndex);
     }
 }
 
@@ -223,7 +224,7 @@ void Reanimation::SetAnimation(const std::string& animName) {
 void Reanimation::SetAnimationIndex(int index) {
     if (index >= 0 && index < (int)m_anims.size()) {
         m_currentAnimIndex = index;
-        m_currentFrameFloat = (float)m_anims[index].startFrame;
+        m_currentFrameFloat = GetLoopStartTime(index);
     }
 }
 
@@ -316,5 +317,34 @@ void Reanimation::AddCustomAnimation(const std::string& newAnimName, const std::
             return;
         }
     }
+}
+
+float Reanimation::GetLoopStartTime(int animIndex) const {
+    if (animIndex < 0 || animIndex >= (int)m_anims.size()) return 0.0f;
+    
+    int startFrame = m_anims[animIndex].startFrame;
+    int endFrame = m_anims[animIndex].endFrame;
+
+    std::map<int, int> snapCount;
+    for (const auto& track : m_def.tracks) {
+        for (int i = startFrame; i <= endFrame && i < (int)track.keyframes.size(); ++i) {
+            if (track.keyframes[i].f != -1) {
+                snapCount[i]++;
+                break; // only take the first visible frame of each track
+            }
+        }
+    }
+
+    if (snapCount.empty()) return (float)startFrame;
+
+    int bestSnap = startFrame;
+    int bestCount = 0;
+    for (const auto& [snap, count] : snapCount) {
+        if (count > bestCount) {
+            bestCount = count;
+            bestSnap = snap;
+        }
+    }
+    return (float)bestSnap;
 }
 

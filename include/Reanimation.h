@@ -40,6 +40,7 @@ public:
     void OverrideTrackImage(const std::string& trackName, const std::string& imageName);
     void ClearTrackImageOverride(const std::string& trackName);
     void AddCustomAnimation(const std::string& newAnimName, const std::string& baseAnimName);
+    float GetLoopStartTime(int animIndex) const;
 
 private:
     void PopulateAnimations();

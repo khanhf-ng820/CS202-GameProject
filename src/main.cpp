@@ -14,6 +14,8 @@
 #include "CherryBomb.h"
 #include "Chomper.h"
 #include "Projectile.h"
+#include "FlagZombie.h"
+#include "ZombieNormal.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -56,6 +58,8 @@ int main() {
     std::unique_ptr<Plant> currentPlant = std::make_unique<FirePea>(res, 550, 420);
     std::vector<Projectile> projectiles;
     std::vector<SunItem> suns;
+    std::unique_ptr<Zombie> currentZombie = nullptr;
+    int currentZombieType = -1;
 
 
     while (!WindowShouldClose()) {
@@ -64,6 +68,9 @@ int main() {
         
         if (!currentPlant->isDead()) {
             currentPlant->update(dt, projectiles, suns);
+        }
+        if (currentZombie && !currentZombie->isDead()) {
+            currentZombie->update(dt);
         }
 
         for (auto& p : projectiles) {
@@ -126,7 +133,10 @@ int main() {
                 suns.clear();
             }
         }
-        
+        if (currentZombie && !currentZombie->isDead()) {
+            currentZombie->draw();
+        }
+
         for (const auto& p : projectiles) {
             p.draw();
         }
@@ -245,17 +255,37 @@ int main() {
         }
 
         DrawLine(20, 330, 300, 330, ColorAlpha(WHITE, 0.2f));
-        DrawLine(20, 400, 300, 400, ColorAlpha(WHITE, 0.2f));
+        
+        DrawText("Select Zombie Type:", 20, 340, 16, SKYBLUE);
+        if (DrawButton({ 20, 365, 135, 30 }, "Flag Zombie", currentZombieType == 0 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 0 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentZombieType != 0) {
+                currentZombieType = 0;
+                currentZombie = std::make_unique<FlagZombie>(res, 800, 420);
+            }
+        }
+        if (DrawButton({ 165, 365, 135, 30 }, "Normal Zombie", currentZombieType == 1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentZombieType != 1) {
+                currentZombieType = 1;
+                currentZombie = std::make_unique<ZombieNormal>(res, 800, 420);
+            }
+        }
+        if (DrawButton({ 20, 400, 135, 30 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            currentZombieType = -1;
+            currentZombie.reset();
+        }
+
+        DrawLine(20, 440, 300, 440, ColorAlpha(WHITE, 0.2f));
 
         // Animations list header
-        DrawText("Select Animation:", 20, 415, 16, SKYBLUE);
+        DrawText("Select Animation:", 20, 450, 16, SKYBLUE);
 
         // Draw a list of animation buttons
-        int startY = 445;
-        const auto& anims = currentPlant->getAnim().GetAnimations();
+        int startY = 470; // Đẩy xuống để không bị đè lên các nút ở trên
+        Reanimation& activeAnim = (currentZombieType != -1 && currentZombie) ? currentZombie->getAnim() : currentPlant->getAnim();
+        const auto& anims = activeAnim.GetAnimations();
         for (size_t i = 0; i < anims.size(); ++i) {
             std::string label = res.FormatAnimName(anims[i].name);
-            bool isCurrent = ((int)i == currentPlant->getAnim().GetCurrentAnimIndex());
+            bool isCurrent = ((int)i == activeAnim.GetCurrentAnimIndex());
             Color baseCol = isCurrent ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f);
             Color hoverCol = isCurrent ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f);
 
@@ -266,7 +296,7 @@ int main() {
             }
 
             if (DrawButton({ 20, (float)startY, 280, 30 }, label.c_str(), baseCol, hoverCol, WHITE)) {
-                currentPlant->getAnim().SetAnimationIndex((int)i);
+                activeAnim.SetAnimationIndex((int)i);
             }
             startY += 35;
         }

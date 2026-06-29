@@ -12,11 +12,6 @@ SunFlower::~SunFlower() {
 void SunFlower::update(float deltaTime, std::vector<Projectile>& outProjectiles, std::vector<SunItem>& outSuns) {
     m_anim.Update(deltaTime);
 
-    // Loop Sunflower exclusively within its idle frame range (4 to 24)
-    if (m_anim.GetCurrentFrame() > 24 || m_anim.GetCurrentFrame() < 4) {
-        m_anim.SetFrame(4.0f);
-    }
-
     m_sunProduceTimer += deltaTime;
     if (m_sunProduceTimer >= m_sunProduceInterval) {
         m_sunProduceTimer = 0.0f;
