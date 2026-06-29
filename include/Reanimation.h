@@ -41,6 +41,10 @@ public:
     void ClearTrackImageOverride(const std::string& trackName);
     void AddCustomAnimation(const std::string& newAnimName, const std::string& baseAnimName);
 
+    // Get the bounding rectangle of a named track at the current frame,
+    // given the draw position and scale. Returns {0,0,0,0} if track not found/hidden.
+    Rectangle GetTrackBounds(const std::string& trackName, float x, float y, float scale) const;
+
 private:
     void PopulateAnimations();
 

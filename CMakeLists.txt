@@ -17,6 +17,8 @@ include(FetchContent)
 # ---------------------------------------------------------
 set(BUILD_EXAMPLES OFF CACHE BOOL "Disable raylib examples" FORCE)
 set(BUILD_GAMES OFF CACHE BOOL "Disable raylib games" FORCE)
+set(CUSTOMIZE_BUILD ON CACHE BOOL "Enable custom raylib config" FORCE)
+set(SUPPORT_FILEFORMAT_JPG ON CACHE BOOL "Enable JPEG loading support" FORCE)
 
 FetchContent_Declare(
     raylib

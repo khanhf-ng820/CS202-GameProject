@@ -50,15 +50,18 @@ void Resources::LoadAll(const std::string& filePath) {
     FilePathList files = LoadDirectoryFiles(filePath.c_str());
     for (unsigned int i = 0; i < files.count; i++) {
         std::string path = files.paths[i];
-        // Check if extension is .png
+        // Check if extension is .png, .jpg, or .jpeg
         size_t lastDot = path.find_last_of('.');
-        if (lastDot != std::string::npos && path.substr(lastDot) == ".png") {
-            std::string stem = GetFileStem(path);
-            std::string key = ToUpper(stem);
-            
-            Texture2D tex = LoadTexture(path.c_str());
-            if (tex.id != 0) {
-                textures[key] = tex;
+        if (lastDot != std::string::npos) {
+            std::string ext = ToUpper(path.substr(lastDot));
+            if (ext == ".PNG" || ext == ".JPG" || ext == ".JPEG") {
+                std::string stem = GetFileStem(path);
+                std::string key = ToUpper(stem);
+
+                Texture2D tex = LoadTexture(path.c_str());
+                if (tex.id != 0) {
+                    textures[key] = tex;
+                }
             }
         }
     }

@@ -318,3 +318,91 @@ void Reanimation::AddCustomAnimation(const std::string& newAnimName, const std::
     }
 }
 
+Rectangle Reanimation::GetTrackBounds(const std::string& trackName, float x, float y, float scale) const {
+    int currentFrame = GetCurrentFrame();
+
+    for (const auto& track : m_def.tracks) {
+        if (track.name != trackName) continue;
+
+        // Check track visibility
+        auto visIt = m_trackVisibility.find(track.name);
+        if (visIt != m_trackVisibility.end() && !visIt->second) {
+            return {0, 0, 0, 0};
+        }
+
+        if (currentFrame < 0 || currentFrame >= (int)track.keyframes.size()) {
+            return {0, 0, 0, 0};
+        }
+
+        const ReanimKeyframe* kf_ptr = nullptr;
+        std::string resolvedImageName;
+
+        // Try overlay (current animation) frame
+        {
+            const auto& kf_overlay = track.keyframes[currentFrame];
+            if (kf_overlay.f != -1) {
+                kf_ptr = &kf_overlay;
+                if (!kf_overlay.imageName.empty()) {
+                    resolvedImageName = kf_overlay.imageName;
+                } else {
+                    for (int j = currentFrame - 1; j >= 0; --j) {
+                        if (!track.keyframes[j].imageName.empty()) {
+                            resolvedImageName = track.keyframes[j].imageName;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Fallback to base animation if overlay frame is hidden
+        if ((!kf_ptr || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
+            int baseFrame = (int)m_baseFrameFloat;
+            if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size()) {
+                const auto& kf_base = track.keyframes[baseFrame];
+                if (kf_base.f != -1) {
+                    if (!kf_ptr) kf_ptr = &kf_base;
+                    if (resolvedImageName.empty()) {
+                        if (!kf_base.imageName.empty()) {
+                            resolvedImageName = kf_base.imageName;
+                        } else {
+                            for (int j = baseFrame - 1; j >= 0; --j) {
+                                if (!track.keyframes[j].imageName.empty()) {
+                                    resolvedImageName = track.keyframes[j].imageName;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!kf_ptr || resolvedImageName.empty()) {
+            return {0, 0, 0, 0};
+        }
+
+        // Apply track image override if any
+        auto imgOverrideIt = m_trackImageOverrides.find(track.name);
+        if (imgOverrideIt != m_trackImageOverrides.end()) {
+            resolvedImageName = imgOverrideIt->second;
+        }
+
+        const auto& kf = *kf_ptr;
+
+        Texture2D tex = m_resources->GetTexture(resolvedImageName);
+        if (tex.id == 0) {
+            return {0, 0, 0, 0};
+        }
+
+        float tx = x + kf.x * scale;
+        float ty = y + kf.y * scale;
+        float tw = (float)tex.width * kf.sx * scale;
+        float th = (float)tex.height * kf.sy * scale;
+
+        return {tx, ty, tw, th};
+    }
+
+    return {0, 0, 0, 0};
+}
+
