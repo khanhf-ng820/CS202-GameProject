@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+#include <map>
 
 Reanimation::Reanimation(const ReanimDefinition& def, const Resources& resources) {
     SetResources(def, resources);
@@ -15,7 +16,7 @@ void Reanimation::SetResources(const ReanimDefinition& def, const Resources& res
     // Default to first animation if available
     if (!m_anims.empty()) {
         m_currentAnimIndex = 0;
-        m_currentFrameFloat = (float)m_anims[m_currentAnimIndex].startFrame;
+        m_currentFrameFloat = GetLoopStartTime(0);
     }
 }
 
@@ -79,9 +80,9 @@ void Reanimation::Update(float dt) {
     int end = m_anims[m_currentAnimIndex].endFrame;
 
     if (m_currentFrameFloat > (float)end) {
-        m_currentFrameFloat = (float)start; // Loop back
+        m_currentFrameFloat = GetLoopStartTime(m_currentAnimIndex); // Loop back
     } else if (m_currentFrameFloat < (float)start) {
-        m_currentFrameFloat = (float)start;
+        m_currentFrameFloat = GetLoopStartTime(m_currentAnimIndex);
     }
 }
 
@@ -223,7 +224,7 @@ void Reanimation::SetAnimation(const std::string& animName) {
 void Reanimation::SetAnimationIndex(int index) {
     if (index >= 0 && index < (int)m_anims.size()) {
         m_currentAnimIndex = index;
-        m_currentFrameFloat = (float)m_anims[index].startFrame;
+        m_currentFrameFloat = GetLoopStartTime(index);
     }
 }
 
@@ -318,91 +319,32 @@ void Reanimation::AddCustomAnimation(const std::string& newAnimName, const std::
     }
 }
 
-Rectangle Reanimation::GetTrackBounds(const std::string& trackName, float x, float y, float scale) const {
-    int currentFrame = GetCurrentFrame();
+float Reanimation::GetLoopStartTime(int animIndex) const {
+    if (animIndex < 0 || animIndex >= (int)m_anims.size()) return 0.0f;
+    
+    int startFrame = m_anims[animIndex].startFrame;
+    int endFrame = m_anims[animIndex].endFrame;
 
+    std::map<int, int> snapCount;
     for (const auto& track : m_def.tracks) {
-        if (track.name != trackName) continue;
-
-        // Check track visibility
-        auto visIt = m_trackVisibility.find(track.name);
-        if (visIt != m_trackVisibility.end() && !visIt->second) {
-            return {0, 0, 0, 0};
-        }
-
-        if (currentFrame < 0 || currentFrame >= (int)track.keyframes.size()) {
-            return {0, 0, 0, 0};
-        }
-
-        const ReanimKeyframe* kf_ptr = nullptr;
-        std::string resolvedImageName;
-
-        // Try overlay (current animation) frame
-        {
-            const auto& kf_overlay = track.keyframes[currentFrame];
-            if (kf_overlay.f != -1) {
-                kf_ptr = &kf_overlay;
-                if (!kf_overlay.imageName.empty()) {
-                    resolvedImageName = kf_overlay.imageName;
-                } else {
-                    for (int j = currentFrame - 1; j >= 0; --j) {
-                        if (!track.keyframes[j].imageName.empty()) {
-                            resolvedImageName = track.keyframes[j].imageName;
-                            break;
-                        }
-                    }
-                }
+        for (int i = startFrame; i <= endFrame && i < (int)track.keyframes.size(); ++i) {
+            if (track.keyframes[i].f != -1) {
+                snapCount[i]++;
+                break; // only take the first visible frame of each track
             }
         }
-
-        // Fallback to base animation if overlay frame is hidden
-        if ((!kf_ptr || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
-            int baseFrame = (int)m_baseFrameFloat;
-            if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size()) {
-                const auto& kf_base = track.keyframes[baseFrame];
-                if (kf_base.f != -1) {
-                    if (!kf_ptr) kf_ptr = &kf_base;
-                    if (resolvedImageName.empty()) {
-                        if (!kf_base.imageName.empty()) {
-                            resolvedImageName = kf_base.imageName;
-                        } else {
-                            for (int j = baseFrame - 1; j >= 0; --j) {
-                                if (!track.keyframes[j].imageName.empty()) {
-                                    resolvedImageName = track.keyframes[j].imageName;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (!kf_ptr || resolvedImageName.empty()) {
-            return {0, 0, 0, 0};
-        }
-
-        // Apply track image override if any
-        auto imgOverrideIt = m_trackImageOverrides.find(track.name);
-        if (imgOverrideIt != m_trackImageOverrides.end()) {
-            resolvedImageName = imgOverrideIt->second;
-        }
-
-        const auto& kf = *kf_ptr;
-
-        Texture2D tex = m_resources->GetTexture(resolvedImageName);
-        if (tex.id == 0) {
-            return {0, 0, 0, 0};
-        }
-
-        float tx = x + kf.x * scale;
-        float ty = y + kf.y * scale;
-        float tw = (float)tex.width * kf.sx * scale;
-        float th = (float)tex.height * kf.sy * scale;
-
-        return {tx, ty, tw, th};
     }
 
-    return {0, 0, 0, 0};
+    if (snapCount.empty()) return (float)startFrame;
+
+    int bestSnap = startFrame;
+    int bestCount = 0;
+    for (const auto& [snap, count] : snapCount) {
+        if (count > bestCount) {
+            bestCount = count;
+            bestSnap = snap;
+        }
+    }
+    return (float)bestSnap;
 }
 
