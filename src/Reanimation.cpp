@@ -348,3 +348,117 @@ float Reanimation::GetLoopStartTime(int animIndex) const {
     return (float)bestSnap;
 }
 
+Rectangle Reanimation::GetTrackBounds(const std::string& trackName, float x, float y, float scale) const {
+    int currentFrame = GetCurrentFrame();
+
+    for (const auto& track : m_def.tracks) {
+        if (track.name != trackName) continue;
+
+        // Check track visibility
+        auto visIt = m_trackVisibility.find(track.name);
+        if (visIt != m_trackVisibility.end() && !visIt->second) {
+            return {0, 0, 0, 0};
+        }
+
+        if (currentFrame < 0 || currentFrame >= (int)track.keyframes.size()) {
+            return {0, 0, 0, 0};
+        }
+
+        const ReanimKeyframe* kf_ptr = nullptr;
+        std::string resolvedImageName;
+
+        // Try current frame
+        const auto& kf_overlay = track.keyframes[currentFrame];
+        if (kf_overlay.f != -1) {
+            kf_ptr = &kf_overlay;
+            if (!kf_overlay.imageName.empty()) {
+                resolvedImageName = kf_overlay.imageName;
+            } else {
+                for (int j = currentFrame - 1; j >= 0; --j) {
+                    if (!track.keyframes[j].imageName.empty()) {
+                        resolvedImageName = track.keyframes[j].imageName;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Fallback to base animation
+        if ((!kf_ptr || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
+            int baseFrame = (int)m_baseFrameFloat;
+            if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size()) {
+                const auto& kf_base = track.keyframes[baseFrame];
+                if (kf_base.f != -1) {
+                    if (!kf_ptr) kf_ptr = &kf_base;
+                    if (resolvedImageName.empty()) {
+                        if (!kf_base.imageName.empty()) {
+                            resolvedImageName = kf_base.imageName;
+                        } else {
+                            for (int j = baseFrame - 1; j >= 0; --j) {
+                                if (!track.keyframes[j].imageName.empty()) {
+                                    resolvedImageName = track.keyframes[j].imageName;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!kf_ptr || resolvedImageName.empty()) {
+            return {0, 0, 0, 0};
+        }
+
+        // Apply track image override if any
+        auto imgOverrideIt = m_trackImageOverrides.find(track.name);
+        if (imgOverrideIt != m_trackImageOverrides.end()) {
+            resolvedImageName = imgOverrideIt->second;
+        }
+
+        const auto& kf = *kf_ptr;
+
+        Texture2D tex = m_resources->GetTexture(resolvedImageName);
+        if (tex.id == 0) {
+            return {0, 0, 0, 0};
+        }
+
+        // Compute transform (same as Draw)
+        float radX = kf.kx * DEG2RAD;
+        float radY = kf.ky * DEG2RAD;
+
+        float m00 = kf.sx * cosf(radX) * scale;
+        float m10 = kf.sx * sinf(radX) * scale;
+        float m01 = -kf.sy * sinf(radY) * scale;
+        float m11 = kf.sy * cosf(radY) * scale;
+
+        float tx = x + kf.x * scale;
+        float ty = y + kf.y * scale;
+
+        // Transform the four corners of the texture
+        float w = (float)tex.width;
+        float h = (float)tex.height;
+
+        float corners[4][2] = {
+            { tx,                    ty },                     // (0,0)
+            { tx + m00 * w,          ty + m10 * w },           // (w,0)
+            { tx + m01 * h,          ty + m11 * h },           // (0,h)
+            { tx + m00 * w + m01 * h, ty + m10 * w + m11 * h } // (w,h)
+        };
+
+        // Compute axis-aligned bounding box
+        float minX = corners[0][0], maxX = corners[0][0];
+        float minY = corners[0][1], maxY = corners[0][1];
+        for (int i = 1; i < 4; ++i) {
+            if (corners[i][0] < minX) minX = corners[i][0];
+            if (corners[i][0] > maxX) maxX = corners[i][0];
+            if (corners[i][1] < minY) minY = corners[i][1];
+            if (corners[i][1] > maxY) maxY = corners[i][1];
+        }
+
+        return { minX, minY, maxX - minX, maxY - minY };
+    }
+
+    return {0, 0, 0, 0};  // Track not found
+}
+
