@@ -23,7 +23,7 @@ static constexpr float REANIM_SCALE = 1.6f;
 // becomes 960px. We anchor the bottom of the reanim to the bottom of the
 // window so the grass/foreground line up correctly.
 static float ComputeYOffset() {
-    return (float)GetScreenHeight() - 600.0f * REANIM_SCALE;
+    return 768.0f - 600.0f * REANIM_SCALE;
 }
 
 // Frame index in the opening animation where the main menu is fully visible
@@ -70,7 +70,7 @@ void MainMenu::update(float dt) {
     // Animation is frozen; no need to call Update.
     // m_anim.Update(dt);
 
-    Vector2 mousePos = GetMousePosition();
+    Vector2 mousePos = GetVirtualMousePosition();
     float yOffset = ComputeYOffset();
 
     // --- Interactive reanim-based buttons ---
@@ -103,8 +103,8 @@ void MainMenu::update(float dt) {
 
     // --- Bottom-bar buttons (Options / Help / Quit) ---
     // These are positioned manually at the bottom of the screen
-    float screenW = (float)GetScreenWidth();
-    float screenH = (float)GetScreenHeight();
+    float screenW = 1280.0f;
+    float screenH = 768.0f;
 
     // Options button — bottom-left area
     float optW = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.width : 60.0f;
@@ -132,10 +132,10 @@ void MainMenu::update(float dt) {
 }
 
 void MainMenu::draw() {
-    float screenW = (float)GetScreenWidth();
-    float screenH = (float)GetScreenHeight();
+    float screenW = 1280.0f;
+    float screenH = 768.0f;
     float yOffset = ComputeYOffset();
-    Vector2 mousePos = GetMousePosition();
+    Vector2 mousePos = GetVirtualMousePosition();
 
     // Draw the entire SelectorScreen reanim (background, clouds, buttons, leaves, flowers, signs)
     // Anchor to the bottom of the window so the grass line matches the window's bottom edge.
