@@ -43,9 +43,9 @@ OptionsMenu::OptionsMenu(Resources& res)
 void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& currentHeight) {
     Vector2 mousePos = GetVirtualMousePosition();
 
-    // Dialog layout coordinates in virtual space (1280x768)
-    float dialogX = (1280.0f - 423.0f) / 2.0f;
-    float dialogY = (768.0f - 498.0f) / 2.0f;
+    // Dialog layout coordinates in virtual space (800x600)
+    float dialogX = (800.0f - 423.0f) / 2.0f;
+    float dialogY = (600.0f - 498.0f) / 2.0f;
 
     // 1. Handle clicking on resolutions (checkboxes / labels)
     for (int i = 0; i < NUM_RESOLUTIONS; ++i) {
@@ -90,11 +90,11 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
 }
 
 void OptionsMenu::draw() {
-    float dialogX = (1280.0f - 423.0f) / 2.0f;
-    float dialogY = (768.0f - 498.0f) / 2.0f;
+    float dialogX = (800.0f - 423.0f) / 2.0f;
+    float dialogY = (600.0f - 498.0f) / 2.0f;
 
     // Draw dark transparent overlay over screen to block clicks and dim background
-    DrawRectangle(0, 0, 1280, 768, ColorAlpha(BLACK, 0.5f));
+    DrawRectangle(0, 0, 800, 600, ColorAlpha(BLACK, 0.5f));
 
     // Draw main background board
     if (m_menuBack.id != 0) {
@@ -140,7 +140,7 @@ void OptionsMenu::draw() {
     Rectangle applyRect = { applyX, applyY, applyW, applyH };
     bool applyHovered = CheckCollisionPointRec(mousePos, applyRect);
     bool applyPressed = applyHovered && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
-    draw3SliceButton(applyRect, "APPLY CHANGES", applyHovered, applyPressed);
+    draw3SliceButton(applyRect, "APPLY", applyHovered, applyPressed);
 
     // Draw Back Button
     float backW = 170.0f;

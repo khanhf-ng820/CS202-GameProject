@@ -10,10 +10,10 @@ struct ResolutionPreset {
 };
 
 static const ResolutionPreset RESOLUTION_PRESETS[] = {
-    { 800, 480, "800 x 480 (Test)" },
-    { 1280, 768, "1280 x 768 (Default)" },
-    { 1600, 960, "1600 x 960 (Large)" },
-    { 1920, 1152, "1920 x 1152 (Full HD)" }
+    { 800, 600, "800 x 600 (Default)" },
+    { 1024, 768, "1024 x 768 (Standard)" },
+    { 1280, 960, "1280 x 960 (Large)" },
+    { 1600, 1200, "1600 x 1200 (Full HD)" }
 };
 static const int NUM_RESOLUTIONS = 4;
 
