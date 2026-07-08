@@ -14,7 +14,7 @@ static const char* TRACK_ZEN_GARDEN      = "SelectorScreen_ZenGarden_button";
 static const char* IMG_START_ADV_HL      = "IMAGE_REANIM_SELECTORSCREEN_STARTADVENTURE_HIGHLIGHT";
 static const char* IMG_SURVIVAL_HL       = "IMAGE_REANIM_SELECTORSCREEN_SURVIVAL_HIGHLIGHT";
 static const char* IMG_CHALLENGES_HL     = "IMAGE_REANIM_SELECTORSCREEN_CHALLENGES_HIGHLIGHT";
-static const char* IMG_ZEN_GARDEN_HL     = "IMAGE_REANIM_SELECTORSCREEN_ZENGARDENHIGHLIGHT";
+static const char* IMG_ZEN_GARDEN_HL     = "IMAGE_REANIM_SELECTORSCREEN_VASEBREAKER_HIGHLIGHT";
 
 // The reanim was designed for an 800x600 canvas. We render at native 1.0x scale.
 static constexpr float REANIM_SCALE = 1.0f;
@@ -43,6 +43,9 @@ MainMenu::MainMenu(Resources& res)
     m_anim.SetAnimation("anim_open");
     m_anim.SetFrame(MENU_REST_FRAME);
     m_anim.SetPaused(true);
+
+    // Hide duplicate adventure button track to prevent overdrawing the highlight
+    m_anim.SetTrackVisible("SelectorScreen_Adventure_button", false);
 
     // Load bottom-bar button textures from the already-loaded resource map
     m_optionsBtn   = res.GetTexture("SELECTORSCREEN_OPTIONS1");
@@ -106,25 +109,25 @@ void MainMenu::update(float dt) {
     float screenH = 600.0f;
 
     // Options button (left flower pot)
-    float optW = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.width : 60.0f;
-    float optH = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.height : 30.0f;
-    Rectangle optRect = { 565.0f, 535.0f, optW, optH };
+    float optW = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.width : 81.0f;
+    float optH = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.height + 23.0f : 54.0f;
+    Rectangle optRect = { 565.0f, 475.0f, optW, optH };
     if (CheckCollisionPointRec(mousePos, optRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         m_action = MenuAction::Options;
     }
 
     // Help button (middle flower pot)
-    float helpW = (m_helpBtn.id != 0) ? (float)m_helpBtn.width : 40.0f;
-    float helpH = (m_helpBtn.id != 0) ? (float)m_helpBtn.height : 30.0f;
-    Rectangle helpRect = { 645.0f, 545.0f, helpW, helpH };
+    float helpW = (m_helpBtn.id != 0) ? (float)m_helpBtn.width : 48.0f;
+    float helpH = (m_helpBtn.id != 0) ? (float)m_helpBtn.height + 33.0f : 55.0f;
+    Rectangle helpRect = { 647.0f, 499.0f, helpW, helpH };
     if (CheckCollisionPointRec(mousePos, helpRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         m_action = MenuAction::Help;
     }
 
     // Quit button (right flower pot)
-    float quitW = (m_quitBtn.id != 0) ? (float)m_quitBtn.width : 50.0f;
-    float quitH = (m_quitBtn.id != 0) ? (float)m_quitBtn.height : 30.0f;
-    Rectangle quitRect = { 720.0f, 540.0f, quitW, quitH };
+    float quitW = (m_quitBtn.id != 0) ? (float)m_quitBtn.width + 10.0f : 57.0f;
+    float quitH = (m_quitBtn.id != 0) ? (float)m_quitBtn.height + 10.0f : 37.0f;
+    Rectangle quitRect = { 715.0f, 510.0f, quitW, quitH };
     if (CheckCollisionPointRec(mousePos, quitRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         m_action = MenuAction::Quit;
     }
@@ -164,23 +167,23 @@ void MainMenu::draw() {
     }
 
     // --- Draw bottom-bar buttons (Options / Help / Quit) ---
-    float optW = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.width : 60.0f;
-    float optH = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.height : 30.0f;
-    Rectangle optRect = { 565.0f, 535.0f, optW, optH };
+    float optW = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.width : 81.0f;
+    float optH = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.height + 23.0f : 54.0f;
+    Rectangle optRect = { 565.0f, 475.0f, optW, optH };
 
-    float helpW = (m_helpBtn.id != 0) ? (float)m_helpBtn.width : 40.0f;
-    float helpH = (m_helpBtn.id != 0) ? (float)m_helpBtn.height : 30.0f;
-    Rectangle helpRect = { 645.0f, 545.0f, helpW, helpH };
+    float helpW = (m_helpBtn.id != 0) ? (float)m_helpBtn.width : 48.0f;
+    float helpH = (m_helpBtn.id != 0) ? (float)m_helpBtn.height + 33.0f : 55.0f;
+    Rectangle helpRect = { 647.0f, 499.0f, helpW, helpH };
 
-    float quitW = (m_quitBtn.id != 0) ? (float)m_quitBtn.width : 50.0f;
-    float quitH = (m_quitBtn.id != 0) ? (float)m_quitBtn.height : 30.0f;
-    Rectangle quitRect = { 720.0f, 540.0f, quitW, quitH };
+    float quitW = (m_quitBtn.id != 0) ? (float)m_quitBtn.width + 10.0f : 57.0f;
+    float quitH = (m_quitBtn.id != 0) ? (float)m_quitBtn.height + 10.0f : 37.0f;
+    Rectangle quitRect = { 715.0f, 510.0f, quitW, quitH };
 
     // Draw Options button
     if (m_optionsBtn.id != 0) {
         bool hovered = CheckCollisionPointRec(mousePos, optRect);
         Texture2D tex = hovered ? (m_optionsBtnHl.id != 0 ? m_optionsBtnHl : m_optionsBtn) : m_optionsBtn;
-        DrawTexture(tex, (int)optRect.x, (int)optRect.y, WHITE);
+        DrawTexture(tex, (int)optRect.x, (int)optRect.y + 15, WHITE);
     } else {
         DrawButton(optRect, "Options", ColorAlpha(DARKGRAY, 0.7f), ColorAlpha(GRAY, 0.8f), WHITE);
     }
@@ -189,7 +192,7 @@ void MainMenu::draw() {
     if (m_helpBtn.id != 0) {
         bool hovered = CheckCollisionPointRec(mousePos, helpRect);
         Texture2D tex = hovered ? (m_helpBtnHl.id != 0 ? m_helpBtnHl : m_helpBtn) : m_helpBtn;
-        DrawTexture(tex, (int)helpRect.x, (int)helpRect.y, WHITE);
+        DrawTexture(tex, (int)helpRect.x, (int)helpRect.y + 30, WHITE);
     } else {
         DrawButton(helpRect, "Help", ColorAlpha(DARKGRAY, 0.7f), ColorAlpha(GRAY, 0.8f), WHITE);
     }
@@ -198,7 +201,7 @@ void MainMenu::draw() {
     if (m_quitBtn.id != 0) {
         bool hovered = CheckCollisionPointRec(mousePos, quitRect);
         Texture2D tex = hovered ? (m_quitBtnHl.id != 0 ? m_quitBtnHl : m_quitBtn) : m_quitBtn;
-        DrawTexture(tex, (int)quitRect.x, (int)quitRect.y, WHITE);
+        DrawTexture(tex, (int)quitRect.x + 5, (int)quitRect.y + 5, WHITE);
     } else {
         DrawButton(quitRect, "Quit", ColorAlpha(DARKGRAY, 0.7f), ColorAlpha(GRAY, 0.8f), WHITE);
     }

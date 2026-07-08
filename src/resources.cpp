@@ -91,6 +91,15 @@ Texture2D Resources::GetTexture(const std::string& name) const {
     }
     key = ToUpper(key);
 
+    // Redirect background images to their transparent versions if they exist
+    if (key == "SELECTORSCREEN_BG_LEFT" || key == "SELECTORSCREEN_BG_CENTER" || key == "SELECTORSCREEN_BG_RIGHT" || key == "OPTIONS_MENUBACK") {
+        std::string transKey = key + "_TRANSPARENT";
+        auto itTrans = textures.find(transKey);
+        if (itTrans != textures.end()) {
+            return itTrans->second;
+        }
+    }
+
     auto it = textures.find(key);
     if (it != textures.end()) {
         return it->second;
