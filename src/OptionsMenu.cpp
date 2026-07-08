@@ -47,11 +47,15 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
     float dialogX = (800.0f - 423.0f) / 2.0f;
     float dialogY = (600.0f - 498.0f) / 2.0f;
 
+    // Checkbox scale and dimensions
+    float cbScale = 0.75f;
+    float cbH = 39.0f * cbScale;
+
     // 1. Handle clicking on resolutions (checkboxes / labels)
     for (int i = 0; i < NUM_RESOLUTIONS; ++i) {
-        float itemY = dialogY + 110.0f + i * 55.0f;
+        float itemY = dialogY + 175.0f + i * 40.0f;
         // Collision rectangle spans from checkbox to label text
-        Rectangle hitRect = { dialogX + 60.0f, itemY, 300.0f, 39.0f };
+        Rectangle hitRect = { dialogX + 60.0f, itemY, 300.0f, cbH };
         if (CheckCollisionPointRec(mousePos, hitRect)) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 m_selectedResolutionIndex = i;
@@ -105,31 +109,42 @@ void OptionsMenu::draw() {
     }
 
     // Draw OPTIONS title
-    m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 30.0f, 423.0f, 40.0f }, 1.3f, Color{ 220, 180, 80, 255 });
+    m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 130.0f, 423.0f, 40.0f }, 1.3f, Color{ 220, 180, 80, 255 });
 
     // Draw resolution checklist
     Vector2 mousePos = GetVirtualMousePosition();
+    float cbScale = 0.75f;
+    float cbW = 42.0f * cbScale;
+    float cbH = 39.0f * cbScale;
+
     for (int i = 0; i < NUM_RESOLUTIONS; ++i) {
-        float itemY = dialogY + 110.0f + i * 55.0f;
-        Rectangle checkboxRect = { dialogX + 60.0f, itemY, 42.0f, 39.0f };
+        float itemY = dialogY + 175.0f + i * 40.0f;
+        Rectangle checkboxRect = { dialogX + 60.0f, itemY, cbW, cbH };
         bool isSelected = (m_selectedResolutionIndex == i);
 
         // Draw Checkbox texture
         Texture2D cbTex = isSelected ? m_checkboxChecked : m_checkboxUnchecked;
         if (cbTex.id != 0) {
-            DrawTexture(cbTex, (int)checkboxRect.x, (int)checkboxRect.y, WHITE);
+            DrawTexturePro(
+                cbTex,
+                { 0.0f, 0.0f, (float)cbTex.width, (float)cbTex.height },
+                checkboxRect,
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
         } else {
             DrawRectangleRec(checkboxRect, GRAY);
             if (isSelected) {
-                DrawRectangleRec({ checkboxRect.x + 10, checkboxRect.y + 10, 22, 19 }, GREEN);
+                DrawRectangleRec({ checkboxRect.x + 8.0f, checkboxRect.y + 8.0f, 17.6f, 15.2f }, GREEN);
             }
         }
 
         // Draw Resolution label (highlight green on hover)
-        Rectangle textRect = { dialogX + 115.0f, itemY, 250.0f, 39.0f };
-        bool itemHovered = CheckCollisionPointRec(mousePos, { dialogX + 60.0f, itemY, 300.0f, 39.0f });
+        Rectangle textRect = { dialogX + 105.0f, itemY, 250.0f, cbH };
+        bool itemHovered = CheckCollisionPointRec(mousePos, { dialogX + 60.0f, itemY, 300.0f, cbH });
         Color labelColor = itemHovered ? GREEN : Color{ 210, 210, 210, 255 };
-        m_font.DrawTextCentered(RESOLUTION_PRESETS[i].label, textRect, 0.85f, labelColor);
+        m_font.DrawTextCentered(RESOLUTION_PRESETS[i].label, textRect, 0.64f, labelColor);
     }
 
     // Draw Apply Changes Button
