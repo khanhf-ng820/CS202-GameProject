@@ -50,15 +50,18 @@ void Resources::LoadAll(const std::string& filePath) {
     FilePathList files = LoadDirectoryFiles(filePath.c_str());
     for (unsigned int i = 0; i < files.count; i++) {
         std::string path = files.paths[i];
-        // Check if extension is .png
+        // Check if extension is .png, .jpg, or .jpeg
         size_t lastDot = path.find_last_of('.');
-        if (lastDot != std::string::npos && path.substr(lastDot) == ".png") {
-            std::string stem = GetFileStem(path);
-            std::string key = ToUpper(stem);
-            
-            Texture2D tex = LoadTexture(path.c_str());
-            if (tex.id != 0) {
-                textures[key] = tex;
+        if (lastDot != std::string::npos) {
+            std::string ext = ToUpper(path.substr(lastDot));
+            if (ext == ".PNG" || ext == ".JPG" || ext == ".JPEG") {
+                std::string stem = GetFileStem(path);
+                std::string key = ToUpper(stem);
+
+                Texture2D tex = LoadTexture(path.c_str());
+                if (tex.id != 0) {
+                    textures[key] = tex;
+                }
             }
         }
     }
@@ -87,6 +90,15 @@ Texture2D Resources::GetTexture(const std::string& name) const {
         key = key.substr(6);
     }
     key = ToUpper(key);
+
+    // Redirect background images to their transparent versions if they exist
+    if (key == "SELECTORSCREEN_BG_LEFT" || key == "SELECTORSCREEN_BG_CENTER" || key == "SELECTORSCREEN_BG_RIGHT" || key == "OPTIONS_MENUBACK") {
+        std::string transKey = key + "_TRANSPARENT";
+        auto itTrans = textures.find(transKey);
+        if (itTrans != textures.end()) {
+            return itTrans->second;
+        }
+    }
 
     auto it = textures.find(key);
     if (it != textures.end()) {
