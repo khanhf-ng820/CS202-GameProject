@@ -17,6 +17,8 @@
 #include "Projectile.h"
 #include "FlagZombie.h"
 #include "ZombieNormal.h"
+#include "ConeheadZombie.h"
+#include "BucketheadZombie.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -380,6 +382,9 @@ int main() {
             WHITE
         );
 
+        DrawRectangleRec({ 340, 20, 450, 40 }, ColorAlpha(BLACK, 0.5f));
+        DrawText("Click buttons on the left to switch animation/plant type.", 355, 32, 14, LIGHTGRAY);
+        
         EndDrawing();
     }
 
