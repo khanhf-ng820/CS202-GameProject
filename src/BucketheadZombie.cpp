@@ -1,12 +1,12 @@
-#include "ZombieNormal.h"
+#include "BucketheadZombie.h"
 
-ZombieNormal::ZombieNormal(Resources& res, float x, float y)
-    : Zombie(res, x, y, 200, 25.0f, 100, "ZombieNormal") {
+BucketheadZombie::BucketheadZombie(Resources& res, float x, float y)
+    : Zombie(res, x, y, 1370, 25.0f, 100, "BucketheadZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
 
-    m_anim.SetTrackVisible("anim_bucket", false);
+    m_anim.SetTrackVisible("anim_bucket", true);
     m_anim.SetTrackVisible("anim_cone", false);
     m_anim.SetTrackVisible("anim_screendoor", false);
     m_anim.SetTrackVisible("Zombie_duckytube", false);
@@ -17,15 +17,15 @@ ZombieNormal::ZombieNormal(Resources& res, float x, float y)
     m_anim.SetTrackVisible("Zombie_flaghand", false);
 }
 
-ZombieNormal::~ZombieNormal() {}
+BucketheadZombie::~BucketheadZombie() {}
 
-void ZombieNormal::takeDamage(int damage) {
+void BucketheadZombie::takeDamage(int damage) {
     Zombie::takeDamage(damage);
     if (m_hp <= 0) {
         if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
             m_anim.SetAnimation("anim_death2");
         }
-    } else if (m_hp <= m_maxHp / 2) {
+    } else if (m_hp <= 100) {
         if (!m_hasLostArm) {
             m_hasLostArm = true;
             Resources& res = Resources::GetInstance();
@@ -41,15 +41,28 @@ void ZombieNormal::takeDamage(int damage) {
             arm.active = true;
             m_fallingParts.push_back(arm);
         }
+    } else if (m_hp <= 280 && !m_hasLostBucket) {
+        m_hasLostBucket = true;
+        Resources& res = Resources::GetInstance();
+        FallingPart bucket;
+        bucket.texture = res.GetTexture("ZOMBIE_BUCKET1");
+        bucket.x = m_x + 30.0f; 
+        bucket.y = m_y + 10.0f;
+        bucket.vx = (float)GetRandomValue(-30, 30);
+        bucket.vy = (float)GetRandomValue(-150, -50);
+        bucket.rotation = 0;
+        bucket.rotSpeed = (float)GetRandomValue(-150, 150);
+        bucket.timer = 1.0f;
+        bucket.active = true;
+        m_fallingParts.push_back(bucket);
     }
 }
 
-void ZombieNormal::update(float deltaTime) {
+void BucketheadZombie::update(float deltaTime) {
     m_anim.Update(deltaTime);
 
     std::string currentAnim = m_anim.GetCurrentAnimName();
 
-    // Ẩn đầu khi chạy animation chết
     if (currentAnim == "anim_death" || currentAnim == "anim_death2" || currentAnim == "anim_waterdeath") {
         m_anim.SetTrackVisible("anim_head1", false);
         m_anim.SetTrackVisible("anim_hair", false);
@@ -57,6 +70,7 @@ void ZombieNormal::update(float deltaTime) {
         m_anim.SetTrackVisible("anim_tongue", false);
         m_anim.SetTrackVisible("Zombie_outerarm_lower", false);
         m_anim.SetTrackVisible("Zombie_outerarm_hand", false);
+        m_anim.SetTrackVisible("anim_bucket", false); // Rớt xô khi chết
 
         if (!m_hasSpawnedDeathParts) {
             m_hasSpawnedDeathParts = true;
@@ -102,8 +116,8 @@ void ZombieNormal::update(float deltaTime) {
                 m_hasLostArm = true;
                 FallingPart arm;
                 arm.texture = res.GetTexture("ZOMBIE_OUTERARM_LOWER");
-                arm.x = m_x + 30.0f; 
-                arm.y = m_y + 50.0f;
+                arm.x = m_x + 45.0f; 
+                arm.y = m_y + 110.0f;
                 arm.vx = (float)GetRandomValue(-40, 20);
                 arm.vy = (float)GetRandomValue(-120, -40);
                 arm.rotation = 0;
@@ -112,9 +126,28 @@ void ZombieNormal::update(float deltaTime) {
                 arm.active = true;
                 m_fallingParts.push_back(arm);
             }
+            if (!m_hasLostBucket) {
+                m_hasLostBucket = true;
+                FallingPart bucket;
+                bucket.texture = res.GetTexture("ZOMBIE_BUCKET1");
+                bucket.x = m_x + 30.0f; 
+                bucket.y = m_y + 10.0f;
+                bucket.vx = (float)GetRandomValue(-30, 30);
+                bucket.vy = (float)GetRandomValue(-150, -50);
+                bucket.rotation = 0;
+                bucket.rotSpeed = (float)GetRandomValue(-150, 150);
+                bucket.timer = 1.0f;
+                bucket.active = true;
+                m_fallingParts.push_back(bucket);
+            }
         }
     } else {
         m_anim.SetTrackVisible("anim_head1", true);
+        if (m_hasLostBucket) {
+            m_anim.SetTrackVisible("anim_bucket", false);
+        } else {
+            m_anim.SetTrackVisible("anim_bucket", true);
+        }
         if (m_hasLostArm) {
             m_anim.SetTrackVisible("Zombie_outerarm_lower", false);
             m_anim.SetTrackVisible("Zombie_outerarm_hand", false);
@@ -133,7 +166,6 @@ void ZombieNormal::update(float deltaTime) {
         }
     }
 
-    // Cập nhật các bộ phận rơi
     for (auto& part : m_fallingParts) {
         if (part.active) {
             part.vy += 400.0f * deltaTime; // gravity
@@ -148,7 +180,7 @@ void ZombieNormal::update(float deltaTime) {
     }
 }
 
-void ZombieNormal::draw() {
+void BucketheadZombie::draw() {
     m_anim.Draw(m_x, m_y, 1.6f);
 
     for (const auto& part : m_fallingParts) {

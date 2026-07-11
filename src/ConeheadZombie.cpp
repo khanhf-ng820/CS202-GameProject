@@ -1,13 +1,14 @@
-#include "ZombieNormal.h"
+#include "ConeheadZombie.h"
 
-ZombieNormal::ZombieNormal(Resources& res, float x, float y)
-    : Zombie(res, x, y, 200, 25.0f, 100, "ZombieNormal") {
+ConeheadZombie::ConeheadZombie(Resources& res, float x, float y)
+    : Zombie(res, x, y, 560, 25.0f, 100, "ConeheadZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
 
+    // Bật nón, ẩn các phụ kiện khác
     m_anim.SetTrackVisible("anim_bucket", false);
-    m_anim.SetTrackVisible("anim_cone", false);
+    m_anim.SetTrackVisible("anim_cone", true);
     m_anim.SetTrackVisible("anim_screendoor", false);
     m_anim.SetTrackVisible("Zombie_duckytube", false);
     m_anim.SetTrackVisible("Zombie_mustache", false);
@@ -17,15 +18,15 @@ ZombieNormal::ZombieNormal(Resources& res, float x, float y)
     m_anim.SetTrackVisible("Zombie_flaghand", false);
 }
 
-ZombieNormal::~ZombieNormal() {}
+ConeheadZombie::~ConeheadZombie() {}
 
-void ZombieNormal::takeDamage(int damage) {
+void ConeheadZombie::takeDamage(int damage) {
     Zombie::takeDamage(damage);
     if (m_hp <= 0) {
         if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
-            m_anim.SetAnimation("anim_death2");
+            m_anim.SetAnimation("anim_death");
         }
-    } else if (m_hp <= m_maxHp / 2) {
+    } else if (m_hp <= 100) {
         if (!m_hasLostArm) {
             m_hasLostArm = true;
             Resources& res = Resources::GetInstance();
@@ -41,15 +42,28 @@ void ZombieNormal::takeDamage(int damage) {
             arm.active = true;
             m_fallingParts.push_back(arm);
         }
+    } else if (m_hp <= 280 && !m_hasLostCone) {
+        m_hasLostCone = true;
+        Resources& res = Resources::GetInstance();
+        FallingPart cone;
+        cone.texture = res.GetTexture("ZOMBIE_CONE1");
+        cone.x = m_x + 30.0f; 
+        cone.y = m_y + 10.0f;
+        cone.vx = (float)GetRandomValue(-30, 30);
+        cone.vy = (float)GetRandomValue(-150, -50);
+        cone.rotation = 0;
+        cone.rotSpeed = (float)GetRandomValue(-150, 150);
+        cone.timer = 1.0f;
+        cone.active = true;
+        m_fallingParts.push_back(cone);
     }
 }
 
-void ZombieNormal::update(float deltaTime) {
+void ConeheadZombie::update(float deltaTime) {
     m_anim.Update(deltaTime);
 
     std::string currentAnim = m_anim.GetCurrentAnimName();
 
-    // Ẩn đầu khi chạy animation chết
     if (currentAnim == "anim_death" || currentAnim == "anim_death2" || currentAnim == "anim_waterdeath") {
         m_anim.SetTrackVisible("anim_head1", false);
         m_anim.SetTrackVisible("anim_hair", false);
@@ -57,6 +71,7 @@ void ZombieNormal::update(float deltaTime) {
         m_anim.SetTrackVisible("anim_tongue", false);
         m_anim.SetTrackVisible("Zombie_outerarm_lower", false);
         m_anim.SetTrackVisible("Zombie_outerarm_hand", false);
+        m_anim.SetTrackVisible("anim_cone", false); // Rớt nón khi chết
 
         if (!m_hasSpawnedDeathParts) {
             m_hasSpawnedDeathParts = true;
@@ -112,9 +127,28 @@ void ZombieNormal::update(float deltaTime) {
                 arm.active = true;
                 m_fallingParts.push_back(arm);
             }
+            if (!m_hasLostCone) {
+                m_hasLostCone = true;
+                FallingPart cone;
+                cone.texture = res.GetTexture("ZOMBIE_CONE1");
+                cone.x = m_x + 30.0f; 
+                cone.y = m_y + 10.0f;
+                cone.vx = (float)GetRandomValue(-30, 30);
+                cone.vy = (float)GetRandomValue(-150, -50);
+                cone.rotation = 0;
+                cone.rotSpeed = (float)GetRandomValue(-150, 150);
+                cone.timer = 1.0f;
+                cone.active = true;
+                m_fallingParts.push_back(cone);
+            }
         }
     } else {
         m_anim.SetTrackVisible("anim_head1", true);
+        if (m_hasLostCone) {
+            m_anim.SetTrackVisible("anim_cone", false);
+        } else {
+            m_anim.SetTrackVisible("anim_cone", true);
+        }
         if (m_hasLostArm) {
             m_anim.SetTrackVisible("Zombie_outerarm_lower", false);
             m_anim.SetTrackVisible("Zombie_outerarm_hand", false);
@@ -133,7 +167,6 @@ void ZombieNormal::update(float deltaTime) {
         }
     }
 
-    // Cập nhật các bộ phận rơi
     for (auto& part : m_fallingParts) {
         if (part.active) {
             part.vy += 400.0f * deltaTime; // gravity
@@ -148,7 +181,7 @@ void ZombieNormal::update(float deltaTime) {
     }
 }
 
-void ZombieNormal::draw() {
+void ConeheadZombie::draw() {
     m_anim.Draw(m_x, m_y, 1.6f);
 
     for (const auto& part : m_fallingParts) {

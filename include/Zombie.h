@@ -4,6 +4,16 @@
 #include "Reanimation.h"
 #include <string>
 
+struct FallingPart {
+    Texture2D texture;
+    float x, y;
+    float vx, vy;
+    float rotation;
+    float rotSpeed;
+    float timer;
+    bool active;
+};
+
 class Zombie {
 protected:
     Resources& res;

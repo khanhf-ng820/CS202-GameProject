@@ -16,6 +16,8 @@
 #include "Projectile.h"
 #include "FlagZombie.h"
 #include "ZombieNormal.h"
+#include "ConeheadZombie.h"
+#include "BucketheadZombie.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -54,23 +56,22 @@ int main() {
     std::string particlesDir = res.GetAssetPath("assets/particles");
     res.LoadAll(particlesDir);
 
-    int currentPlantType = 3; // Default to Fire Pea for testing
+    int currentPlantType = 3;
     std::unique_ptr<Plant> currentPlant = std::make_unique<FirePea>(res, 550, 420);
     std::vector<Projectile> projectiles;
     std::vector<SunItem> suns;
     std::unique_ptr<Zombie> currentZombie = nullptr;
     int currentZombieType = -1;
 
-
     while (!WindowShouldClose()) {
-        // --- Update ---
         float dt = GetFrameTime();
         
+        if (currentZombie) {
+            currentZombie->update(GetFrameTime());
+        }
+
         if (!currentPlant->isDead()) {
             currentPlant->update(dt, projectiles, suns);
-        }
-        if (currentZombie && !currentZombie->isDead()) {
-            currentZombie->update(dt);
         }
 
         for (auto& p : projectiles) {
@@ -81,19 +82,15 @@ int main() {
             s.update(dt);
         }
         
-        // Dọn dẹp các viên đạn đã bay ra ngoài màn hình
         projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
             [](const Projectile& p) { return !p.isActive(); }), projectiles.end());
 
-        // Dọn dẹp các mặt trời đã hết thời gian
         suns.erase(std::remove_if(suns.begin(), suns.end(),
             [](const SunItem& s) { return !s.isActive(); }), suns.end());
 
-        // --- Draw ---
         BeginDrawing();
         ClearBackground(DARKGRAY);
 
-        // 1. Draw Lawn Background (Scale to fit screen)
         Texture2D bgTex = res.GetBackground();
         if (bgTex.id != 0) {
             DrawTexturePro(
@@ -104,13 +101,6 @@ int main() {
                 0.0f,
                 WHITE
             );
-        } else {
-            // Fallback: draw green lawn grid
-            for (int y = 0; y < GetScreenHeight(); y += 80) {
-                for (int x = 0; x < GetScreenWidth(); x += 80) {
-                    DrawRectangle(x, y, 80, 80, ((x/80 + y/80) % 2 == 0) ? GREEN : DARKGREEN);
-                }
-            }
         }
 
         if (!currentPlant->isDead()) {
@@ -133,7 +123,7 @@ int main() {
                 suns.clear();
             }
         }
-        if (currentZombie && !currentZombie->isDead()) {
+        if (currentZombie) {
             currentZombie->draw();
         }
 
@@ -145,16 +135,13 @@ int main() {
             s.draw();
         }
 
-        // 3. Draw Controls UI Panel (Glassmorphism overlay on the left)
         DrawRectangleRec({ 0, 0, 320, (float)GetScreenHeight() }, ColorAlpha(DARKBLUE, 0.75f));
         DrawRectangleLines(0, 0, 320, GetScreenHeight(), ColorAlpha(WHITE, 0.3f));
 
-        // Title
         DrawText("PLANT REANIMATOR", 20, 20, 22, SKYBLUE);
         DrawText("C++ & Raylib Visualizer (OOP)", 20, 48, 14, GRAY);
         DrawLine(20, 72, 300, 72, ColorAlpha(WHITE, 0.2f));
 
-        // Plant selector section
         DrawText("Select Plant Type:", 20, 85, 16, SKYBLUE);
         
         if (DrawButton({ 20, 115, 135, 30 }, "Peashooter", currentPlantType == 0 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 0 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
@@ -269,18 +256,42 @@ int main() {
                 currentZombie = std::make_unique<ZombieNormal>(res, 800, 420);
             }
         }
+        if (DrawButton({ 310, 365, 135, 30 }, "Conehead", currentZombieType == 2 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 2 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentZombieType != 2) {
+                currentZombieType = 2;
+                currentZombie = std::make_unique<ConeheadZombie>(res, 800, 420);
+            }
+        }
+        if (DrawButton({ 455, 365, 135, 30 }, "Buckethead", currentZombieType == 3 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 3 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentZombieType != 3) {
+                currentZombieType = 3;
+                currentZombie = std::make_unique<BucketheadZombie>(res, 800, 420);
+            }
+        }
         if (DrawButton({ 20, 400, 135, 30 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             currentZombieType = -1;
             currentZombie.reset();
         }
 
+        if (currentZombie && !currentZombie->isDead()) {
+            if (DrawButton({ 165, 400, 200, 30 }, "Take Damage (-HP)", ColorAlpha(ORANGE, 0.6f), ColorAlpha(ORANGE, 0.8f), WHITE)) {
+                if (currentZombie->getName() == "ZombieNormal") {
+                    currentZombie->takeDamage(100);
+                } else if (currentZombie->getName() == "ConeheadZombie") {
+                    if (currentZombie->getHp() > 280) currentZombie->takeDamage(280);
+                    else currentZombie->takeDamage(180);
+                } else if (currentZombie->getName() == "BucketheadZombie") {
+                    if (currentZombie->getHp() > 280) currentZombie->takeDamage(1090);
+                    else currentZombie->takeDamage(180); 
+                }
+            }
+        }
+
         DrawLine(20, 440, 300, 440, ColorAlpha(WHITE, 0.2f));
 
-        // Animations list header
         DrawText("Select Animation:", 20, 450, 16, SKYBLUE);
 
-        // Draw a list of animation buttons
-        int startY = 470; // Đẩy xuống để không bị đè lên các nút ở trên
+        int startY = 470;
         Reanimation& activeAnim = (currentZombieType != -1 && currentZombie) ? currentZombie->getAnim() : currentPlant->getAnim();
         const auto& anims = activeAnim.GetAnimations();
         for (size_t i = 0; i < anims.size(); ++i) {
@@ -289,7 +300,6 @@ int main() {
             Color baseCol = isCurrent ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f);
             Color hoverCol = isCurrent ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f);
 
-            // Break if we exceed screen bounds
             if (startY + 35 > GetScreenHeight() - 50) {
                 DrawText("...", 20, startY, 14, GRAY);
                 break;
@@ -301,7 +311,6 @@ int main() {
             startY += 35;
         }
 
-        // Footer instructions
         DrawRectangleRec({ 340, 20, 450, 40 }, ColorAlpha(BLACK, 0.5f));
         DrawText("Click buttons on the left to switch animation/plant type.", 355, 32, 14, LIGHTGRAY);
         
