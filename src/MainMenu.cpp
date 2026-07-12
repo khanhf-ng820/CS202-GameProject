@@ -91,7 +91,14 @@ void MainMenu::update(float dt) {
 
     for (const auto& btn : buttons) {
         Rectangle bounds = m_anim.GetTrackBounds(btn.trackName, 0, yOffset, REANIM_SCALE);
-        bool hovered = (bounds.width > 0) && CheckCollisionPointRec(mousePos, bounds);
+        
+        std::string texName;
+        if (btn.action == MenuAction::StartAdventure) texName = "SELECTORSCREEN_STARTADVENTURE_BUTTON1";
+        else if (btn.action == MenuAction::Level1) texName = "SELECTORSCREEN_SURVIVAL_BUTTON";
+        else if (btn.action == MenuAction::Level2) texName = "SELECTORSCREEN_CHALLENGES_BUTTON";
+        else if (btn.action == MenuAction::Level3) texName = "SELECTORSCREEN_VASEBREAKER_BUTTON";
+
+        bool hovered = (bounds.width > 0) && isGraveButtonHovered(mousePos, bounds, texName);
 
         if (hovered) {
             m_anim.OverrideTrackImage(btn.trackName, btn.highlightImg);
@@ -213,4 +220,11 @@ MenuAction MainMenu::getAction() const {
 
 void MainMenu::resetAction() {
     m_action = MenuAction::None;
+}
+
+bool MainMenu::isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName) {
+    if (!CheckCollisionPointRec(mousePos, bounds)) return false;
+    int localX = (int)((mousePos.x - bounds.x) / REANIM_SCALE);
+    int localY = (int)((mousePos.y - bounds.y) / REANIM_SCALE);
+    return !m_res.IsPixelTransparent(texName, localX, localY);
 }

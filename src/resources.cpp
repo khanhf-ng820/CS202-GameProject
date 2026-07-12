@@ -58,9 +58,15 @@ void Resources::LoadAll(const std::string& filePath) {
                 std::string stem = GetFileStem(path);
                 std::string key = ToUpper(stem);
 
-                Texture2D tex = LoadTexture(path.c_str());
-                if (tex.id != 0) {
-                    textures[key] = tex;
+                Image img = LoadImage(path.c_str());
+                if (img.data != nullptr) {
+                    Texture2D tex = LoadTextureFromImage(img);
+                    if (tex.id != 0) {
+                        textures[key] = tex;
+                        images[key] = img;
+                    } else {
+                        UnloadImage(img);
+                    }
                 }
             }
         }
@@ -77,6 +83,10 @@ void Resources::UnloadAll() {
         UnloadTexture(pair.second);
     }
     textures.clear();
+    for (auto& pair : images) {
+        UnloadImage(pair.second);
+    }
+    images.clear();
 }
 
 Texture2D Resources::GetTexture(const std::string& name) const {
@@ -105,6 +115,29 @@ Texture2D Resources::GetTexture(const std::string& name) const {
         return it->second;
     }
     return Texture2D{0};
+}
+
+bool Resources::IsPixelTransparent(const std::string& name, int x, int y) const {
+    std::string key = name;
+    // Strip IMAGE_REANIM_
+    if (key.rfind("IMAGE_REANIM_", 0) == 0) {
+        key = key.substr(13);
+    }
+    // Strip IMAGE_
+    else if (key.rfind("IMAGE_", 0) == 0) {
+        key = key.substr(6);
+    }
+    key = ToUpper(key);
+
+    auto it = images.find(key);
+    if (it != images.end()) {
+        const Image& img = it->second;
+        if (x >= 0 && x < img.width && y >= 0 && y < img.height) {
+            Color color = GetImageColor(img, x, y);
+            return color.a == 0;
+        }
+    }
+    return true; // Out of bounds or not found counts as transparent (not clickable)
 }
 
 std::string Resources::GetAssetPath(const std::string& relativePath) {

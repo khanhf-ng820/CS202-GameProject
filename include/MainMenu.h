@@ -38,4 +38,6 @@ private:
     Texture2D m_helpBtnHl;
     Texture2D m_quitBtn;
     Texture2D m_quitBtnHl;
+
+    bool isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName);
 };
