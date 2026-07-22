@@ -42,7 +42,10 @@ void Resources::LoadAll(const std::string& filePath) {
     // Load background
     std::string bgPath = GetAssetPath("assets/images/background1.png");
     background = LoadTexture(bgPath.c_str());
-    if (background.id == 0) {
+    if (background.id != 0) {
+        GenTextureMipmaps(&background);
+        SetTextureFilter(background, TEXTURE_FILTER_BILINEAR);
+    } else {
         std::cerr << "Warning: Failed to load background from " << bgPath << std::endl;
     }
 
@@ -62,6 +65,8 @@ void Resources::LoadAll(const std::string& filePath) {
                 if (img.data != nullptr) {
                     Texture2D tex = LoadTextureFromImage(img);
                     if (tex.id != 0) {
+                        GenTextureMipmaps(&tex);
+                        SetTextureFilter(tex, TEXTURE_FILTER_TRILINEAR);
                         textures[key] = tex;
                         images[key] = img;
                     } else {

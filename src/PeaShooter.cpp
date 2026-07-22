@@ -2,11 +2,11 @@
 
 PeaShooter::PeaShooter(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 100, "PeaShooter") {
-    // Gọi hàm này để nạp reanim cho Peashooter (thay đổi đường dẫn nếu cần)
+    // Gọi hàm này để nạp reanim cho Peashooter
     getResources(res.GetAssetPath("assets/reanim/PeaShooter.reanim"));
     m_anim.SetBaseAnimation("anim_idle");
-    m_anim.SetAnimation("anim_shooting");
-    m_fireRate = 2.08f; // Mỗi 1.5s bắn 1 viên đạn
+    m_anim.SetAnimation("anim_head_idle");
+    m_fireRate = 2.08f;
     m_fireTimer = 0.0f;
 }
 
@@ -17,16 +17,23 @@ void PeaShooter::update(float deltaTime, std::vector<Projectile>& outProjectiles
     // Cập nhật animation
     m_anim.Update(deltaTime);
 
+    std::string currentAnim = m_anim.GetCurrentAnimName();
+
+    // Nếu người dùng bấm "anim_idle" trên UI, tự động chuyển sang "anim_head_idle"
+    if (currentAnim == "anim_idle") {
+        m_anim.SetAnimation("anim_head_idle");
+        currentAnim = "anim_head_idle";
+    }
+
     // Xử lý logic bắn đạn
-    if (m_anim.GetCurrentAnimName() == "anim_shooting" && m_anim.GetCurrentFrame() == 59 && did_shoot == 0) {
+    if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() >= 65 && did_shoot == 0) {
         // Bắn đạn
         Texture2D tex = res.GetTexture("ProjectilePea"); 
-        // Tọa độ bắn có thể tuỳ chỉnh đôi chút để ra đúng vị trí miệng
         outProjectiles.push_back(Projectile(m_x + 60, m_y + 35, 400.0f, tex));
         did_shoot = 1;
     }
 
-    if (m_anim.GetCurrentFrame() == 60) {
+    if (m_anim.GetCurrentFrame() >= 77) {
         did_shoot = 0;
     }
 }

@@ -93,6 +93,50 @@ void Reanimation::Draw(float x, float y, float scale) const {
 void Reanimation::Draw(float x, float y, float scale, Color tint) const {
     int currentFrame = GetCurrentFrame();
 
+    float stem_offset_x = 0.0f;
+    float stem_offset_y = 0.0f;
+
+    if (m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size() && m_currentAnimIndex != m_baseAnimIndex) {
+        int baseStart = m_anims[m_baseAnimIndex].startFrame;
+        int baseFrame = (int)m_baseFrameFloat;
+        
+        const ReanimTrack* stemTrack = nullptr;
+        for (const auto& tr : m_def.tracks) {
+            if (tr.name == "anim_stem") {
+                stemTrack = &tr;
+                break;
+            }
+        }
+        if (!stemTrack) {
+            for (const auto& tr : m_def.tracks) {
+                if (tr.name == "stalk_top" || tr.name == "stalk_bottom" || tr.name == "body") {
+                    stemTrack = &tr;
+                    break;
+                }
+            }
+        }
+        
+        int currentStart = m_anims[m_currentAnimIndex].startFrame;
+        int currentEnd = m_anims[m_currentAnimIndex].endFrame;
+        bool stemIsConstantInCurrent = true;
+        if (stemTrack && currentStart >= 0 && currentEnd < (int)stemTrack->keyframes.size() && currentStart <= currentEnd) {
+            const auto& firstKf = stemTrack->keyframes[currentStart];
+            for (int fIdx = currentStart + 1; fIdx <= currentEnd; ++fIdx) {
+                const auto& kfTest = stemTrack->keyframes[fIdx];
+                if (kfTest.x != firstKf.x || kfTest.y != firstKf.y) {
+                    stemIsConstantInCurrent = false;
+                    break;
+                }
+            }
+        }
+
+        if (stemIsConstantInCurrent && stemTrack && baseStart >= 0 && baseStart < (int)stemTrack->keyframes.size() &&
+            baseFrame >= 0 && baseFrame < (int)stemTrack->keyframes.size()) {
+            stem_offset_x = stemTrack->keyframes[baseFrame].x - stemTrack->keyframes[baseStart].x;
+            stem_offset_y = stemTrack->keyframes[baseFrame].y - stemTrack->keyframes[baseStart].y;
+        }
+    }
+
     for (const auto& track : m_def.tracks) {
         // Check track visibility
         auto it = m_trackVisibility.find(track.name);
@@ -107,8 +151,29 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
         const ReanimKeyframe* kf_ptr = nullptr;
         std::string resolvedImageName;
 
-        // Try overlay (current animation) frame
-        if (currentFrame >= 0 && currentFrame < (int)track.keyframes.size()) {
+        // Determine if the current overlay animation actually animates this track
+        bool overlayIsConstant = false;
+        if (m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size() && m_currentAnimIndex != m_baseAnimIndex) {
+            int startF = m_anims[m_currentAnimIndex].startFrame;
+            int endF = m_anims[m_currentAnimIndex].endFrame;
+            if (startF >= 0 && endF < (int)track.keyframes.size() && startF <= endF) {
+                overlayIsConstant = true;
+                const auto& firstKf = track.keyframes[startF];
+                for (int fIdx = startF + 1; fIdx <= endF; ++fIdx) {
+                    const auto& kfTest = track.keyframes[fIdx];
+                    if (kfTest.x != firstKf.x || kfTest.y != firstKf.y ||
+                        kfTest.kx != firstKf.kx || kfTest.ky != firstKf.ky ||
+                        kfTest.sx != firstKf.sx || kfTest.sy != firstKf.sy ||
+                        kfTest.f != firstKf.f || kfTest.imageName != firstKf.imageName) {
+                        overlayIsConstant = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Try overlay (current animation) frame if this track is animated by overlay
+        if (!overlayIsConstant && currentFrame >= 0 && currentFrame < (int)track.keyframes.size()) {
             const auto& kf_overlay = track.keyframes[currentFrame];
             if (kf_overlay.f != -1) {
                 kf_ptr = &kf_overlay;
@@ -127,7 +192,7 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
             }
         }
 
-        // Fallback to base animation if overlay frame is hidden
+        // Fallback to base animation if overlay frame is hidden or overlay track is un-animated
         if ((!kf_ptr || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
             int baseFrame = (int)m_baseFrameFloat;
             if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size()) {
@@ -160,7 +225,11 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
             resolvedImageName = imgOverrideIt->second;
         }
 
-        const auto& kf = *kf_ptr;
+        ReanimKeyframe kf = *kf_ptr;
+        if (m_currentAnimIndex != m_baseAnimIndex && !overlayIsConstant && kf_ptr == &track.keyframes[currentFrame]) {
+            kf.x += stem_offset_x;
+            kf.y += stem_offset_y;
+        }
 
         Texture2D tex = m_resources->GetTexture(resolvedImageName);
         if (tex.id == 0) {

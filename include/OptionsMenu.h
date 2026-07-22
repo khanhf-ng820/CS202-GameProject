@@ -10,12 +10,13 @@ struct ResolutionPreset {
 };
 
 static const ResolutionPreset RESOLUTION_PRESETS[] = {
-    { 800, 600, "800 x 600 (Default)" },
+    { 1200, 900, "1200 x 900 (Default)" },
+    { 800, 600, "800 x 600 (Compact)" },
     { 1024, 768, "1024 x 768 (Standard)" },
     { 1280, 960, "1280 x 960 (Large)" },
     { 1600, 1200, "1600 x 1200 (Full HD)" }
 };
-static const int NUM_RESOLUTIONS = 4;
+static const int NUM_RESOLUTIONS = 5;
 
 class OptionsMenu {
 public:
