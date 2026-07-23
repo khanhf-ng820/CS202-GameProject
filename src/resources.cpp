@@ -31,6 +31,14 @@ namespace {
         if (lastDot == std::string::npos) return filename;
         return filename.substr(0, lastDot);
     }
+
+    // Normalize backslashes to forward slashes for consistent map keys
+    std::string NormalizePath(std::string path) {
+        for (char& c : path) {
+            if (c == '\\') c = '/';
+        }
+        return path;
+    }
 }
 
 Resources& Resources::GetInstance() {
@@ -65,14 +73,15 @@ void Resources::LoadAll(const std::string& filePath) {
                 if (img.data != nullptr) {
                     Texture2D tex = LoadTextureFromImage(img);
                     if (tex.id != 0) {
-                        GenTextureMipmaps(&tex);
-                        SetTextureFilter(tex, TEXTURE_FILTER_TRILINEAR);
+                        SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
                         textures[key] = tex;
                         images[key] = img;
                     } else {
                         UnloadImage(img);
                     }
                 }
+            } else if (ext == ".REANIM") {
+                LoadReanim(path);
             }
         }
     }
@@ -146,22 +155,23 @@ bool Resources::IsPixelTransparent(const std::string& name, int x, int y) const 
 }
 
 std::string Resources::GetAssetPath(const std::string& relativePath) {
-    if (FileExists(relativePath.c_str()) || DirectoryExists(relativePath.c_str())) {
-        return relativePath;
+    std::string norm = NormalizePath(relativePath);
+    if (FileExists(norm.c_str()) || DirectoryExists(norm.c_str())) {
+        return norm;
     }
-    std::string path = "../" + relativePath;
+    std::string path = "../" + norm;
     if (FileExists(path.c_str()) || DirectoryExists(path.c_str())) {
-        return path;
+        return NormalizePath(path);
     }
-    path = "../../" + relativePath;
+    path = "../../" + norm;
     if (FileExists(path.c_str()) || DirectoryExists(path.c_str())) {
-        return path;
+        return NormalizePath(path);
     }
-    path = "../../../" + relativePath;
+    path = "../../../" + norm;
     if (FileExists(path.c_str()) || DirectoryExists(path.c_str())) {
-        return path;
+        return NormalizePath(path);
     }
-    return relativePath; // Fallback
+    return norm; // Fallback
 }
 
 std::string Resources::FormatAnimName(const std::string& raw) const {
@@ -176,10 +186,16 @@ std::string Resources::FormatAnimName(const std::string& raw) const {
 }
 
 ReanimDefinition Resources::LoadReanim(const std::string& filePath) {
+    std::string normPath = NormalizePath(filePath);
+    auto it = reanims.find(normPath);
+    if (it != reanims.end()) {
+        return it->second;
+    }
+
     ReanimDefinition def;
-    std::ifstream file(filePath);
+    std::ifstream file(normPath);
     if (!file.is_open()) {
-        std::cerr << "Failed to open reanim file: " << filePath << std::endl;
+        std::cerr << "Failed to open reanim file: " << normPath << std::endl;
         return def;
     }
 
@@ -264,5 +280,6 @@ ReanimDefinition Resources::LoadReanim(const std::string& filePath) {
         }
     }
 
+    reanims[normPath] = def;
     return def;
 }

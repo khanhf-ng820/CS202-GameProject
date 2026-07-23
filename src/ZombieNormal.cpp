@@ -1,10 +1,11 @@
 #include "ZombieNormal.h"
 
 ZombieNormal::ZombieNormal(Resources& res, float x, float y)
-    : Zombie(res, x, y, 200, 25.0f, 100, "ZombieNormal") {
+    : Zombie(res, x, y, 200, 8.0f, 100, "ZombieNormal") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
+    m_anim.SetAnimation("anim_walk");
 
     m_anim.SetTrackVisible("anim_bucket", false);
     m_anim.SetTrackVisible("anim_cone", false);
@@ -46,6 +47,10 @@ void ZombieNormal::takeDamage(int damage) {
 
 void ZombieNormal::update(float deltaTime) {
     m_anim.Update(deltaTime);
+
+    if (m_hp <= 0) {
+        m_deathTimer += deltaTime;
+    }
 
     std::string currentAnim = m_anim.GetCurrentAnimName();
 
@@ -128,7 +133,7 @@ void ZombieNormal::update(float deltaTime) {
     }
 
     if (!isDead()) {
-        if (currentAnim == "anim_walk" || currentAnim == "anim_walk2") {
+        if (currentAnim == "anim_walk" || currentAnim == "anim_walk2" || currentAnim == "anim_slowwalk") {
             m_x -= m_speed * deltaTime;
         }
     }
@@ -149,12 +154,12 @@ void ZombieNormal::update(float deltaTime) {
 }
 
 void ZombieNormal::draw() {
-    m_anim.Draw(m_x, m_y, 1.6f);
+    m_anim.Draw(m_x, m_y, 1.0f);
 
     for (const auto& part : m_fallingParts) {
         if (part.active && part.texture.id != 0) {
             Rectangle source = { 0, 0, (float)part.texture.width, (float)part.texture.height };
-            Rectangle dest = { part.x, part.y, part.texture.width * 1.28f, part.texture.height * 1.28f };
+            Rectangle dest = { part.x, part.y, (float)part.texture.width, (float)part.texture.height };
             Vector2 origin = { dest.width / 2.0f, dest.height / 2.0f };
             DrawTexturePro(part.texture, source, dest, origin, part.rotation, WHITE);
         }

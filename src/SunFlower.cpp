@@ -34,8 +34,8 @@ void SunFlower::draw() {
         unsigned char r = (unsigned char)(255);
         unsigned char g = (unsigned char)(255);
         unsigned char b = (unsigned char)(150 + 105 * (1.0f - glowIntensity));
-        m_anim.Draw(m_x, m_y, 1.6f, Color{r, g, b, 255});
+        m_anim.Draw(m_x, m_y, 1.0f, Color{r, g, b, 255});
     } else {
-        m_anim.Draw(m_x, m_y, 1.6f);
+        m_anim.Draw(m_x, m_y, 1.0f);
     }
 }

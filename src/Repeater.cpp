@@ -21,20 +21,18 @@ void Repeater::update(float deltaTime, std::vector<Projectile>& outProjectiles, 
         currentAnim = "anim_head_idle";
     }
 
-    if (currentAnim == "anim_shooting") {
-        if (m_anim.GetCurrentFrame() == 59 && !did_shoot) {
-            Texture2D tex = res.GetTexture("ProjectilePea"); 
-            outProjectiles.push_back(Projectile(m_x + 60, m_y + 35, 400.0f, tex));
-            outProjectiles.push_back(Projectile(m_x + 15, m_y + 35, 400.0f, tex));
-            did_shoot = true;
-        }
-
-        if (m_anim.GetCurrentFrame() == 60) {
-            did_shoot = false;
-        }
+    if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() == 65 && !did_shoot) {
+        // Bắn đạn
+        Texture2D tex = res.GetTexture("ProjectilePea"); 
+        outProjectiles.push_back(Projectile(m_x + 60, m_y + 15, 400.0f, tex));
+        outProjectiles.push_back(Projectile(m_x + 15, m_y + 15, 400.0f, tex));
+        did_shoot = 1;
     }
+
+    if (m_anim.GetCurrentFrame() == 66)
+        did_shoot = 0;
 }
 
 void Repeater::draw() {
-    m_anim.Draw(m_x, m_y, 1.6f); 
+    m_anim.Draw(m_x, m_y, 1.0f); 
 }

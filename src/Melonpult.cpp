@@ -43,5 +43,5 @@ void Melonpult::update(float deltaTime, std::vector<Projectile>& outProjectiles,
 }
 
 void Melonpult::draw() {
-    m_anim.Draw(m_x, m_y, 1.6f);
+    m_anim.Draw(m_x, m_y, 1.0f);
 }

@@ -24,7 +24,7 @@ void FirePea::update(float deltaTime, std::vector<Projectile>& outProjectiles, s
     // Shoot a fire pea when the shooting animation reaches the launch frame
     if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() >= 65 && did_shoot == false) {
         Texture2D tex = res.GetTexture("FirePea"); 
-        outProjectiles.push_back(Projectile(m_x + 60, m_y + 35, 450.0f, tex)); // Fire pea travels slightly faster
+        outProjectiles.push_back(Projectile(m_x + 60, m_y + 15, 450.0f, tex)); // Fire pea travels slightly faster
         did_shoot = true;
     }
 
@@ -34,5 +34,5 @@ void FirePea::update(float deltaTime, std::vector<Projectile>& outProjectiles, s
 }
 
 void FirePea::draw() {
-    m_anim.Draw(m_x, m_y, 1.6f, Color{255, 140, 60, 255}); // Orange-fiery tint
+    m_anim.Draw(m_x, m_y, 1.0f, Color{255, 140, 60, 255}); // Orange-fiery tint
 }

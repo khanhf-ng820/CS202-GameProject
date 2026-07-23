@@ -44,6 +44,7 @@ public:
     Reanimation& getAnim() { return m_anim; }
 
     virtual bool isDead() const { return m_hp <= 0; }
+    virtual bool isFinished() const { return m_hp <= 0; }
     virtual void takeDamage(int damage) { m_hp -= damage; }
     
     void setEating(bool isEating) { m_isEating = isEating; }

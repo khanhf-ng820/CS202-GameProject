@@ -33,7 +33,7 @@ void Jalapeno::update(float deltaTime, std::vector<Projectile>& outProjectiles, 
 
 void Jalapeno::draw() {
     if (m_state == JalapenoState::EXPLODING_SWELL) {
-        m_anim.Draw(m_x, m_y, 1.6f);
+        m_anim.Draw(m_x, m_y, 1.0f);
     } else if (m_state == JalapenoState::EXPLODING_FIRE) {
         // Draw the fire wave spanning across the screen row (X from 0 to 1280)
         for (int i = 0; i < 12; ++i) {
