@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "resources.h"
 #include "SeedPacket.h"
+#include "BitmapFont.h"
 #include <vector>
 #include <string>
 
@@ -13,6 +14,9 @@ private:
     bool m_isShovelSelected;
     Rectangle m_bankBounds;
     Rectangle m_shovelBounds;
+
+    BitmapFont m_sunFont;
+    BitmapFont m_priceFont;
 
 public:
     SeedBank(int initialSun = 150);

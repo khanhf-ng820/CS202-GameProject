@@ -5,6 +5,16 @@ SeedBank::SeedBank(int initialSun)
     : m_selectedPacketIndex(-1), m_sunCount(initialSun), m_isShovelSelected(false) {
     m_bankBounds = { 10.0f, 5.0f, 446.0f, 87.0f };
     m_shovelBounds = { 715.0f, 5.0f, 70.0f, 72.0f };
+
+    Resources& res = Resources::GetInstance();
+    std::string sunPng = res.GetAssetPath("assets/data/_ContinuumBold14.png");
+    std::string sunTxt = res.GetAssetPath("assets/data/ContinuumBold14.txt");
+    m_sunFont.Load(sunPng, sunTxt);
+
+    std::string pricePng = res.GetAssetPath("assets/data/_Pico129.png");
+    std::string priceTxt = res.GetAssetPath("assets/data/Pico129.txt");
+    m_priceFont.Load(pricePng, priceTxt);
+
     initDefaultDeck();
 }
 
@@ -90,16 +100,13 @@ void SeedBank::draw(Resources& res, Vector2 mousePos) const {
         DrawRectangleLinesEx(m_bankBounds, 2.0f, GOLD);
     }
 
-    // 2. Draw Sun Counter Text inside Sun display area of SeedBank
+    // 2. Draw Sun Counter Text inside Sun display area of SeedBank (scaled 1.5x to 0.9f)
     std::string sunStr = std::to_string(m_sunCount);
-    int sunTextX = (int)m_bankBounds.x + 35 - MeasureText(sunStr.c_str(), 16) / 2;
-    int sunTextY = (int)m_bankBounds.y + 60;
-    DrawText(sunStr.c_str(), sunTextX + 1, sunTextY + 1, 16, BLACK);
-    DrawText(sunStr.c_str(), sunTextX, sunTextY, 16, BLACK);
+    m_sunFont.DrawTextCentered(sunStr.c_str(), { m_bankBounds.x + 4.0f, m_bankBounds.y + 60.0f, 66.0f, 22.0f }, 0.9f, BLACK);
 
     // 3. Draw all Seed Packets inside top bar
     for (size_t i = 0; i < m_packets.size(); ++i) {
-        m_packets[i].draw(res, m_sunCount, m_selectedPacketIndex == (int)i);
+        m_packets[i].draw(res, m_priceFont, m_sunCount, m_selectedPacketIndex == (int)i);
     }
 
     // 4. Draw Shovel Bank & Shovel

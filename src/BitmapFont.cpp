@@ -198,10 +198,41 @@ static std::string ReadDefineBody(std::ifstream& file) {
 // BitmapFont::Load
 // ---------------------------------------------------------------------------
 bool BitmapFont::Load(const std::string& pngPath, const std::string& txtPath) {
-    // Load the atlas texture
-    m_atlas = LoadTexture(pngPath.c_str());
+    // Load the atlas image
+    Image img = LoadImage(pngPath.c_str());
+    if (img.data == nullptr) {
+        std::cerr << "BitmapFont: Failed to load atlas image: " << pngPath << std::endl;
+        return false;
+    }
+
+    // Ensure RGBA 32-bit format
+    ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8);
+    Color* pixels = (Color*)img.data;
+    int pixelCount = img.width * img.height;
+
+    // Check if the image already has transparent pixels
+    bool hasExistingAlpha = false;
+    for (int i = 0; i < pixelCount; ++i) {
+        if (pixels[i].a < 255) {
+            hasExistingAlpha = true;
+            break;
+        }
+    }
+
+    // If image has no alpha transparency channel (like PopCap _*.png fonts),
+    // convert pixel RGB luminance/brightness into the alpha channel.
+    if (!hasExistingAlpha) {
+        for (int i = 0; i < pixelCount; ++i) {
+            unsigned char alpha = std::max({ pixels[i].r, pixels[i].g, pixels[i].b });
+            pixels[i] = Color{ 255, 255, 255, alpha };
+        }
+    }
+
+    m_atlas = LoadTextureFromImage(img);
+    UnloadImage(img);
+
     if (m_atlas.id == 0) {
-        std::cerr << "BitmapFont: Failed to load atlas: " << pngPath << std::endl;
+        std::cerr << "BitmapFont: Failed to create atlas texture: " << pngPath << std::endl;
         return false;
     }
 

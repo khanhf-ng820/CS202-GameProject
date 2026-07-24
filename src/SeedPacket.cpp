@@ -15,7 +15,7 @@ void SeedPacket::update(float dt) {
     }
 }
 
-void SeedPacket::draw(Resources& res, int currentSun, bool isSelected) const {
+void SeedPacket::draw(Resources& res, const BitmapFont& priceFont, int currentSun, bool isSelected) const {
     Texture2D tex = res.GetTexture(m_textureName);
     
     if (tex.id != 0) {
@@ -50,16 +50,13 @@ void SeedPacket::draw(Resources& res, int currentSun, bool isSelected) const {
         DrawRectangleRec(cdRect, ColorAlpha(BLACK, 0.45f));
     }
 
-    // Draw Sun cost text at bottom right of packet
+    // Draw Sun cost text centered horizontally at bottom of packet using Pico129 bitmap font
     std::string costStr = std::to_string(m_sunCost);
-    int fontSize = 12;
-    int textWidth = MeasureText(costStr.c_str(), fontSize);
-    int textX = (int)(m_bounds.x + m_bounds.width - textWidth - 3);
-    int textY = (int)(m_bounds.y + m_bounds.height - fontSize - 2);
+    int textWidth = priceFont.MeasureText(costStr.c_str(), 1.0f);
+    float textX = m_bounds.x + (m_bounds.width - (float)textWidth) / 2.0f;
+    float textY = m_bounds.y + m_bounds.height - 16.0f;
 
-    // Text shadow + text
-    DrawText(costStr.c_str(), textX + 1, textY + 1, fontSize, BLACK);
-    DrawText(costStr.c_str(), textX, textY, fontSize, affordable ? WHITE : RED);
+    priceFont.DrawText(costStr.c_str(), textX, textY, 1.0f, BLACK);
 
     // Draw selection highlight frame if currently selected
     if (isSelected) {
