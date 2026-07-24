@@ -51,6 +51,6 @@ void Cornpult::update(float deltaTime, std::vector<Projectile>& outProjectiles, 
 }
 
 void Cornpult::draw() {
-    // Draw animation with appropriate scale (1.6f matches SnowPea and PeaShooter)
-    m_anim.Draw(m_x, m_y, 1.6f);
+    // Draw animation with appropriate scale (1.0f matches PeaShooter)
+    m_anim.Draw(m_x, m_y, 1.0f);
 }

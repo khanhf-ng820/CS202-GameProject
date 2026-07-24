@@ -37,15 +37,16 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen)
 bool Level1::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
     float startX = 140.0f;
     float startY = 80.0f;
-    float cellW = 75.0f;
-    float cellH = 95.0f;
 
     if (mousePos.x < startX || mousePos.y < startY) return false;
 
-    int col = (int)((mousePos.x - startX) / cellW);
-    int row = (int)((mousePos.y - startY) / cellH);
+    int row = (int)((mousePos.y - startY) / 100.0f);
+    if (row < 0 || row >= 5) return false;
 
-    if (row >= 0 && row < 5 && col >= 0 && col < 9) {
+    float relX = mousePos.x - startX;
+    int col = (relX < 80.0f) ? 0 : 1 + (int)((relX - 80.0f) / 70.0f);
+
+    if (col >= 0 && col < 9) {
         outRow = row;
         outCol = col;
         return true;
@@ -91,31 +92,31 @@ void Level1::createPlant(const std::string& type, int row, int col, int pixelX, 
 
 void Level1::spawnNextWave() {
     m_currentWave++;
-    float spawnX = 820.0f;
+    float spawnX = 700.0f;
 
     auto laneY = [](int row) -> float {
-        return 80.0f + row * 95.0f;
+        return 60.0f + row * 100.0f;
     };
 
     if (m_currentWave == 1) {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
     } else if (m_currentWave == 2) {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 40.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(3)));
     } else if (m_currentWave == 3) {
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 30.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
     } else if (m_currentWave == 4) {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 30.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
     } else if (m_currentWave == 5) {
         // Final wave!
         m_finalWaveAnnounced = true;
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 30.0f, laneY(0)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 40.0f, laneY(1)));
-        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 50.0f, laneY(3)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 60.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
     }
 }
 
@@ -141,7 +142,7 @@ void Level1::updateCollisions(float dt) {
         if (z->isDead()) continue;
 
         bool foundPlantToEat = false;
-        int zRow = (int)((z->getY() - 80.0f + 40.0f) / 95.0f);
+        int zRow = (int)((z->getY() - 80.0f + 40.0f) / 100.0f);
         if (zRow < 0) zRow = 0;
         if (zRow > 4) zRow = 4;
 
@@ -181,8 +182,57 @@ void Level1::update(float dt) {
     bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     bool rightClicked = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
 
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        Vector2 mousePos = GetVirtualMousePosition();
+        int getRow, getCol;
+        if (getGridCell(mousePos, getRow, getCol)) {
+            m_zombies.push_back(std::make_unique<ZombieNormal>(res, 700.0f, 60.0f + getRow * 100.0f));
+        }
+    }
+
     if (rightClicked) {
         m_seedBank.deselect();
+    }
+
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            if (m_grid[r][c] && m_grid[r][c]->isDead()) {
+                m_grid[r][c] = nullptr;
+            } else if (m_grid[r][c]) {
+                bool shoot = false;
+                float plantX = (float)m_grid[r][c]->getX();
+                float plantY = (float)m_grid[r][c]->getY();
+
+                for (auto &zombie : m_zombies) {
+                    if (!zombie->isDead()) {
+                        float zombieX = zombie->getX();
+                        float zombieY = zombie->getY();
+                        bool isSameRow = (std::abs(zombieY - plantY) < 50.0f);
+
+                        if (isSameRow) {
+                            float dist = zombieX - plantX;
+                            if (dist >= 0.0f && dist <= 700.0f) {
+                                shoot = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                std::string targetAnim = shoot ? "anim_shooting" : "anim_head_idle";
+                std::string plantName = m_grid[r][c]->getName();
+                if (plantName == "SunFlower" || plantName == "Wallnut" ||
+                    plantName == "CherryBomb" || plantName == "Chomper") {
+                    targetAnim = "anim_idle";
+                }
+
+                // Chú ý: Chỉ đổi animation khi animation hiện tại chưa phải targetAnim!
+                // (Tránh gọi SetAnimation mỗi frame làm reset frame về 0 liên tục)
+                if (m_grid[r][c]->getAnim().GetCurrentAnimName() != targetAnim) {
+                    m_grid[r][c]->SetAnimation(targetAnim);
+                }
+            }
+        }
     }
 
     m_seedBank.update(dt, mousePos, mouseClicked);
@@ -198,8 +248,14 @@ void Level1::update(float dt) {
         } else {
             std::string selectedType = m_seedBank.getSelectedPlantType();
             if (!selectedType.empty() && m_grid[hoverRow][hoverCol] == nullptr) {
-                int px = (int)(115.0f + hoverCol * 71.0f + 6.0f);
-                int py = (int)(80.0f + hoverRow * 95.0f + 10.0f);
+                float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
+                float cellH = 100.0f;
+                float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
+                float cellY = 80.0f + hoverRow * 100.0f;
+                float centerX = cellX + cellW / 2.0f;
+                float centerY = cellY + cellH / 2.0f;
+                int px = (int)(centerX - 30.0f - 10.0f);
+                int py = (int)(centerY - 35.0f );
                 createPlant(selectedType, hoverRow, hoverCol, px, py);
                 m_seedBank.consumeSelected();
             }
@@ -233,7 +289,7 @@ void Level1::update(float dt) {
 
     // Update zombies
     for (auto& z : m_zombies) {
-        if (!z->isDead()) {
+        if (!z->isFinished()) {
             z->update(dt);
         }
     }
@@ -247,17 +303,20 @@ void Level1::update(float dt) {
     for (auto& s : m_suns) {
         s.update(dt);
         if (mouseClicked && s.isActive() && s.isClicked(mousePos)) {
-            m_seedBank.addSun(25);
+            m_seedBank.addSun(2500);
             s.collect();
         }
     }
 
-    // Clean up inactive projectiles & suns
+    // Clean up inactive projectiles, suns, and finished zombies
     m_projectiles.erase(std::remove_if(m_projectiles.begin(), m_projectiles.end(),
         [](const Projectile& p) { return !p.isActive(); }), m_projectiles.end());
 
     m_suns.erase(std::remove_if(m_suns.begin(), m_suns.end(),
         [](const SunItem& s) { return !s.isActive(); }), m_suns.end());
+
+    m_zombies.erase(std::remove_if(m_zombies.begin(), m_zombies.end(),
+        [](const std::unique_ptr<Zombie>& z) { return z->isFinished(); }), m_zombies.end());
 
     // Update collisions
     updateCollisions(dt);
@@ -305,9 +364,11 @@ void Level1::draw() {
     Vector2 mousePos = GetVirtualMousePosition();
     int hoverRow, hoverCol;
     if (getGridCell(mousePos, hoverRow, hoverCol)) {
-        float cellX = 140.0f + hoverCol * 75.0f;
-        float cellY = 80.0f + hoverRow * 95.0f;
-        DrawRectangleLinesEx({ cellX, cellY, 69.0f, 90.0f }, 2.0f, ColorAlpha(GREEN, 0.6f));
+        float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
+        float cellY = 80.0f + hoverRow * 100.0f;
+        float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
+        float cellH = 100.0f;
+        DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
     }
 
     // 3. Draw Plants
@@ -321,7 +382,7 @@ void Level1::draw() {
 
     // 4. Draw Zombies
     for (const auto& z : m_zombies) {
-        if (!z->isDead()) {
+        if (!z->isFinished()) {
             z->draw();
         }
     }

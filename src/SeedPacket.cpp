@@ -18,9 +18,6 @@ void SeedPacket::update(float dt) {
 void SeedPacket::draw(Resources& res, int currentSun, bool isSelected) const {
     Texture2D tex = res.GetTexture(m_textureName);
     
-    // Draw base card slot rectangle background
-    DrawRectangleRec(m_bounds, ColorAlpha(DARKGRAY, 0.5f));
-
     if (tex.id != 0) {
         DrawTexturePro(
             tex,
@@ -40,9 +37,9 @@ void SeedPacket::draw(Resources& res, int currentSun, bool isSelected) const {
     bool affordable = (currentSun >= m_sunCost);
     bool offCooldown = (m_cooldownTimer <= 0.0f);
 
-    if (!affordable || !offCooldown) {
-        // Dark overlay for unavailable state
-        DrawRectangleRec(m_bounds, ColorAlpha(BLACK, 0.55f));
+    if (!affordable) {
+        // Dark overlay for unaffordable state (35% opacity shade)
+        DrawRectangleRec(m_bounds, ColorAlpha(BLACK, 0.35f));
     }
 
     // Cooldown timer sweep overlay
@@ -68,7 +65,7 @@ void SeedPacket::draw(Resources& res, int currentSun, bool isSelected) const {
     if (isSelected) {
         DrawRectangleLinesEx(m_bounds, 2.5f, GOLD);
     } else {
-        DrawRectangleLinesEx(m_bounds, 1.0f, ColorAlpha(WHITE, 0.4f));
+        DrawRectangleLinesEx(m_bounds, 1.0f, ColorAlpha(WHITE, 0.3f));
     }
 }
 

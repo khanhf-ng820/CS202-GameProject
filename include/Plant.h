@@ -37,7 +37,10 @@ public:
     int getHp() const { return m_hp; }
     int getSunCost() const { return m_sunCost; }
     virtual bool isDead() const { return m_hp <= 0; }
+    std::string getName() const { return m_name; }
     Reanimation& getAnim() { return m_anim; }
+    void SetAnimation(const std::string& name) { m_anim.SetAnimation(name); }
+    void SetBaseAnimation(const std::string& name) { m_anim.SetBaseAnimation(name); }
     
     // Hàm để Zombie gọi khi đang cắn cây này
     void takeDamage(int damage) { m_hp -= damage; }

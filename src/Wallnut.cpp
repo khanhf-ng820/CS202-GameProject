@@ -31,5 +31,5 @@ void Wallnut::update(float deltaTime, std::vector<Projectile>& outProjectiles, s
 
 void Wallnut::draw() {
     // Vẽ animation tại vị trí của cây
-    m_anim.Draw(m_x, m_y, 1.6f); 
+    m_anim.Draw(m_x, m_y, 1.0f); 
 }

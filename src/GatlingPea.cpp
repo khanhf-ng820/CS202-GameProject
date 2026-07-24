@@ -25,10 +25,10 @@ void GatlingPea::update(float deltaTime, std::vector<Projectile>& outProjectiles
     if (currentAnim == "anim_shooting") {
         if (m_anim.GetCurrentFrame() == 59 && did_shoot == false) {
             Texture2D tex = res.GetTexture("ProjectilePea"); 
-            outProjectiles.push_back(Projectile(m_x + 60, m_y + 35, 400.0f, tex));
-            outProjectiles.push_back(Projectile(m_x + 15, m_y + 35, 400.0f, tex));
-            outProjectiles.push_back(Projectile(m_x - 30, m_y + 35, 400.0f, tex));
-            outProjectiles.push_back(Projectile(m_x - 75, m_y + 35, 400.0f, tex));
+            outProjectiles.push_back(Projectile(m_x + 60, m_y + 15, 400.0f, tex));
+            outProjectiles.push_back(Projectile(m_x + 15, m_y + 15, 400.0f, tex));
+            outProjectiles.push_back(Projectile(m_x - 30, m_y + 15, 400.0f, tex));
+            outProjectiles.push_back(Projectile(m_x - 75, m_y + 15, 400.0f, tex));
             did_shoot = true;
         }
 
@@ -39,5 +39,5 @@ void GatlingPea::update(float deltaTime, std::vector<Projectile>& outProjectiles
 }
 
 void GatlingPea::draw() {
-    m_anim.Draw(m_x, m_y, 1.6f); 
+    m_anim.Draw(m_x, m_y, 1.0f); 
 }

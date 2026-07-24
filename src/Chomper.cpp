@@ -16,5 +16,5 @@ void Chomper::update(float deltaTime, std::vector<Projectile>& outProjectiles, s
 }
 
 void Chomper::draw() {
-    m_anim.Draw(m_x, m_y, 1.4f); 
+    m_anim.Draw(m_x, m_y, 1.0f); 
 }

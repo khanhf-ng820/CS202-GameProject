@@ -1,10 +1,11 @@
 #include "BucketheadZombie.h"
 
 BucketheadZombie::BucketheadZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 1370, 25.0f, 100, "BucketheadZombie") {
+    : Zombie(res, x, y, 1370, 8.0f, 100, "BucketheadZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
+    m_anim.SetAnimation("anim_walk");
 
     m_anim.SetTrackVisible("anim_bucket", true);
     m_anim.SetTrackVisible("anim_cone", false);
@@ -60,6 +61,10 @@ void BucketheadZombie::takeDamage(int damage) {
 
 void BucketheadZombie::update(float deltaTime) {
     m_anim.Update(deltaTime);
+
+    if (m_hp <= 0) {
+        m_deathTimer += deltaTime;
+    }
 
     std::string currentAnim = m_anim.GetCurrentAnimName();
 
@@ -161,7 +166,7 @@ void BucketheadZombie::update(float deltaTime) {
     }
 
     if (!isDead()) {
-        if (currentAnim == "anim_walk" || currentAnim == "anim_walk2") {
+        if (currentAnim == "anim_walk" || currentAnim == "anim_walk2" || currentAnim == "anim_slowwalk") {
             m_x -= m_speed * deltaTime;
         }
     }
@@ -181,12 +186,12 @@ void BucketheadZombie::update(float deltaTime) {
 }
 
 void BucketheadZombie::draw() {
-    m_anim.Draw(m_x, m_y, 1.6f);
+    m_anim.Draw(m_x, m_y, 1.0f);
 
     for (const auto& part : m_fallingParts) {
         if (part.active && part.texture.id != 0) {
             Rectangle source = { 0, 0, (float)part.texture.width, (float)part.texture.height };
-            Rectangle dest = { part.x, part.y, part.texture.width * 1.28f, part.texture.height * 1.28f };
+            Rectangle dest = { part.x, part.y, (float)part.texture.width, (float)part.texture.height };
             Vector2 origin = { dest.width / 2.0f, dest.height / 2.0f };
             DrawTexturePro(part.texture, source, dest, origin, part.rotation, WHITE);
         }

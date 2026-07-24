@@ -26,19 +26,18 @@ void PeaShooter::update(float deltaTime, std::vector<Projectile>& outProjectiles
     }
 
     // Xử lý logic bắn đạn
-    if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() >= 65 && did_shoot == 0) {
+    if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() == 65 && !did_shoot) {
         // Bắn đạn
         Texture2D tex = res.GetTexture("ProjectilePea"); 
-        outProjectiles.push_back(Projectile(m_x + 60, m_y + 35, 400.0f, tex));
+        outProjectiles.push_back(Projectile(m_x + 60, m_y + 15, 400.0f, tex));
         did_shoot = 1;
     }
 
-    if (m_anim.GetCurrentFrame() >= 77) {
+    if (m_anim.GetCurrentFrame() == 66)
         did_shoot = 0;
-    }
 }
 
 void PeaShooter::draw() {
     // Vẽ animation tại vị trí của cây
-    m_anim.Draw(m_x, m_y, 1.6f); 
+    m_anim.Draw(m_x, m_y, 1.0f); 
 }

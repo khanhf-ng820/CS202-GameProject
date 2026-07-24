@@ -24,24 +24,18 @@ void SnowPea::update(float deltaTime, std::vector<Projectile>& outProjectiles, s
         currentAnim = "anim_head_idle";
     }
 
-    // Xử lý logic bắn đạn
-    m_fireTimer += deltaTime;
-    if (m_fireTimer >= m_fireRate) {
-        if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() >= 65 && did_shoot == 0) {
-            // Bắn đạn băng (ProjectileSnowPea)
-            Texture2D tex = res.GetTexture("ProjectileSnowPea"); 
-            outProjectiles.push_back(Projectile(m_x + 60, m_y + 35, 400.0f, tex, true));
-            did_shoot = 1;
-        }
-
-        if (m_anim.GetCurrentFrame() >= 77) {
-            did_shoot = 0;
-            m_fireTimer = 0.0f; // Reset bộ đếm khi hoàn tất bắn đạn
-        }
+    if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() == 65 && !did_shoot) {
+        // Bắn đạn
+        Texture2D tex = res.GetTexture("ProjectileSnowPea"); 
+        outProjectiles.push_back(Projectile(m_x + 60, m_y + 15, 400.0f, tex, true));
+        did_shoot = 1;
     }
+
+    if (m_anim.GetCurrentFrame() == 66)
+        did_shoot = 0;
 }
 
 void SnowPea::draw() {
-    // Scale 1.6f cho phù hợp màn hình
-    m_anim.Draw(m_x, m_y, 1.6f);
+    // Scale 1.0f cho phù hợp màn hình
+    m_anim.Draw(m_x, m_y, 1.0f);
 }

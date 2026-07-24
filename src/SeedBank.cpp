@@ -12,11 +12,11 @@ void SeedBank::initDefaultDeck() {
     m_packets.clear();
     
     // Position of cards inside top SeedBank bar
-    float startX = 88.0f;
-    float startY = 10.0f;
-    float cardW = 46.0f;
-    float cardH = 68.0f;
-    float spacing = 50.0f;
+    float startX = 82.0f;
+    float startY = 8.0f;
+    float cardW = 60.0f;
+    float cardH = 75.0f;
+    float spacing = 62.0f;
 
     struct DeckItem {
         std::string type;
@@ -26,11 +26,11 @@ void SeedBank::initDefaultDeck() {
     };
 
     std::vector<DeckItem> deck = {
-        { "SunFlower", 50, 7.5f, "SUNFLOWER" },
-        { "PeaShooter", 100, 7.5f, "PEASHOOTER" },
+        { "SunFlower", 50, 10.0f, "SUNFLOWER" },
+        { "PeaShooter", 100, 10.0f, "PEASHOOTER" },
         { "Wallnut", 50, 30.0f, "WALLNUT" },
-        { "SnowPea", 175, 7.5f, "SNOWPEA" },
-        { "Repeater", 200, 7.5f, "REPEATER" },
+        { "SnowPea", 175, 10.0f, "SNOWPEA" },
+        { "Repeater", 200, 10.0f, "REPEATER" },
         { "CherryBomb", 150, 35.0f, "CHERRYBOMB" },
         { "Jalapeno", 125, 35.0f, "JALAPENO" }
     };
@@ -145,7 +145,7 @@ void SeedBank::draw(Resources& res, Vector2 mousePos) const {
                 cursorRec,
                 { 0.0f, 0.0f },
                 0.0f,
-                ColorAlpha(WHITE, 0.8f)
+                WHITE
             );
         }
     } else if (m_isShovelSelected && shovelTex.id != 0) {

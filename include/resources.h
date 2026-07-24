@@ -22,6 +22,7 @@ public:
 private:
     std::unordered_map<std::string, Texture2D> textures;
     std::unordered_map<std::string, Image> images;
+    std::unordered_map<std::string, ReanimDefinition> reanims;
     Texture2D background;
 
     Resources() = default;

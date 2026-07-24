@@ -73,6 +73,6 @@ void CherryBomb::draw() {
                 tint);
         }
     } else {
-        m_anim.Draw(m_x, m_y, 1.6f); 
+        m_anim.Draw(m_x, m_y, 1.0f); 
     }
 }
