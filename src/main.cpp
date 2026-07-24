@@ -2,6 +2,7 @@
 #include "resources.h"
 #include "MainMenu.h"
 #include "OptionsMenu.h"
+#include "ShopMenu.h"
 #include "UIHelpers.h"
 #include "testing.h"
 #include "Level1.h"
@@ -12,9 +13,9 @@ int main() {
     // Enable config flags for high quality drawing
     SetConfigFlags(FLAG_MSAA_4X_HINT);
     
-    // Start window at 1200x900 default
-    int windowWidth = 1200;
-    int windowHeight = 900;
+    // Start window at 800x600 default (Compact)
+    int windowWidth = 800;
+    int windowHeight = 600;
     InitWindow(windowWidth, windowHeight, "Plants vs. Zombies - Level 1 (C++ & Raylib)");
     SetTargetFPS(60);
     SetTraceLogLevel(LOG_WARNING);
@@ -35,7 +36,9 @@ int main() {
 
     MainMenu menu(res);
     OptionsMenu optionsMenu(res);
+    ShopMenu shopMenu(res);
     bool showOptions = false;
+    bool showShop = false;
     bool exitGame = false;
 
     while (!WindowShouldClose() && !exitGame) {
@@ -49,6 +52,8 @@ int main() {
         
         if (showOptions) {
             optionsMenu.update(dt, showOptions, windowWidth, windowHeight);
+        } else if (showShop) {
+            shopMenu.update(dt, showShop);
         } else {
             menu.update(dt);
             if (menu.getAction() == MenuAction::StartAdventure || menu.getAction() == MenuAction::Level1) {
@@ -58,22 +63,28 @@ int main() {
             } else if (menu.getAction() == MenuAction::Options) {
                 showOptions = true;
                 menu.resetAction();
+            } else if (menu.getAction() == MenuAction::Shop) {
+                showShop = true;
+                menu.resetAction();
             } else if (menu.getAction() == MenuAction::Quit) {
                 exitGame = true;
             }
         }
 
         // Update UI interaction availability based on options menu visibility
-        SetUIInteractionEnabled(!showOptions);
+        SetUIInteractionEnabled(!showOptions && !showShop);
 
         // --- Draw to Virtual Canvas ---
         BeginTextureMode(targetScreen);
         ClearBackground(RAYWHITE);
 
-        menu.draw();
-        
-        if (showOptions) {
-            optionsMenu.draw();
+        if (showShop) {
+            shopMenu.draw();
+        } else {
+            menu.draw();
+            if (showOptions) {
+                optionsMenu.draw();
+            }
         }
 
         EndTextureMode();

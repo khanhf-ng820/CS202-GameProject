@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include "resources.h"
+#include "BitmapFont.h"
 #include <string>
 
 class SeedPacket {
@@ -16,7 +17,7 @@ public:
     SeedPacket(const std::string& plantType, int sunCost, float cooldownMax, const std::string& textureName, Rectangle bounds);
 
     void update(float dt);
-    void draw(Resources& res, int currentSun, bool isSelected) const;
+    void draw(Resources& res, const BitmapFont& priceFont, int currentSun, bool isSelected) const;
 
     bool isClicked(Vector2 mousePos) const;
     bool isReady(int currentSun) const;

@@ -10,8 +10,8 @@ struct ResolutionPreset {
 };
 
 static const ResolutionPreset RESOLUTION_PRESETS[] = {
-    { 1200, 900, "1200 x 900 (Default)" },
     { 800, 600, "800 x 600 (Compact)" },
+    { 1200, 900, "1200 x 900 (Normal)" },
     { 1024, 768, "1024 x 768 (Standard)" },
     { 1280, 960, "1280 x 960 (Large)" },
     { 1600, 1200, "1600 x 1200 (Full HD)" }

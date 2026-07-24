@@ -54,6 +54,8 @@ MainMenu::MainMenu(Resources& res)
     m_helpBtnHl    = res.GetTexture("SELECTORSCREEN_HELP2");
     m_quitBtn      = res.GetTexture("SELECTORSCREEN_QUIT1");
     m_quitBtnHl    = res.GetTexture("SELECTORSCREEN_QUIT2");
+    m_storeBtn     = res.GetTexture("SELECTORSCREEN_STORE");
+    m_storeBtnHl   = res.GetTexture("SELECTORSCREEN_STOREHIGHLIGHT");
 
     // Load the DwarvenTodcraft24 bitmap font
     std::string fontPng = res.GetAssetPath("assets/data/DwarvenTodcraft24.png");
@@ -138,6 +140,16 @@ void MainMenu::update(float dt) {
     if (CheckCollisionPointRec(mousePos, quitRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         m_action = MenuAction::Quit;
     }
+
+    // Shop button (car keys hanging near Zen Garden / bottom-right)
+    float storeW = (m_storeBtn.id != 0) ? (float)m_storeBtn.width : 100.0f;
+    float storeH = (m_storeBtn.id != 0) ? (float)m_storeBtn.height : 100.0f;
+    Rectangle storeRect = { 390.0f, 430.0f, storeW, storeH };
+    if (isGraveButtonHovered(mousePos, storeRect, "SELECTORSCREEN_STORE")) {
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            m_action = MenuAction::Shop;
+        }
+    }
 }
 
 void MainMenu::draw() {
@@ -211,6 +223,16 @@ void MainMenu::draw() {
         DrawTexture(tex, (int)quitRect.x + 5, (int)quitRect.y + 5, WHITE);
     } else {
         DrawButton(quitRect, "Quit", ColorAlpha(DARKGRAY, 0.7f), ColorAlpha(GRAY, 0.8f), WHITE);
+    }
+
+    // Draw Shop button
+    float storeW = (m_storeBtn.id != 0) ? (float)m_storeBtn.width : 100.0f;
+    float storeH = (m_storeBtn.id != 0) ? (float)m_storeBtn.height : 100.0f;
+    Rectangle storeRect = { 390.0f, 430.0f, storeW, storeH };
+    if (m_storeBtn.id != 0) {
+        bool hovered = isGraveButtonHovered(mousePos, storeRect, "SELECTORSCREEN_STORE");
+        Texture2D tex = hovered ? (m_storeBtnHl.id != 0 ? m_storeBtnHl : m_storeBtn) : m_storeBtn;
+        DrawTexture(tex, (int)storeRect.x, (int)storeRect.y, WHITE);
     }
 }
 
