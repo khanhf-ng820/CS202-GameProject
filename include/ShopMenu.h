@@ -27,6 +27,7 @@ private:
 
     Resources& m_res;
     BitmapFont m_font;
+    BitmapFont m_houseOfTerrorFont;
 
     Reanimation m_crazyDave;
     Texture2D m_shopBack;

@@ -18,39 +18,45 @@ ShopMenu::ShopMenu(Resources& res)
     m_crazyDave.SetResources(daveDef, res);
     m_crazyDave.SetAnimation("anim_idle");
 
-    // Load font
+    // Load fonts
     std::string fontPng = res.GetAssetPath("assets/data/DwarvenTodcraft24.png");
     std::string fontTxt = res.GetAssetPath("assets/data/DwarvenTodcraft24.txt");
     m_font.Load(fontPng, fontTxt);
 
-    // Initialize 8 seed packet items for the shop shelves
+    std::string hotPng = res.GetAssetPath("assets/data/HouseofTerror28.png");
+    std::string hotTxt = res.GetAssetPath("assets/data/HouseofTerror28.txt");
+    m_houseOfTerrorFont.Load(hotPng, hotTxt);
+
+    // Initialize 8 seed packet items for the shop shelves according to exact user coordinates
     struct SeedDef {
         const char* name;
         const char* key;
         float x;
         float y;
+        float w;
+        float h;
     };
 
     SeedDef seedDefs[] = {
-        { "Gatling Pea",     "GATLINGPEA",     250.0f, 180.0f },
-        { "Twin Sunflower",  "TWINSUNFLOWER",  320.0f, 180.0f },
-        { "Gloom-Shroom",    "GLOOMSHROOM",    390.0f, 180.0f },
-        { "Cattail",         "CATTAIL",        460.0f, 180.0f },
-        { "Winter Melon",    "WINTERMELON",    250.0f, 260.0f },
-        { "Gold Magnet",     "GOLDMAGNET",     320.0f, 260.0f },
-        { "Spikerock",       "SPIKEROCK",      390.0f, 260.0f },
-        { "Cob Cannon",      "COBCANNON",      460.0f, 260.0f },
+        // Row 1 (Lower Shelf, y = 310)
+        { "Gatling Pea",     "GATLINGPEA",     372.0f, 310.0f, 50.0f, 70.0f },
+        { "Twin Sunflower",  "TWINSUNFLOWER",  446.0f, 310.0f, 50.0f, 70.0f },
+        { "Gloom-Shroom",    "GLOOMSHROOM",    520.0f, 310.0f, 50.0f, 70.0f },
+        { "Cattail",         "CATTAIL",        594.0f, 310.0f, 50.0f, 70.0f },
+        // Row 2 (Upper Shelf, y = 206)
+        { "Winter Melon",    "WINTERMELON",    420.0f, 206.0f, 50.0f, 70.0f },
+        { "Gold Magnet",     "GOLDMAGNET",     494.0f, 206.0f, 50.0f, 70.0f },
+        { "Spikerock",       "SPIKEROCK",      568.0f, 206.0f, 50.0f, 70.0f },
+        { "Cob Cannon",      "COBCANNON",      642.0f, 206.0f, 50.0f, 70.0f },
     };
 
     for (const auto& def : seedDefs) {
         Texture2D tex = res.GetTexture(def.key);
-        float w = (tex.id != 0) ? (float)tex.width : 55.0f;
-        float h = (tex.id != 0) ? (float)tex.height : 75.0f;
         m_shopItems.push_back({
             def.name,
             def.key,
             tex,
-            { def.x, def.y, w, h },
+            { def.x, def.y, def.w, def.h },
             false
         });
     }
@@ -58,8 +64,11 @@ ShopMenu::ShopMenu(Resources& res)
 
 bool ShopMenu::isButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName) {
     if (!CheckCollisionPointRec(mousePos, bounds)) return false;
-    int localX = (int)(mousePos.x - bounds.x);
-    int localY = (int)(mousePos.y - bounds.y);
+    Texture2D tex = m_res.GetTexture(texName);
+    float scaleX = (tex.width > 0 && bounds.width > 0) ? (float)tex.width / bounds.width : 1.0f;
+    float scaleY = (tex.height > 0 && bounds.height > 0) ? (float)tex.height / bounds.height : 1.0f;
+    int localX = (int)((mousePos.x - bounds.x) * scaleX);
+    int localY = (int)((mousePos.y - bounds.y) * scaleY);
     return !m_res.IsPixelTransparent(texName, localX, localY);
 }
 
@@ -73,7 +82,7 @@ void ShopMenu::update(float dt, bool& showShop) {
     float btnW = (m_mainMenuBtn.id != 0) ? (float)m_mainMenuBtn.width : 138.0f;
     float btnH = (m_mainMenuBtn.id != 0) ? (float)m_mainMenuBtn.height : 80.0f;
     
-    Rectangle btnRect = { 662.0f, 514.0f, btnW, btnH };
+    Rectangle btnRect = { 425.0f, 514.0f, btnW, btnH };
 
     if (isButtonHovered(mousePos, btnRect, "STORE_MAINMENUBUTTON")) {
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
@@ -114,13 +123,20 @@ void ShopMenu::draw() {
         DrawTexture(m_shopSign, 250, 0, WHITE);
     }
 
-    // 4. Draw Crazy Dave
-    m_crazyDave.Draw(120.0f, 180.0f, 1.4f);
+    // 4. Draw Crazy Dave (left side of 800x600 window in front of fence)
+    m_crazyDave.Draw(0.0f, 50.0f, 1.0f);
 
     // 5. Draw Shop Seed Packets with pixel-perfect hover highlight
     for (const auto& item : m_shopItems) {
         if (item.texture.id != 0) {
-            DrawTexture(item.texture, (int)item.bounds.x, (int)item.bounds.y, WHITE);
+            DrawTexturePro(
+                item.texture,
+                { 0.0f, 0.0f, (float)item.texture.width, (float)item.texture.height },
+                item.bounds,
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
             if (item.hovered) {
                 // Pixel-perfect hover highlight (yellow border glow)
                 DrawRectangleLinesEx(item.bounds, 2.0f, YELLOW);
@@ -132,10 +148,10 @@ void ShopMenu::draw() {
         }
     }
 
-    // 6. Draw Main Menu license plate button (Pixel-perfect hover detection)
+    // 6. Draw Main Menu license plate button with HouseOfTerror font label (Pixel-perfect hover detection)
     float btnW = (m_mainMenuBtn.id != 0) ? (float)m_mainMenuBtn.width : 138.0f;
     float btnH = (m_mainMenuBtn.id != 0) ? (float)m_mainMenuBtn.height : 80.0f;
-    Rectangle btnRect = { 662.0f, 514.0f, btnW, btnH };
+    Rectangle btnRect = { 425.0f, 514.0f, btnW, btnH };
 
     if (m_mainMenuBtn.id != 0) {
         bool hovered = isButtonHovered(mousePos, btnRect, "STORE_MAINMENUBUTTON");
@@ -149,8 +165,9 @@ void ShopMenu::draw() {
         }
 
         DrawTexture(tex, (int)btnRect.x, (int)btnRect.y, WHITE);
+        m_houseOfTerrorFont.DrawTextCentered("MAIN MENU", { btnRect.x - 8.f, btnRect.y - 4.0f, btnRect.width, btnRect.height }, 0.75f, Color{ 102, 152, 235, 255 });
     } else {
         DrawRectangleRec(btnRect, BROWN);
-        m_font.DrawTextCentered("Main Menu", btnRect, 0.8f, WHITE);
+        m_houseOfTerrorFont.DrawTextCentered("MAIN MENU", { btnRect.x - 8.f, btnRect.y - 4.0f, btnRect.width, btnRect.height }, 0.75f, Color{ 102, 152, 235, 255 });
     }
 }
