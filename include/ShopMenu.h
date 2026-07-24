@@ -37,5 +37,15 @@ private:
     Texture2D m_mainMenuBtnDown;
     Texture2D m_shopSign;
 
-    std::vector<ShopSeedItem> m_shopItems;
+    Texture2D m_prevBtn;
+    Texture2D m_prevBtnDisabled;
+    Texture2D m_prevBtnHl;
+    Texture2D m_nextBtn;
+    Texture2D m_nextBtnDisabled;
+    Texture2D m_nextBtnHl;
+
+    int m_currentPage;
+    int m_totalPages;
+
+    std::vector<std::vector<ShopSeedItem>> m_pages;
 };
