@@ -95,7 +95,7 @@ void Level1::spawnNextWave() {
     float spawnX = 700.0f;
 
     auto laneY = [](int row) -> float {
-        return 60.0f + row * 100.0f;
+        return 65.0f + row * 100.0f;
     };
 
     if (m_currentWave == 1) {

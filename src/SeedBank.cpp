@@ -94,7 +94,6 @@ void SeedBank::draw(Resources& res, Vector2 mousePos) const {
     std::string sunStr = std::to_string(m_sunCount);
     int sunTextX = (int)m_bankBounds.x + 35 - MeasureText(sunStr.c_str(), 16) / 2;
     int sunTextY = (int)m_bankBounds.y + 60;
-    DrawText(sunStr.c_str(), sunTextX + 1, sunTextY + 1, 16, BLACK);
     DrawText(sunStr.c_str(), sunTextX, sunTextY, 16, BLACK);
 
     // 3. Draw all Seed Packets inside top bar

@@ -6,6 +6,14 @@ PeaShooter::PeaShooter(Resources& res, int x, int y)
     getResources(res.GetAssetPath("assets/reanim/PeaShooter.reanim"));
     m_anim.SetBaseAnimation("anim_idle");
     m_anim.SetAnimation("anim_head_idle");
+
+    // Ẩn phần lá phía sau đầu
+    m_anim.SetTrackVisible("idle_headleaf_farthest", false);
+    //m_anim.SetTrackVisible("idle_headleaf_2ndfarthest", false);
+    m_anim.SetTrackVisible("idle_headleaf_3rdfarthest", false);
+    m_anim.SetTrackVisible("idle_headleaf_nearest", false);
+    //m_anim.SetTrackVisible("idle_headleaf_tip_bottom", false);
+    m_anim.SetTrackVisible("idle_headleaf_tip_top", false);
     m_fireRate = 2.08f;
     m_fireTimer = 0.0f;
 }
