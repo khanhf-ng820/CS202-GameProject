@@ -59,10 +59,35 @@ void Resources::LoadAll(const std::string& filePath) {
             std::string ext = ToUpper(path.substr(lastDot));
             if (ext == ".PNG" || ext == ".JPG" || ext == ".JPEG") {
                 std::string stem = GetFileStem(path);
+                // Skip standalone mask files ending with '_' (e.g. Store_Car_.png)
+                if (!stem.empty() && stem.back() == '_') {
+                    continue;
+                }
+
                 std::string key = ToUpper(stem);
 
                 Image img = LoadImage(path.c_str());
                 if (img.data != nullptr) {
+                    // Check for matching mask file (e.g., Store_Car_.png or Store_Car_.jpg)
+                    std::string basePathWithoutExt = path.substr(0, lastDot);
+                    std::string maskPng = basePathWithoutExt + "_.png";
+                    std::string maskJpg = basePathWithoutExt + "_.jpg";
+                    std::string maskPath = "";
+
+                    if (FileExists(maskPng.c_str())) {
+                        maskPath = maskPng;
+                    } else if (FileExists(maskJpg.c_str())) {
+                        maskPath = maskJpg;
+                    }
+
+                    if (!maskPath.empty()) {
+                        Image alphaMask = LoadImage(maskPath.c_str());
+                        if (alphaMask.data != nullptr) {
+                            ImageAlphaMask(&img, alphaMask);
+                            UnloadImage(alphaMask);
+                        }
+                    }
+
                     Texture2D tex = LoadTextureFromImage(img);
                     if (tex.id != 0) {
                         GenTextureMipmaps(&tex);
