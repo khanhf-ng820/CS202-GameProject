@@ -57,9 +57,17 @@ file(GLOB_RECURSE SRC_FILES src/*.cpp)
 
 # Define the primary game executable target
 add_executable(${PROJECT_NAME} ${SRC_FILES}
-    src/testing.cpp
     include/particle.h)
-target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/core
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/ui
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/level
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/entities/plants
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/entities/zombies
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/entities/items
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/utils
+)
 
 # raygui is a header-only library; wrap its include directory as an interface target
 add_library(raygui_interface INTERFACE)
