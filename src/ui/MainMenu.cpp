@@ -1,5 +1,6 @@
 #include "MainMenu.h"
 #include "UIHelpers.h"
+#include "AudioManager.h"
 #include <iostream>
 
 // --------------------------------------------------------------------------
@@ -68,6 +69,8 @@ MainMenu::~MainMenu() {
 }
 
 void MainMenu::update(float dt) {
+    AudioManager::GetInstance().PlayMusic(MusicTrack::MainMenu);
+
     // Reset action each frame
     m_action = MenuAction::None;
 

@@ -2,7 +2,7 @@
 trigger: always_on
 description: Core project rules, build quirks, and architecture for the PvZ codebase
 ---
-# Agent Instructions — Plants vs. Zombies (CS202)
+# Agent Instructions — Plants vs. Zombies (CS202 OOP Course)
 
 This codebase uses C++20 and Raylib. Keep your edits concise, and follow these project-specific quirks to avoid critical bugs and build failures.
 
@@ -75,4 +75,4 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 
 *   **Game State & Architecture:** Game state is managed via `MainMenu`, `OptionsMenu`, and `Level1` (which handles the 5x9 grid, waves, economy via `SunItem`, and collisions). **Build on top of `Level1` and `SeedBank`** rather than reinventing these systems.
 *   **"Multiple Players" interpretation:** This is a planned feature for a **pre-level Seed Deck Loadout Screen**, where the player builds their active `currentDeck` from `unlockedPlants` before a level. (Currently, `SeedBank` provides a default static deck). Mention this interpretation explicitly in the design document.
-*   **Design Patterns Tracker:** The rubric grades "Effective use of 5 design patterns" (25/100 points). Before adding subsystems, review `.agents/skills/design-patterns-tracker/SKILL.md` to map them onto needed patterns. Keep the status table updated in your commits.
+*   **OOP Design Patterns Tracker:** The rubric grades "Effective use of 5 design patterns" (25/100 points). Before adding subsystems, review `.agents/skills/design-patterns-tracker/SKILL.md` to map them onto needed patterns. Keep the status table updated in your commits.
