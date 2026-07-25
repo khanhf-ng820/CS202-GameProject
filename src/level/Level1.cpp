@@ -1,5 +1,6 @@
 #include "Level1.h"
 #include "UIHelpers.h"
+#include "AudioManager.h"
 #include "PeaShooter.h"
 #include "SunFlower.h"
 #include "Wallnut.h"
@@ -433,12 +434,14 @@ void Level1::draw() {
 
 void Level1::run() {
     SetUIInteractionEnabled(true);
+    AudioManager::GetInstance().PlayMusic(MusicTrack::None);
     while (!WindowShouldClose()) {
         float scaleX = 800.0f / (float)GetScreenWidth();
         float scaleY = 600.0f / (float)GetScreenHeight();
         SetVirtualMouseScale(scaleX, scaleY);
 
         float dt = GetFrameTime();
+        AudioManager::GetInstance().Update();
         update(dt);
         draw();
 

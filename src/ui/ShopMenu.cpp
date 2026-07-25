@@ -1,5 +1,6 @@
 #include "ShopMenu.h"
 #include "UIHelpers.h"
+#include "AudioManager.h"
 #include <iostream>
 
 ShopMenu::ShopMenu(Resources& res)
@@ -131,6 +132,8 @@ bool ShopMenu::isButtonHovered(Vector2 mousePos, Rectangle bounds, const std::st
 }
 
 void ShopMenu::update(float dt, bool& showShop) {
+    AudioManager::GetInstance().PlayMusic(MusicTrack::ShopMenu);
+
     Vector2 mousePos = GetVirtualMousePosition();
 
     // Update Crazy Dave animation

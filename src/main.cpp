@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "resources.h"
+#include "AudioManager.h"
 #include "MainMenu.h"
 #include "OptionsMenu.h"
 #include "ShopMenu.h"
@@ -17,6 +18,7 @@ int main() {
     int windowWidth = 800;
     int windowHeight = 600;
     InitWindow(windowWidth, windowHeight, "Plants vs. Zombies - Level 1 (C++ & Raylib)");
+    AudioManager::GetInstance().Init();
     SetTargetFPS(60);
     SetTraceLogLevel(LOG_WARNING);
 
@@ -46,6 +48,8 @@ int main() {
         float scaleX = 800.0f / (float)GetScreenWidth();
         float scaleY = 600.0f / (float)GetScreenHeight();
         SetVirtualMouseScale(scaleX, scaleY);
+
+        AudioManager::GetInstance().Update();
 
         // --- Update ---
         float dt = GetFrameTime();
@@ -111,6 +115,7 @@ int main() {
     // Unload all resources
     res.UnloadAll();
 
+    AudioManager::GetInstance().Close();
     CloseWindow();
     return 0;
 }
