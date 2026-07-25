@@ -53,11 +53,11 @@ FetchContent_MakeAvailable(raylib raygui json)
 # Target Configuration
 # ---------------------------------------------------------
 # Locate all source files inside the src directory
-file(GLOB_RECURSE SRC_FILES src/*.cpp)
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.cpp)
 
 # Define the primary game executable target
 add_executable(${PROJECT_NAME} ${SRC_FILES}
-    include/particle.h)
+    include/entities/items/particle.h)
 target_include_directories(${PROJECT_NAME} PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include/core
