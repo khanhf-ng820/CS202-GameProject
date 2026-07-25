@@ -120,6 +120,55 @@ void Level1::spawnNextWave() {
     }
 }
 
+void Level1::createSplat(float x, float y, bool isSnow) {
+    ParticleEffect eff;
+    if (isSnow) {
+        eff.texture = res.GetTexture("SNOWPEA_SPLATS");
+        if (eff.texture.id == 0) eff.texture = res.GetTexture("SnowPea_splats");
+        eff.totalFrames = 4;
+    } else {
+        eff.texture = res.GetTexture("PEA_SPLATS");
+        if (eff.texture.id == 0) eff.texture = res.GetTexture("pea_splats");
+        eff.totalFrames = 4;
+    }
+    if (eff.texture.id == 0) return;
+
+    eff.x = x;
+    eff.y = y;
+    eff.currentFrame = 0;
+    eff.frameDuration = 0.05f;
+    eff.timer = 0.0f;
+    eff.scale = 1.2f;
+    eff.active = true;
+    m_effects.push_back(eff);
+}
+
+void Level1::createEatingParticle(float x, float y) {
+    int count = GetRandomValue(2, 4);
+    for (int i = 0; i < count; ++i) {
+        ParticleEffect p;
+        p.x = x + (float)GetRandomValue(0, 20);
+        p.y = y + (float)GetRandomValue(-15, 10);
+        p.vx = (float)GetRandomValue(-55, 55);
+        p.vy = (float)GetRandomValue(-120, -40); // Pop upward
+        p.gravity = 500.0f;                      // Gravity pulls down
+        p.rotation = (float)GetRandomValue(0, 360);
+        p.vr = (float)GetRandomValue(-360, 360);
+        p.scale = (float)GetRandomValue(8, 14) / 10.0f;
+        p.alpha = 1.0f;
+        p.fadeRate = 2.5f; // Fades in ~0.4s
+        p.isPhysicsParticle = true;
+        p.active = true;
+
+        int c = GetRandomValue(0, 2);
+        if (c == 0) p.tint = Color{ 34, 177, 76, 255 };      // Vivid Green
+        else if (c == 1) p.tint = Color{ 140, 210, 40, 255 }; // Light/Lime Green
+        else p.tint = Color{ 20, 120, 40, 255 };              // Dark Leaf Green
+
+        m_effects.push_back(p);
+    }
+}
+
 void Level1::updateCollisions(float dt) {
     // 1. Projectiles vs Zombies
     for (auto& p : m_projectiles) {
@@ -130,6 +179,7 @@ void Level1::updateCollisions(float dt) {
             if (std::abs(p.getY() - (z->getY() + 40.0f)) < 55.0f) {
                 if (p.getX() >= z->getX() + 10.0f && p.getX() <= z->getX() + 80.0f) {
                     z->takeDamage(p.getDamage());
+                    createSplat(p.getX(), p.getY(), p.isSnow());
                     p.deactivate();
                     break;
                 }
@@ -153,18 +203,36 @@ void Level1::updateCollisions(float dt) {
                 if (z->getX() >= plantX - 20.0f && z->getX() <= plantX + 50.0f) {
                     foundPlantToEat = true;
                     z->setEating(true);
-                    p->takeDamage(z->getDamage());
+                    if (z->getAnim().GetCurrentAnimName() != "anim_eat") {
+                        z->getAnim().SetAnimation("anim_eat");
+                    }
+
+                    p->takeDamage((float)z->getDamage() * dt);
+
+                    // Spawn eating food crumbs effect periodically
+                    z->addEatTimer(dt);
+                    if (z->getEatTimer() >= 0.18f) {
+                        z->resetEatTimer();
+                        createEatingParticle(plantX + 25.0f, (float)p->getY() + 45.0f);
+                    }
+
                     if (p->isDead()) {
                         m_grid[zRow][c] = nullptr;
                         z->setEating(false);
+                        z->resetEatTimer();
+                        z->getAnim().SetAnimation("anim_walk");
                     }
                     break;
                 }
             }
         }
 
-        if (!foundPlantToEat && z->isEating()) {
-            z->setEating(false);
+        if (!foundPlantToEat) {
+            if (z->isEating() || z->getAnim().GetCurrentAnimName() == "anim_eat") {
+                z->setEating(false);
+                z->resetEatTimer();
+                z->getAnim().SetAnimation("anim_walk");
+            }
         }
 
         // Check loss condition: Zombie reaches house
@@ -308,7 +376,13 @@ void Level1::update(float dt) {
         }
     }
 
-    // Clean up inactive projectiles, suns, and finished zombies
+    // Update particle / splat / crumb effects
+    for (auto& eff : m_effects) {
+        if (!eff.active) continue;
+        eff.timing(dt);
+    }
+
+    // Clean up inactive projectiles, suns, finished zombies, and particle effects
     m_projectiles.erase(std::remove_if(m_projectiles.begin(), m_projectiles.end(),
         [](const Projectile& p) { return !p.isActive(); }), m_projectiles.end());
 
@@ -317,6 +391,9 @@ void Level1::update(float dt) {
 
     m_zombies.erase(std::remove_if(m_zombies.begin(), m_zombies.end(),
         [](const std::unique_ptr<Zombie>& z) { return z->isFinished(); }), m_zombies.end());
+
+    m_effects.erase(std::remove_if(m_effects.begin(), m_effects.end(),
+        [](const ParticleEffect& e) { return !e.isActive(); }), m_effects.end());
 
     // Update collisions
     updateCollisions(dt);
@@ -392,7 +469,12 @@ void Level1::draw() {
         p.draw();
     }
 
-    // 6. Draw Sun Items
+    // 6. Draw Particle & Splat Effects
+    for (const auto& eff : m_effects) {
+        eff.draw();
+    }
+
+    // 7. Draw Sun Items
     for (const auto& s : m_suns) {
         s.draw();
     }

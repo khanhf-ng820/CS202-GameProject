@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include <cmath>
 #include <iostream>
+#include "particle.h"
 
 class Projectile {
 private:
@@ -16,36 +17,28 @@ private:
     float m_maxHeight;
     float m_scale;
     int m_damage;
+    ParticleEffect efftrailing;
+    Resources* m_res;
 
 public:
-    Projectile(float x, float y, float speed, Texture2D tex, bool isSnow = false, bool isLobbed = false, float scale = 1.0f, int damage = 20) 
-        : m_x(x), m_y(y), m_startX(x), m_startY(y), m_speed(speed), m_tex(tex), m_active(true), m_isSnow(isSnow), m_isLobbed(isLobbed), m_scale(scale), m_damage(damage) {
+    Projectile(float x, float y, float speed, Texture2D tex, bool isSnow = false, bool isLobbed = false, float scale = 1.0f, int damage = 20, Resources* res = nullptr) 
+        : m_x(x), m_y(y), m_startX(x), m_startY(y), m_speed(speed), m_tex(tex), m_active(true), m_isSnow(isSnow), m_isLobbed(isLobbed), m_scale(scale), m_damage(damage), m_res(res ? res : &Resources::GetInstance()) {
         m_range = 500.0f;     // Tầm bắn xa của đạn cầu vồng
         m_maxHeight = 150.0f; // Chiều cao tối đa vòng cung
-    }
-
-    void update(float dt) {
-        m_x += m_speed * dt;
-        if (m_isLobbed) {
-            float progress = (m_x - m_startX) / m_range;
-            if (progress >= 1.0f) {
-                m_active = false; // Chạm đất/bia bắn thì tắt
-            } else {
-                // Tính tọa độ Y theo đường cong Sin (1 nửa chu kỳ từ 0 -> PI)
-                m_y = m_startY - m_maxHeight * sinf(progress * 3.14159265f);
-            }
-        }
-        if (m_x > 1300) {
-            m_active = false;
+        efftrailing.setActive(true);
+        if (isSnow && m_res) {
+            efftrailing.setTexture(m_res->GetTexture("SnowFlakes"));
+            efftrailing.setTotalFrames(3);
+            efftrailing.setLoop(true);
         }
     }
 
-    void draw() const {
-        if (m_active && m_tex.id != 0) {
-            DrawTextureEx(m_tex, {m_x, m_y}, 0.0f, m_scale, WHITE);
-        }
-    }
+    Projectile(Resources& res, float x, float y, float speed, Texture2D tex, bool isSnow = false, bool isLobbed = false, float scale = 1.0f, int damage = 20)
+        : Projectile(x, y, speed, tex, isSnow, isLobbed, scale, damage, &res) {}
 
+    void update(float dt);
+
+    void draw() const;
     bool isActive() const { return m_active; }
     void deactivate() { m_active = false; }
     float getX() const { return m_x; }
@@ -53,4 +46,11 @@ public:
     int getDamage() const { return m_damage; }
     bool isSnow() const { return m_isSnow; }
     bool isLobbed() const { return m_isLobbed; }
+
+    Resources* getResources() const { return m_res; }
+    Resources& getRes() const { return *m_res; }
+
+    ParticleEffect& getTrailingEffect() { return efftrailing; }
+    void setTrailingEffect(const ParticleEffect& eff) { efftrailing = eff; }
 };
+

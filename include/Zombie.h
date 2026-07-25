@@ -25,6 +25,7 @@ protected:
     std::string m_name;    // Tên zombie
     Reanimation m_anim;    // Animation của zombie
     bool m_isEating;       // Trạng thái đang ăn cây
+    float m_eatTimer{ 0.0f }; // Timer đếm ngược/tích lũy để tạo vụn cây khi đang ăn
 
 public:
     Zombie(Resources& res, float x, float y, int hp, float speed, int damage, std::string name);
@@ -49,4 +50,7 @@ public:
     
     void setEating(bool isEating) { m_isEating = isEating; }
     bool isEating() const { return m_isEating; }
+    float getEatTimer() const { return m_eatTimer; }
+    void addEatTimer(float dt) { m_eatTimer += dt; }
+    void resetEatTimer() { m_eatTimer = 0.0f; }
 };

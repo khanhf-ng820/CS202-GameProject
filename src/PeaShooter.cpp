@@ -16,6 +16,7 @@ PeaShooter::PeaShooter(Resources& res, int x, int y)
     m_anim.SetTrackVisible("idle_headleaf_tip_top", false);
     m_fireRate = 2.08f;
     m_fireTimer = 0.0f;
+    m_hp = 560; 
 }
 
 PeaShooter::~PeaShooter() {

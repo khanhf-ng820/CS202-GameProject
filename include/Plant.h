@@ -13,8 +13,8 @@ protected:
     // Đổi thành protected để các class con như PeaShooter có thể truy cập tọa độ m_x, m_y và m_anim
     Resources& res; // Tham chiếu đến ResourceManager để vẽ cây (có thể là sprite hoặc animation)
     int m_x, m_y;          // Tọa độ trên ô lưới (Grid position) hoặc tọa độ pixel
-    int m_hp;              // Máu hiện tại của cây
-    int m_maxHp;           // Máu tối đa (để vẽ thanh máu nếu cần)
+    float m_hp;            // Máu hiện tại của cây
+    float m_maxHp;         // Máu tối đa (để vẽ thanh máu nếu cần)
     int m_sunCost;         // Giá đặt cây (Ví dụ: Sunflower = 50, Peashooter = 100)
     float m_cooldownTime;  // Thời gian hồi chiêu để mua cây tiếp theo
     std::string m_name;    // Tên loại cây (để check logic hoặc debug)
@@ -34,14 +34,14 @@ public:
     // Các hàm phụ trợ (Getters / Setters) để các hệ thống khác tương tác
     int getX() const { return m_x; }
     int getY() const { return m_y; }
-    int getHp() const { return m_hp; }
+    int getHp() const { return (int)m_hp; }
     int getSunCost() const { return m_sunCost; }
-    virtual bool isDead() const { return m_hp <= 0; }
+    virtual bool isDead() const { return m_hp <= 0.0f; }
     std::string getName() const { return m_name; }
     Reanimation& getAnim() { return m_anim; }
     void SetAnimation(const std::string& name) { m_anim.SetAnimation(name); }
     void SetBaseAnimation(const std::string& name) { m_anim.SetBaseAnimation(name); }
     
-    // Hàm để Zombie gọi khi đang cắn cây này
-    void takeDamage(int damage) { m_hp -= damage; }
+    // Hàm để Zombie gọi khi đang cắn cây này (sát thương theo thời gian: damage * dt)
+    void takeDamage(float damage) { m_hp -= damage; }
 };

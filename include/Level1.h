@@ -4,11 +4,13 @@
 #include "SeedBank.h"
 #include "Plant.h"
 #include "Zombie.h"
+#include "particle.h"
 #include "Projectile.h"
 #include "SunItem.h"
 #include <vector>
 #include <memory>
 #include <string>
+
 
 class Level1 {
 public:
@@ -31,6 +33,7 @@ private:
     std::vector<std::unique_ptr<Zombie>> m_zombies;
     std::vector<Projectile> m_projectiles;
     std::vector<SunItem> m_suns;
+    std::vector<ParticleEffect> m_effects;
 
     // Spawning & progression state
     float m_skySunTimer;
@@ -46,5 +49,7 @@ private:
     void spawnSunFromSky();
     void spawnNextWave();
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
+    void createSplat(float x, float y, bool isSnow);
+    void createEatingParticle(float x, float y);
     void updateCollisions(float dt);
 };
