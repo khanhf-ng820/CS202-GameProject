@@ -42,6 +42,11 @@ private:
     Texture2D m_backToGameBtn;
     Texture2D m_backToGameBtnHl;
 
+    // Slider textures and state
+    Texture2D m_sliderSlot;
+    Texture2D m_sliderKnob;
+    bool m_isDraggingSlider = false;
+
     // 3-slice button textures
     Texture2D m_btnLeft;
     Texture2D m_btnMiddle;

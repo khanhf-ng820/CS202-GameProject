@@ -1,6 +1,8 @@
 #include "OptionsMenu.h"
 #include "UIHelpers.h"
+#include "AudioManager.h"
 #include <iostream>
+#include <algorithm>
 
 OptionsMenu::OptionsMenu(Resources& res)
     : m_res(res), m_selectedResolutionIndex(0), m_activeResolutionIndex(0) {
@@ -19,6 +21,10 @@ OptionsMenu::OptionsMenu(Resources& res)
     m_checkboxChecked   = res.GetTexture("OPTIONS_CHECKBOX1");
     m_backToGameBtn     = res.GetTexture("OPTIONS_BACKTOGAMEBUTTON0");
     m_backToGameBtnHl   = res.GetTexture("OPTIONS_BACKTOGAMEBUTTON2");
+
+    // Slider textures
+    m_sliderSlot        = res.GetTexture("OPTIONS_SLIDERSLOT");
+    m_sliderKnob        = res.GetTexture("OPTIONS_SLIDERKNOB2");
 
     // 3-slice buttons for Apply Changes
     m_btnLeft           = res.GetTexture("BUTTON_LEFT");
@@ -47,13 +53,34 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
     float dialogX = (800.0f - 423.0f) / 2.0f;
     float dialogY = (600.0f - 498.0f) / 2.0f;
 
+    // 1. Handle Music Volume Slider dragging
+    float slotX = dialogX + 205.0f;
+    float slotY = dialogY + 122.0f;
+    float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;
+    float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width : 22.0f;
+    Rectangle sliderHitbox = { slotX - 10.0f, slotY - 15.0f, slotW + 20.0f, 40.0f };
+
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, sliderHitbox)) {
+        m_isDraggingSlider = true;
+    }
+    if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        m_isDraggingSlider = false;
+    }
+
+    if (m_isDraggingSlider) {
+        float travelW = slotW - knobW;
+        float clampedX = std::clamp(mousePos.x - slotX - knobW / 2.0f, 0.0f, travelW);
+        float newVol = (travelW > 0.0f) ? (clampedX / travelW) : 1.0f;
+        AudioManager::GetInstance().SetMusicVolume(newVol);
+    }
+
     // Checkbox scale and dimensions
     float cbScale = 0.75f;
     float cbH = 39.0f * cbScale;
 
-    // 1. Handle clicking on resolutions (checkboxes / labels)
+    // 2. Handle clicking on resolutions (checkboxes / labels)
     for (int i = 0; i < NUM_RESOLUTIONS; ++i) {
-        float itemY = dialogY + 175.0f + i * 40.0f;
+        float itemY = dialogY + 160.0f + i * 42.0f;
         // Collision rectangle spans from checkbox to label text
         Rectangle hitRect = { dialogX + 60.0f, itemY, 300.0f, cbH };
         if (CheckCollisionPointRec(mousePos, hitRect)) {
@@ -63,7 +90,7 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
         }
     }
 
-    // 2. Handle "Apply Changes" button
+    // 3. Handle "Apply Changes" button
     float applyW = 170.0f;
     float applyH = 46.0f;
     float applyX = dialogX + 31.5f;
@@ -78,7 +105,7 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
         SetWindowSize(currentWidth, currentHeight);
     }
 
-    // 3. Handle "Back" button
+    // 4. Handle "Back" button
     float backW = 170.0f;
     float backH = 46.0f;
     float backX = dialogX + 31.5f + 170.0f + 20.0f; // 221.5f
@@ -87,7 +114,7 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
 
     bool backHovered = CheckCollisionPointRec(mousePos, backRect);
     if (backHovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-        // Revert unapplied selection
+        // Revert unapplied resolution selection
         m_selectedResolutionIndex = m_activeResolutionIndex;
         showOptions = false;
     }
@@ -109,7 +136,35 @@ void OptionsMenu::draw() {
     }
 
     // Draw OPTIONS title
-    m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 130.0f, 423.0f, 40.0f }, 1.3f, Color{ 220, 180, 80, 255 });
+    m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 55.0f, 423.0f, 35.0f }, 1.3f, Color{ 220, 180, 80, 255 });
+
+    // Draw Music Volume Section
+    Rectangle labelRect = { dialogX + 45.0f, dialogY + 115.0f, 140.0f, 25.0f };
+    m_font.DrawTextCentered("Music Volume", labelRect, 0.70f, Color{ 210, 210, 210, 255 });
+
+    float slotX = dialogX + 205.0f;
+    float slotY = dialogY + 122.0f;
+    float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;
+    float slotH = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.height : 10.0f;
+    float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width : 22.0f;
+    float knobH = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.height : 29.0f;
+
+    if (m_sliderSlot.id != 0) {
+        DrawTexture(m_sliderSlot, (int)slotX, (int)slotY, WHITE);
+    } else {
+        DrawRectangleRec({ slotX, slotY, slotW, slotH }, DARKGRAY);
+    }
+
+    float currentVol = AudioManager::GetInstance().GetMusicVolume();
+    float travelW = slotW - knobW;
+    float knobX = slotX + currentVol * travelW;
+    float knobY = slotY + (slotH - knobH) / 2.0f;
+
+    if (m_sliderKnob.id != 0) {
+        DrawTexture(m_sliderKnob, (int)knobX, (int)knobY, WHITE);
+    } else {
+        DrawRectangleRec({ knobX, knobY, knobW, knobH }, GRAY);
+    }
 
     // Draw resolution checklist
     Vector2 mousePos = GetVirtualMousePosition();
@@ -118,7 +173,7 @@ void OptionsMenu::draw() {
     float cbH = 39.0f * cbScale;
 
     for (int i = 0; i < NUM_RESOLUTIONS; ++i) {
-        float itemY = dialogY + 175.0f + i * 40.0f;
+        float itemY = dialogY + 160.0f + i * 42.0f;
         Rectangle checkboxRect = { dialogX + 60.0f, itemY, cbW, cbH };
         bool isSelected = (m_selectedResolutionIndex == i);
 

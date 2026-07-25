@@ -20,6 +20,7 @@ public:
     void Update();
 
     void SetMusicVolume(float volume);
+    float GetMusicVolume() const { return m_volume; }
     MusicTrack GetCurrentTrack() const { return m_currentTrack; }
 
 private:
