@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include <string>
+#include <unordered_map>
 
 enum class MusicTrack {
     None,
@@ -19,6 +20,8 @@ public:
     void StopMusic();
     void Update();
 
+    void PlaySoundEffect(const std::string& soundPath);
+
     void SetMusicVolume(float volume);
     float GetMusicVolume() const { return m_volume; }
     MusicTrack GetCurrentTrack() const { return m_currentTrack; }
@@ -31,7 +34,9 @@ private:
 
     MusicTrack m_currentTrack = MusicTrack::None;
     Music m_currentMusic = { 0 };
+    std::unordered_map<std::string, Sound> m_sounds;
     bool m_isAudioInit = false;
     bool m_isMusicLoaded = false;
     float m_volume = 1.0f; // in range [0.0f, 1.0f]
 };
+

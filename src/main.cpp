@@ -60,7 +60,11 @@ int main() {
             shopMenu.update(dt, showShop);
         } else {
             menu.update(dt);
-            if (menu.getAction() == MenuAction::StartAdventure || menu.getAction() == MenuAction::Level1) {
+            if (menu.getAction() == MenuAction::StartAdventure) {
+                Testing testingState(res, targetScreen);
+                testingState.run();
+                menu.resetAction();
+            } else if (menu.getAction() == MenuAction::Level1) {
                 Level1 level1State(res, targetScreen);
                 level1State.run();
                 menu.resetAction();

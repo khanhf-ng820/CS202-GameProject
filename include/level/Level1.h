@@ -50,6 +50,7 @@ private:
     void spawnNextWave();
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
     void createSplat(float x, float y, bool isSnow);
+    void createFireSplat(float x, float y);
     void createEatingParticle(float x, float y);
     void updateCollisions(float dt);
 };

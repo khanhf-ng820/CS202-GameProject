@@ -23,8 +23,10 @@ void FirePea::update(float deltaTime, std::vector<Projectile>& outProjectiles, s
 
     // Shoot a fire pea when the shooting animation reaches the launch frame
     if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() >= 65 && did_shoot == false) {
-        Texture2D tex = res.GetTexture("FirePea"); 
-        outProjectiles.push_back(Projectile(m_x + 60, m_y + 15, 450.0f, tex)); // Fire pea travels slightly faster
+        Texture2D tex = res.GetTexture("fire1"); 
+        Projectile p(m_x + 60, m_y + 15, 450.0f, tex);
+        p.setFire(true);
+        outProjectiles.push_back(p);
         did_shoot = true;
     }
 

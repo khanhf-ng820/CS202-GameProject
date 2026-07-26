@@ -1,7 +1,7 @@
 #include "ConeheadZombie.h"
 
 ConeheadZombie::ConeheadZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 560, 8.0f, 100, "ConeheadZombie") {
+    : Zombie(res, x, y, 540, 8.0f, 100, "ConeheadZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
@@ -43,8 +43,9 @@ void ConeheadZombie::takeDamage(int damage) {
             arm.active = true;
             m_fallingParts.push_back(arm);
         }
-    } else if (m_hp <= 280 && !m_hasLostCone) {
+    } else if (m_hp <= 270 && !m_hasLostCone) {
         m_hasLostCone = true;
+        m_anim.SetTrackVisible("anim_cone", false);
         Resources& res = Resources::GetInstance();
         FallingPart cone;
         cone.texture = res.GetTexture("ZOMBIE_CONE1");

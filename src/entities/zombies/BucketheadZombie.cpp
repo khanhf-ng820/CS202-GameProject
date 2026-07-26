@@ -1,7 +1,7 @@
 #include "BucketheadZombie.h"
 
 BucketheadZombie::BucketheadZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 1370, 8.0f, 100, "BucketheadZombie") {
+    : Zombie(res, x, y, 810, 8.0f, 100, "BucketheadZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
@@ -42,8 +42,9 @@ void BucketheadZombie::takeDamage(int damage) {
             arm.active = true;
             m_fallingParts.push_back(arm);
         }
-    } else if (m_hp <= 280 && !m_hasLostBucket) {
+    } else if (m_hp <= 270 && !m_hasLostBucket) {
         m_hasLostBucket = true;
+        m_anim.SetTrackVisible("anim_bucket", false);
         Resources& res = Resources::GetInstance();
         FallingPart bucket;
         bucket.texture = res.GetTexture("ZOMBIE_BUCKET1");

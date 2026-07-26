@@ -13,6 +13,7 @@
 #include "GatlingPea.h"
 #include "Cornpult.h"
 #include "Melonpult.h"
+#include "Torchwood.h"
 #include "ZombieNormal.h"
 #include "FlagZombie.h"
 #include "ConeheadZombie.h"
@@ -22,7 +23,7 @@
 #include <cstdlib>
 
 Level1::Level1(Resources& res, RenderTexture2D targetScreen)
-    : res(res), targetScreen(targetScreen), m_seedBank(150),
+    : res(res), targetScreen(targetScreen), m_seedBank(40000),
       m_skySunTimer(0.0f), m_waveTimer(12.0f), m_currentWave(0),
       m_maxWaves(5), m_levelWon(false), m_levelLost(false),
       m_finalWaveAnnounced(false) 
@@ -88,6 +89,10 @@ void Level1::createPlant(const std::string& type, int row, int col, int pixelX, 
         m_grid[row][col] = std::make_unique<Cornpult>(res, pixelX, pixelY);
     } else if (type == "Melonpult") {
         m_grid[row][col] = std::make_unique<Melonpult>(res, pixelX, pixelY);
+    } else if (type == "Torchwood") {
+        m_grid[row][col] = std::make_unique<Torchwood>(res, pixelX, pixelY);
+    } else if (type == "Chomper") {
+        m_grid[row][col] = std::make_unique<Chomper>(res, pixelX, pixelY);
     }
 }
 
@@ -144,6 +149,38 @@ void Level1::createSplat(float x, float y, bool isSnow) {
     m_effects.push_back(eff);
 }
 
+void Level1::createFireSplat(float x, float y) {
+    Texture2D sparkTex = res.GetTexture("FirePea_spark");
+    if (sparkTex.id == 0) sparkTex = res.GetTexture("FIREPEA_SPARK");
+
+    int sparkCount = GetRandomValue(10, 14);
+    for (int i = 0; i < sparkCount; ++i) {
+        ParticleEffect p;
+        p.x = x + (float)GetRandomValue(-5, 5);
+        p.y = y + (float)GetRandomValue(-5, 5);
+        p.vx = (float)GetRandomValue(-160, 160);
+        p.vy = (float)GetRandomValue(-200, 30);  // Fly outward & pop up
+        p.gravity = 450.0f;                      // Pull sparks back down
+        p.rotation = (float)GetRandomValue(0, 360);
+        p.vr = (float)GetRandomValue(-600, 600);
+        p.scale = (float)GetRandomValue(9, 18) / 10.0f;
+        p.alpha = 1.0f;
+        p.fadeRate = 3.2f;                       // Fades out in ~0.3s
+        p.isPhysicsParticle = true;
+        p.active = true;
+        if (sparkTex.id != 0) {
+            p.texture = sparkTex;
+        }
+
+        int c = GetRandomValue(0, 2);
+        if (c == 0) p.tint = Color{ 255, 230, 80, 255 };      // Vivid Yellow / Gold
+        else if (c == 1) p.tint = Color{ 255, 140, 20, 255 }; // Fiery Orange
+        else p.tint = Color{ 255, 50, 10, 255 };              // Fiery Red
+
+        m_effects.push_back(p);
+    }
+}
+
 void Level1::createEatingParticle(float x, float y) {
     int count = GetRandomValue(2, 4);
     for (int i = 0; i < count; ++i) {
@@ -173,16 +210,44 @@ void Level1::createEatingParticle(float x, float y) {
 void Level1::updateCollisions(float dt) {
     // 1. Projectiles vs Zombies
     for (auto& p : m_projectiles) {
-        if (!p.isActive()) continue;
+        if (!p.isActive() || p.isImpacting()) continue;
         for (auto& z : m_zombies) {
             if (z->isDead()) continue;
-            // Check Y lane match (within 50 pixels) and X collision
-            if (std::abs(p.getY() - (z->getY() + 40.0f)) < 55.0f) {
-                if (p.getX() >= z->getX() + 10.0f && p.getX() <= z->getX() + 80.0f) {
+            // Check Y lane match (within 55 pixels) and X collision
+            float projBaseY = p.isLobbed() ? (p.getStartY() + 60.0f) : p.getY();
+            if (std::abs(projBaseY - (z->getY() + 40.0f)) < 55.0f) {
+                if (p.getX() >= z->getX() + 10.0f && p.getX() <= z->getX() + 20.0f) {
                     z->takeDamage(p.getDamage());
-                    createSplat(p.getX(), p.getY(), p.isSnow());
-                    p.deactivate();
+                    
+                    // Splash damage for Melonpult to nearby zombies
+                    if (p.isMelon()) {
+                        for (auto& otherZ : m_zombies) {
+                            if (otherZ.get() == z.get() || otherZ->isDead()) continue;
+                            float dx = otherZ->getX() - z->getX();
+                            float dy = otherZ->getY() - z->getY();
+                            if (dx * dx + dy * dy <= 120.0f * 120.0f) {
+                                otherZ->takeDamage(26); // Melon splash damage ~26 HP
+                            }
+                        }
+                    }
+
+                    p.onHit();
                     break;
+                }
+            }
+        }
+    }
+
+    // 1.5. Projectiles vs Torchwood
+    for (auto& p : m_projectiles) {
+        if (!p.isActive() || p.isFire() || p.isLobbed()) continue;
+        int pRow = (int)((p.getY() - 80.0f + 40.0f) / 100.0f);
+        if (pRow >= 0 && pRow < 5) {
+            int pCol = (int)((p.getX() - 140.0f + 35.0f) / 70.0f);
+            if (pCol >= 0 && pCol < 9) {
+                Plant* plant = m_grid[pRow][pCol].get();
+                if (plant && plant->getName() == "Torchwood" && !plant->isDead()) {
+                    p.setFire(true);
                 }
             }
         }
@@ -272,6 +337,7 @@ void Level1::update(float dt) {
                 float plantX = (float)m_grid[r][c]->getX();
                 float plantY = (float)m_grid[r][c]->getY();
 
+                float min_distance = 800.0f; // Only consider zombies within 700 pixels in front of the plant
                 for (auto &zombie : m_zombies) {
                     if (!zombie->isDead()) {
                         float zombieX = zombie->getX();
@@ -282,23 +348,33 @@ void Level1::update(float dt) {
                             float dist = zombieX - plantX;
                             if (dist >= 0.0f && dist <= 700.0f) {
                                 shoot = true;
+                                min_distance = std::min(min_distance, dist);
                                 break;
                             }
                         }
                     }
                 }
 
-                std::string targetAnim = shoot ? "anim_shooting" : "anim_head_idle";
                 std::string plantName = m_grid[r][c]->getName();
-                if (plantName == "SunFlower" || plantName == "Wallnut" ||
-                    plantName == "CherryBomb" || plantName == "Chomper") {
-                    targetAnim = "anim_idle";
+                std::string targetAnim;
+                if (shoot) {
+                    targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||
+                                  plantName == "CherryBomb" || plantName == "Chomper") ? "anim_idle" : "anim_shooting";
+                } else {
+                    targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||
+                                  plantName == "CherryBomb" || plantName == "Chomper" ||
+                                  plantName == "Melonpult" || plantName == "Cornpult") ? "anim_idle" : "anim_head_idle";
                 }
 
-                // Chú ý: Chỉ đổi animation khi animation hiện tại chưa phải targetAnim!
-                // (Tránh gọi SetAnimation mỗi frame làm reset frame về 0 liên tục)
+                if (shoot && plantName == "Melonpult") {
+                    m_grid[r][c]->set_distance(min_distance - 65.0f); // Adjust the distance for Melonpult based on the nearest zombie
+                }
+
                 if (m_grid[r][c]->getAnim().GetCurrentAnimName() != targetAnim) {
                     m_grid[r][c]->SetAnimation(targetAnim);
+                    if (plantName == "SunFlower" && targetAnim == "anim_idle") {
+                        m_grid[r][c]->SetBaseAnimation("anim_idle");
+                    }
                 }
             }
         }

@@ -29,6 +29,7 @@ public:
     virtual void update(float deltaTime, std::vector<Projectile>& outProjectiles, std::vector<SunItem>& outSuns) = 0;
     // Hàm vẽ cây lên màn hình (Mỗi cây có hình khác nhau nên cũng để virtual)
     virtual void draw() = 0;
+    virtual void set_distance(float dist) {} // Default implementation does nothing; override in Melonpult
 
     void getResources(std::string dir);
     // Các hàm phụ trợ (Getters / Setters) để các hệ thống khác tương tác

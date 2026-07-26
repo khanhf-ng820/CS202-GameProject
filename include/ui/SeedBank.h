@@ -19,7 +19,7 @@ private:
     BitmapFont m_priceFont;
 
 public:
-    SeedBank(int initialSun = 150);
+    SeedBank(int initialSun = 40000);
 
     void initDefaultDeck();
     void update(float dt, Vector2 mousePos, bool mouseClicked);

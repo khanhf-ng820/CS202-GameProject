@@ -15,6 +15,10 @@ void AudioManager::Init() {
 
 void AudioManager::Close() {
     StopMusic();
+    for (auto& pair : m_sounds) {
+        UnloadSound(pair.second);
+    }
+    m_sounds.clear();
     if (m_isAudioInit) {
         CloseAudioDevice();
         m_isAudioInit = false;
@@ -75,3 +79,20 @@ void AudioManager::SetMusicVolume(float volume) {
         ::SetMusicVolume(m_currentMusic, m_volume);
     }
 }
+
+void AudioManager::PlaySoundEffect(const std::string& soundPath) {
+    if (!m_isAudioInit || soundPath.empty()) return;
+    auto it = m_sounds.find(soundPath);
+    if (it == m_sounds.end()) {
+        if (FileExists(soundPath.c_str())) {
+            Sound sound = LoadSound(soundPath.c_str());
+            if (sound.stream.buffer != nullptr) {
+                m_sounds[soundPath] = sound;
+                ::PlaySound(sound);
+            }
+        }
+    } else {
+        ::PlaySound(it->second);
+    }
+}
+

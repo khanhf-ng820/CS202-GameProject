@@ -3,7 +3,7 @@
 
 SeedBank::SeedBank(int initialSun)
     : m_selectedPacketIndex(-1), m_sunCount(initialSun), m_isShovelSelected(false) {
-    m_bankBounds = { 10.0f, 5.0f, 446.0f, 87.0f };
+    m_bankBounds = { 10.0f, 5.0f, 580.0f, 87.0f };
     m_shovelBounds = { 715.0f, 5.0f, 70.0f, 72.0f };
 
     Resources& res = Resources::GetInstance();
@@ -42,7 +42,12 @@ void SeedBank::initDefaultDeck() {
         { "SnowPea", 175, 10.0f, "SNOWPEA" },
         { "Repeater", 200, 10.0f, "REPEATER" },
         { "CherryBomb", 150, 35.0f, "CHERRYBOMB" },
-        { "Jalapeno", 125, 35.0f, "JALAPENO" }
+        { "Jalapeno", 125, 35.0f, "JALAPENO" },
+        { "Torchwood", 175, 10.0f, "TORCHWOOD" }, 
+        { "Chomper", 150, 30.0f, "CHOMPER" },
+        { "GatlingPea", 250, 10.0f, "GATLINGPEA" },
+        { "Cornpult", 175, 10.0f, "CORNPULT" },
+        { "Melonpult", 300, 10.0f, "MELONPULT" }
     };
 
     for (size_t i = 0; i < deck.size(); ++i) {

@@ -15,8 +15,6 @@ void GatlingPea::update(float deltaTime, std::vector<Projectile>& outProjectiles
 
     std::string currentAnim = m_anim.GetCurrentAnimName();
 
-    // Nếu người dùng bấm "anim_idle" trên UI, tự động chuyển sang "anim_head_idle"
-    // vì anim_idle trong file reanim chỉ chứa phần thân, không có đầu.
     if (currentAnim == "anim_idle") {
         m_anim.SetAnimation("anim_head_idle");
         currentAnim = "anim_head_idle";
