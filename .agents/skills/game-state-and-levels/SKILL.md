@@ -18,12 +18,17 @@ Management" requirement (start/pause/end, score/lives, save/load).
 ```cpp
 enum class GameState {
     MainMenu,
-    SeedSelect,   // see the seed-deck-loadout skill — runs once per level
     Playing,
     Paused,
     LevelWon,
     LevelLost,
     GameOver
+};
+
+// Internal Sub-State Machine inside Level1 (see seed-deck-loadout and temp/preselect-design.md):
+enum class LevelPhase {
+    SeedSelection,  // Preselection UI overlay active
+    ActiveWave      // Gameplay loop, sun falling, wave spawner, grid placement
 };
 ```
 

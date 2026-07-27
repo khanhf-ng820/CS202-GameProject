@@ -126,6 +126,7 @@ void MainMenu::update(float dt) {
     Rectangle optRect = { 565.0f, 475.0f, optW, optH };
     if (CheckCollisionPointRec(mousePos, optRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         m_action = MenuAction::Options;
+        AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/gravebutton.ogg"));
     }
 
     // Help button (middle flower pot)

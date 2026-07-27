@@ -80,6 +80,13 @@ void AudioManager::SetMusicVolume(float volume) {
     }
 }
 
+void AudioManager::SetSoundVolume(float volume) {
+    m_sfxVolume = volume;
+    for (auto& pair : m_sounds) {
+        ::SetSoundVolume(pair.second, m_sfxVolume);
+    }
+}
+
 void AudioManager::PlaySoundEffect(const std::string& soundPath) {
     if (!m_isAudioInit || soundPath.empty()) return;
     auto it = m_sounds.find(soundPath);
@@ -87,11 +94,13 @@ void AudioManager::PlaySoundEffect(const std::string& soundPath) {
         if (FileExists(soundPath.c_str())) {
             Sound sound = LoadSound(soundPath.c_str());
             if (sound.stream.buffer != nullptr) {
+                ::SetSoundVolume(sound, m_sfxVolume);
                 m_sounds[soundPath] = sound;
                 ::PlaySound(sound);
             }
         }
     } else {
+        ::SetSoundVolume(it->second, m_sfxVolume);
         ::PlaySound(it->second);
     }
 }

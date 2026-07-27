@@ -34,40 +34,67 @@ This repository is a C++20 implementation of a Plants vs. Zombies clone built us
 
 ```
 CS202-PlantsVsZombies/
-├── assets/                  # Game assets (sprites, reanim XML definitions, fonts, particles)
-│   ├── reanim/              # PopCap .reanim keyframe animation XMLs (PeaShooter, Zombie, etc.)
+├── assets/                  # Game assets (sprites, reanim XMLs, audio, fonts, particles)
+│   ├── data/                # Custom bitmap font definitions and atlases (.png, .txt)
 │   ├── images/              # Static UI textures, background lawn, seed packets
-│   ├── fonts/               # Custom bitmap font definitions (DwarvenTodcraft24)
-│   └── particles/           # Particle effect textures
-├── include/                 # C++ Header files
-│   ├── BitmapFont.h          # Custom bitmap font renderer for PopCap UI typography
-│   ├── BucketheadZombie.h    # Buckethead Zombie subclass (armor extension)
-│   ├── CherryBomb.h          # Cherry Bomb plant (area-of-effect explosive)
-│   ├── Chomper.h             # Chomper plant (melee bite and chew mechanics)
-│   ├── ConeheadZombie.h      # Conehead Zombie subclass (armor extension)
-│   ├── Cornpult.h            # Cornpult plant (lobbed parabolic trajectory)
-│   ├── FirePea.h             # Fire Pea shooter plant (flaming pea projectile)
-│   ├── FlagZombie.h          # Flag Zombie subclass (wave leader)
-│   ├── GatlingPea.h          # Gatling Pea shooter plant (quad-pea barrage)
-│   ├── Jalapeno.h            # Jalapeno plant (lane-clearing explosive line)
-│   ├── MainMenu.h           # PopCap interactive main menu (SelectorScreen.reanim)
-│   ├── Melonpult.h           # Melonpult plant (heavy lobbed splash projectile)
-│   ├── OptionsMenu.h         # Game settings and options overlay panel
-│   ├── PeaShooter.h          # Base Pea Shooter plant (straight projectile)
-│   ├── Plant.h               # Abstract base class for all Plant entities
-│   ├── Projectile.h         # Projectile class handling flying peas and lobbed melons
-│   ├── Reanimation.h        # PopCap .reanim keyframe animation player and track manager
-│   ├── reanim.h             # Struct definitions for .reanim XML keyframes and tracks
-│   ├── Repeater.h            # Repeater plant (double pea projectile)
-│   ├── resources.h           # Centralized resource and asset management (Singleton)
-│   ├── SnowPea.h             # Snow Pea plant (freezing pea projectile)
-│   ├── SunFlower.h           # Sunflower plant (sun generation timer)
-│   ├── SunItem.h             # Sun item drop (falling and click collection)
-│   ├── UIHelpers.h           # Raylib interactive UI components (buttons, resolution scaling)
-│   ├── Wallnut.h             # Wall-nut plant (defensive high-HP shield)
-│   ├── Zombie.h              # Abstract base class for all Zombie entities
-│   └── ZombieNormal.h        # Standard Zombie subclass
-├── src/                     # C++ Source implementation files
+│   ├── particles/           # Particle effect textures
+│   ├── properties/          # Resource manifest XML (resources.xml)
+│   ├── reanim/              # PopCap .reanim keyframe animation XMLs (PeaShooter, Zombie, etc.)
+│   └── sounds/              # Audio tracks and sound effect files (.ogg)
+├── include/                 # Modular C++ Header files
+│   ├── core/                # Core engine infrastructure
+│   │   ├── AudioManager.h   # Singleton audio manager for music and sound effect dispatch
+│   │   ├── BitmapFont.h     # Custom bitmap font renderer for PopCap UI typography
+│   │   ├── Reanimation.h    # PopCap .reanim keyframe animation player and track manager
+│   │   ├── reanim.h         # Struct definitions for .reanim XML keyframes and tracks
+│   │   └── resources.h      # Centralized resource and asset management (Singleton)
+│   ├── entities/            # In-game object entity models
+│   │   ├── items/           # Projectiles, sun drops, and particle effects
+│   │   │   ├── Projectile.h # Pea, snow pea, fire pea, corn, and melon projectiles
+│   │   │   ├── SunItem.h    # Falling and plant-produced sun currency drops
+│   │   │   └── particle.h   # Particle and splat animation structures
+│   │   ├── plants/          # Plant base class and specialized plant subclasses
+│   │   │   ├── Plant.h      # Abstract base class for all Plant entities
+│   │   │   ├── PeaShooter.h # Standard single pea shooter plant
+│   │   │   ├── SnowPea.h    # Freezing pea shooter plant
+│   │   │   ├── SunFlower.h  # Periodic sun producer plant
+│   │   │   ├── Wallnut.h    # High-HP defensive wall plant
+│   │   │   ├── CherryBomb.h # Area-of-effect instant explosive plant
+│   │   │   ├── Chomper.h    # Melee bite and chew plant
+│   │   │   ├── Jalapeno.h   # Lane-clearing fire explosive plant
+│   │   │   ├── Repeater.h   # Double pea shooter plant
+│   │   │   ├── Torchwood.h  # Fire pea conversion tree plant
+│   │   │   ├── FirePea.h    # Flaming pea shooter plant
+│   │   │   ├── GatlingPea.h # Quad pea barrage shooter plant
+│   │   │   ├── Cornpult.h   # Lobbed butter/kernel catapult plant
+│   │   │   └── Melonpult.h  # Heavy lobbed melon splash catapult plant
+│   │   └── zombies/         # Zombie base class and specialized zombie subclasses
+│   │       ├── Zombie.h     # Abstract base class for all Zombie entities
+│   │       ├── ZombieNormal.h    # Standard browncoat zombie
+│   │       ├── ConeheadZombie.h  # Conehead armored zombie
+│   │       ├── BucketheadZombie.h# Buckethead high-armor zombie
+│   │       └── FlagZombie.h # Wave lead flag zombie
+│   ├── level/               # Gameplay loop, grid management, waves, and collisions
+│   │   └── Level1.h         # Main gameplay level managing grid, waves, and economic state
+│   ├── ui/                  # User interface screens and HUD elements
+│   │   ├── MainMenu.h       # Interactive main menu screen (SelectorScreen.reanim)
+│   │   ├── OptionsMenu.h    # Game settings and options overlay panel
+│   │   ├── ShopMenu.h       # Crazy Dave's Shop interface
+│   │   ├── SeedSelectMenu.h # Pre-level plant loadout selection deck
+│   │   ├── SeedBank.h       # Top HUD sun counter and active seed card deck
+│   │   ├── SeedPacket.h     # Individual plant seed card HUD item with cooldown
+│   │   └── UIHelpers.h      # Virtual resolution scaling and interaction utilities
+│   └── utils/               # Testing and helper utilities
+│       └── testing.h        # Unit testing harness definitions
+├── src/                     # C++ Source implementation files matching include/ domain structure
+│   ├── core/                # Core subsystem implementations (AudioManager, Reanimation, resources)
+│   ├── entities/            # Entity behavior implementations (plants, zombies, items)
+│   ├── level/               # Level state, grid management, and collision logic (Level1.cpp)
+│   ├── ui/                  # UI menu and seed bank implementations
+│   ├── utils/               # Test harness implementations
+│   ├── main.cpp             # Game entry point and main loop execution
+│   ├── Projectile.cpp       # Projectile movement and hit detection
+│   └── particle.cpp         # Particle timing and setter logic
 ├── build.sh                 # CMake configure and Release build automation script
 ├── remake.sh                # Incremental make script for fast rebuilds
 └── CMakeLists.txt           # Build configuration pinning Raylib, raygui, nlohmann_json

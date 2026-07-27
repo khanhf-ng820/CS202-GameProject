@@ -21,19 +21,15 @@ was the rubric's original intent.
 
 ## Flow
 
-1. Entered as `GameState::SeedSelect` (see `game-state-and-levels`),
-   between `MainMenu`/level-complete and `Playing`.
-2. Present every plant type in `unlockedPlants` (from the save file) as a
-   toggle-select button — reuse and adapt the existing plant-preview button
-   layout already in `main.cpp` (the `DrawButton` calls for "Peashooter",
-   "Snow Pea", etc.) rather than building a new button system from scratch,
-   but change the interaction model from "select one to preview" to
-   "toggle N of many to build a deck."
-3. Enforce a minimum (e.g. at least 1) and optionally a maximum deck size
-   before allowing the player to proceed to `Playing`.
-4. Store the confirmed selection as `currentDeck` for the duration of that
-   level (see the JSON shape in `game-state-and-levels` — keep field names
-   in sync between the two skills).
+1. Managed via an internal sub-state machine inside `Level1` using `enum class LevelPhase { SeedSelection, ActiveWave }`
+   (see `game-state-and-levels` and `temp/preselect-design.md`).
+   - Main Menu **"Level 1"** launches `Level1` starting in `LevelPhase::SeedSelection`.
+   - Main Menu **"Start Adventure"** is reserved for the debug/reanimation testing visualizer (`Testing`).
+2. Present available plant types in `SeedSelectMenu` as toggle-select cards.
+   - Clicking an available chooser card adds it to `m_chosenPlants` (up to 7 max capacity) and places it into the top SeedBank bar, dimming the chooser grid card.
+   - Clicking a selected card in either the top bar or chooser grid unselects it and restores the card.
+3. Enforce a deck capacity (1 to 7 plants max) before allowing the player to confirm with **"LET'S ROCK!"**.
+4. Store the confirmed selection as `m_chosenDeck` for the duration of that level and initialize `SeedBank` via `m_seedBank.initFromDeck(m_chosenDeck)` upon transitioning to `LevelPhase::ActiveWave`.
 
 ## Enforcement during play
 

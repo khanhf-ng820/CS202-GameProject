@@ -53,44 +53,69 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
     float dialogX = (800.0f - 423.0f) / 2.0f;
     float dialogY = (600.0f - 498.0f) / 2.0f;
 
-    // 1. Handle Music Volume Slider dragging
-    float slotX = dialogX + 210.0f;
-    float slotY = dialogY + 125.0f;
+    std::string sfxPath = m_res.GetAssetPath("assets/sounds/gravebutton.ogg");
+
+    // Slider dimensions
     float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;
     float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width : 22.0f;
-    Rectangle sliderHitbox = { slotX - 10.0f, slotY - 15.0f, slotW + 20.0f, 40.0f };
+    float travelW = slotW - knobW;
 
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, sliderHitbox)) {
-        m_isDraggingSlider = true;
-    }
-    if (!IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-        m_isDraggingSlider = false;
-    }
+    // 1. Handle Music Volume Slider dragging
+    float musicSlotX = dialogX + 205.0f;
+    float musicSlotY = dialogY + 82.0f;
+    Rectangle musicHitbox = { musicSlotX - 10.0f, musicSlotY - 15.0f, slotW + 20.0f, 40.0f };
 
-    if (m_isDraggingSlider) {
-        float travelW = slotW - knobW;
-        float clampedX = std::clamp(mousePos.x - slotX - knobW / 2.0f, 0.0f, travelW);
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, musicHitbox)) {
+        m_isDraggingMusicSlider = true;
+        AudioManager::GetInstance().PlaySoundEffect(sfxPath);
+    }
+    if (m_isDraggingMusicSlider && !IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        m_isDraggingMusicSlider = false;
+    }
+    if (m_isDraggingMusicSlider) {
+        float clampedX = std::clamp(mousePos.x - musicSlotX - knobW / 2.0f, 0.0f, travelW);
         float newVol = (travelW > 0.0f) ? (clampedX / travelW) : 1.0f;
         AudioManager::GetInstance().SetMusicVolume(newVol);
+    }
+
+    // 2. Handle Sound FX Volume Slider dragging
+    float sfxSlotX = dialogX + 205.0f;
+    float sfxSlotY = dialogY + 122.0f;
+    Rectangle sfxHitbox = { sfxSlotX - 10.0f, sfxSlotY - 15.0f, slotW + 20.0f, 40.0f };
+
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, sfxHitbox)) {
+        m_isDraggingSfxSlider = true;
+        AudioManager::GetInstance().PlaySoundEffect(sfxPath);
+    }
+    if (m_isDraggingSfxSlider && !IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        m_isDraggingSfxSlider = false;
+    }
+    if (m_isDraggingSfxSlider) {
+        float clampedX = std::clamp(mousePos.x - sfxSlotX - knobW / 2.0f, 0.0f, travelW);
+        float newVol = (travelW > 0.0f) ? (clampedX / travelW) : 1.0f;
+        AudioManager::GetInstance().SetSoundVolume(newVol);
     }
 
     // Checkbox scale and dimensions
     float cbScale = 0.75f;
     float cbH = 39.0f * cbScale;
 
-    // 2. Handle clicking on resolutions (checkboxes / labels)
+    // 3. Handle clicking on resolutions (checkboxes / labels)
     for (int i = 0; i < NUM_RESOLUTIONS; ++i) {
         float itemY = dialogY + 160.0f + i * 42.0f;
         // Collision rectangle spans from checkbox to label text
         Rectangle hitRect = { dialogX + 60.0f, itemY, 300.0f, cbH };
         if (CheckCollisionPointRec(mousePos, hitRect)) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                m_selectedResolutionIndex = i;
+                if (m_selectedResolutionIndex != i) {
+                    m_selectedResolutionIndex = i;
+                    AudioManager::GetInstance().PlaySoundEffect(sfxPath);
+                }
             }
         }
     }
 
-    // 3. Handle "Apply Changes" button
+    // 4. Handle "Apply Changes" button
     float applyW = 170.0f;
     float applyH = 46.0f;
     float applyX = dialogX + 31.5f;
@@ -103,9 +128,10 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
         currentWidth = RESOLUTION_PRESETS[m_activeResolutionIndex].width;
         currentHeight = RESOLUTION_PRESETS[m_activeResolutionIndex].height;
         SetWindowSize(currentWidth, currentHeight);
+        AudioManager::GetInstance().PlaySoundEffect(sfxPath);
     }
 
-    // 4. Handle "Back" button
+    // 5. Handle "Back" button
     float backW = 170.0f;
     float backH = 46.0f;
     float backX = dialogX + 31.5f + 170.0f + 20.0f; // 221.5f
@@ -117,6 +143,7 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
         // Revert unapplied resolution selection
         m_selectedResolutionIndex = m_activeResolutionIndex;
         showOptions = false;
+        AudioManager::GetInstance().PlaySoundEffect(sfxPath);
     }
 }
 
@@ -136,34 +163,54 @@ void OptionsMenu::draw() {
     }
 
     // Draw OPTIONS title
-    m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 55.0f, 423.0f, 35.0f }, 1.3f, Color{ 220, 180, 80, 255 });
+    m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 30.0f, 423.0f, 35.0f }, 1.3f, Color{ 220, 180, 80, 255 });
 
-    // Draw Music Volume Section
-    Rectangle labelRect = { dialogX + 55.0f, dialogY + 115.0f, 140.0f, 25.0f };
-    m_font.DrawTextCentered("Music Volume", labelRect, 0.70f, Color{ 210, 210, 210, 255 });
-
-    float slotX = dialogX + 210.0f;
-    float slotY = dialogY + 125.0f;
     float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;
     float slotH = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.height : 10.0f;
     float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width : 22.0f;
     float knobH = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.height : 29.0f;
+    float travelW = slotW - knobW;
 
+    // --- 1. Draw Music Volume Section ---
+    Rectangle musicLabelRect = { dialogX + 45.0f, dialogY + 75.0f, 140.0f, 25.0f };
+    m_font.DrawTextCentered("Music Volume", musicLabelRect, 0.70f, Color{ 210, 210, 210, 255 });
+
+    float musicSlotX = dialogX + 205.0f;
+    float musicSlotY = dialogY + 82.0f;
     if (m_sliderSlot.id != 0) {
-        DrawTexture(m_sliderSlot, (int)slotX, (int)slotY, WHITE);
+        DrawTexture(m_sliderSlot, (int)musicSlotX, (int)musicSlotY, WHITE);
     } else {
-        DrawRectangleRec({ slotX, slotY, slotW, slotH }, DARKGRAY);
+        DrawRectangleRec({ musicSlotX, musicSlotY, slotW, slotH }, DARKGRAY);
     }
 
-    float currentVol = AudioManager::GetInstance().GetMusicVolume();
-    float travelW = slotW - knobW;
-    float knobX = slotX + currentVol * travelW;
-    float knobY = slotY + (slotH - knobH) / 2.0f;
-
+    float musicVol = AudioManager::GetInstance().GetMusicVolume();
+    float musicKnobX = musicSlotX + musicVol * travelW;
+    float musicKnobY = musicSlotY + (slotH - knobH) / 2.0f;
     if (m_sliderKnob.id != 0) {
-        DrawTexture(m_sliderKnob, (int)knobX, (int)knobY, WHITE);
+        DrawTexture(m_sliderKnob, (int)musicKnobX, (int)musicKnobY, WHITE);
     } else {
-        DrawRectangleRec({ knobX, knobY, knobW, knobH }, GRAY);
+        DrawRectangleRec({ musicKnobX, musicKnobY, knobW, knobH }, GRAY);
+    }
+
+    // --- 2. Draw Sound FX Volume Section ---
+    Rectangle sfxLabelRect = { dialogX + 45.0f, dialogY + 115.0f, 140.0f, 25.0f };
+    m_font.DrawTextCentered("Sound FX Volume", sfxLabelRect, 0.70f, Color{ 210, 210, 210, 255 });
+
+    float sfxSlotX = dialogX + 205.0f;
+    float sfxSlotY = dialogY + 122.0f;
+    if (m_sliderSlot.id != 0) {
+        DrawTexture(m_sliderSlot, (int)sfxSlotX, (int)sfxSlotY, WHITE);
+    } else {
+        DrawRectangleRec({ sfxSlotX, sfxSlotY, slotW, slotH }, DARKGRAY);
+    }
+
+    float sfxVol = AudioManager::GetInstance().GetSoundVolume();
+    float sfxKnobX = sfxSlotX + sfxVol * travelW;
+    float sfxKnobY = sfxSlotY + (slotH - knobH) / 2.0f;
+    if (m_sliderKnob.id != 0) {
+        DrawTexture(m_sliderKnob, (int)sfxKnobX, (int)sfxKnobY, WHITE);
+    } else {
+        DrawRectangleRec({ sfxKnobX, sfxKnobY, knobW, knobH }, GRAY);
     }
 
     // Draw resolution checklist

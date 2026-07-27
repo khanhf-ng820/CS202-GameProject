@@ -24,6 +24,10 @@ public:
 
     void SetMusicVolume(float volume);
     float GetMusicVolume() const { return m_volume; }
+
+    void SetSoundVolume(float volume);
+    float GetSoundVolume() const { return m_sfxVolume; }
+
     MusicTrack GetCurrentTrack() const { return m_currentTrack; }
 
 private:
@@ -38,5 +42,6 @@ private:
     bool m_isAudioInit = false;
     bool m_isMusicLoaded = false;
     float m_volume = 1.0f; // in range [0.0f, 1.0f]
+    float m_sfxVolume = 1.0f; // in range [0.0f, 1.0f]
 };
 

@@ -45,7 +45,8 @@ private:
     // Slider textures and state
     Texture2D m_sliderSlot;
     Texture2D m_sliderKnob;
-    bool m_isDraggingSlider = false;
+    bool m_isDraggingMusicSlider = false;
+    bool m_isDraggingSfxSlider = false;
 
     // 3-slice button textures
     Texture2D m_btnLeft;
