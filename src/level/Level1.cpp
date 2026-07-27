@@ -101,7 +101,7 @@ void Level1::spawnNextWave() {
     float spawnX = 700.0f;
 
     auto laneY = [](int row) -> float {
-        return 65.0f + row * 100.0f;
+        return 45.0f + row * 100.0f;
     };
 
     if (m_currentWave == 1) {
@@ -266,7 +266,7 @@ void Level1::updateCollisions(float dt) {
             Plant* p = m_grid[zRow][c].get();
             if (p && !p->isDead()) {
                 float plantX = (float)p->getX();
-                if (z->getX() >= plantX - 20.0f && z->getX() <= plantX + 50.0f) {
+                if (z->getX() >= plantX - 20.0f && z->getX() <= plantX + 45.0f) {
                     foundPlantToEat = true;
                     z->setEating(true);
                     if (z->getAnim().GetCurrentAnimName() != "anim_eat") {
@@ -320,7 +320,7 @@ void Level1::update(float dt) {
         Vector2 mousePos = GetVirtualMousePosition();
         int getRow, getCol;
         if (getGridCell(mousePos, getRow, getCol)) {
-            m_zombies.push_back(std::make_unique<ZombieNormal>(res, 700.0f, 60.0f + getRow * 100.0f));
+            m_zombies.push_back(std::make_unique<ZombieNormal>(res, 700.0f, 50.0f + getRow * 100.0f));
         }
     }
 
@@ -342,7 +342,7 @@ void Level1::update(float dt) {
                     if (!zombie->isDead()) {
                         float zombieX = zombie->getX();
                         float zombieY = zombie->getY();
-                        bool isSameRow = (std::abs(zombieY - plantY) < 50.0f);
+                        bool isSameRow = ((zombieY - plantY) < 20.0f && (zombieY - plantY) > -55.0fg);
 
                         if (isSameRow) {
                             float dist = zombieX - plantX;
