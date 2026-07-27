@@ -1,4 +1,3 @@
-#pragma once
 #include "Projectile.h"
 #include "AudioManager.h"
 

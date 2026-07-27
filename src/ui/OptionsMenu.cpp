@@ -54,8 +54,8 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
     float dialogY = (600.0f - 498.0f) / 2.0f;
 
     // 1. Handle Music Volume Slider dragging
-    float slotX = dialogX + 205.0f;
-    float slotY = dialogY + 122.0f;
+    float slotX = dialogX + 210.0f;
+    float slotY = dialogY + 125.0f;
     float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;
     float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width : 22.0f;
     Rectangle sliderHitbox = { slotX - 10.0f, slotY - 15.0f, slotW + 20.0f, 40.0f };
@@ -139,11 +139,11 @@ void OptionsMenu::draw() {
     m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 55.0f, 423.0f, 35.0f }, 1.3f, Color{ 220, 180, 80, 255 });
 
     // Draw Music Volume Section
-    Rectangle labelRect = { dialogX + 45.0f, dialogY + 115.0f, 140.0f, 25.0f };
+    Rectangle labelRect = { dialogX + 55.0f, dialogY + 115.0f, 140.0f, 25.0f };
     m_font.DrawTextCentered("Music Volume", labelRect, 0.70f, Color{ 210, 210, 210, 255 });
 
-    float slotX = dialogX + 205.0f;
-    float slotY = dialogY + 122.0f;
+    float slotX = dialogX + 210.0f;
+    float slotY = dialogY + 125.0f;
     float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;
     float slotH = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.height : 10.0f;
     float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width : 22.0f;

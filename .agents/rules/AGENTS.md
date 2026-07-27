@@ -25,6 +25,18 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 
 ---
 
+## 📁 Directory & Module Structure
+
+*   **Modular Subdirectories:** Source and header files are organized by domain under `src/` and `include/`:
+    *   `core/` — Core infrastructure, resource loading, animation engine, font handling (`resources`, `AudioManager`, `BitmapFont`, `Reanimation`).
+    *   `entities/` — In-game objects, subdivided into `plants/`, `zombies/`, and `items/` (`Projectile`, `SunItem`).
+    *   `level/` — Gameplay loop, grid management, waves, and collisions (`Level1`).
+    *   `ui/` — Menus and interface elements (`MainMenu`, `OptionsMenu`, `ShopMenu`, `SeedBank`, `SeedPacket`).
+    *   `utils/` — Test harness and utilities (`testing`).
+*   **Flat Header Inclusion:** `CMakeLists.txt` registers all subdirectories directly in the target include path. Always `#include` headers directly by filename without subfolder prefixes (e.g., `#include "PeaShooter.h"`, `#include "AudioManager.h"`).
+
+---
+
 ## 📂 Asset Paths & Resolution
 
 *   **NEVER hardcode asset paths.** The relative working directory of the compiled executable varies depending on the generator and config (`build/`, `build/Debug/`, etc.).
@@ -67,12 +79,12 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 
 ## 🔊 Raylib Audio
 
-*   **BGM update loop:** Raylib background music requires `UpdateMusicStream(bgMusic)` to be called **every frame** in the main loop. Forgetting this causes the music to play for a fraction of a second and silently stop.
+*   **Centralized AudioManager:** Do not manage raw raylib music streams directly or call `UpdateMusicStream` in isolated components. Use the centralized singleton **`AudioManager::GetInstance()`** (in `include/core/AudioManager.h`) to play tracks (`PlayMusic(MusicTrack::...)`), stop music, and adjust volume. Its streaming update loop is already invoked every frame inside `main.cpp`.
 
 ---
 
 ## 📑 Rubric Requirements & Design Patterns
 
-*   **Game State & Architecture:** Game state is managed via `MainMenu`, `OptionsMenu`, and `Level1` (which handles the 5x9 grid, waves, economy via `SunItem`, and collisions). **Build on top of `Level1` and `SeedBank`** rather than reinventing these systems.
+*   **Game State & Architecture:** Game state is managed via `MainMenu`, `OptionsMenu`, `ShopMenu` (Crazy Dave's Shop), and `Level1` (which handles the 5x9 grid, waves, economy via `SunItem`, and collisions). **Build on top of these existing systems** rather than reinventing them.
 *   **"Multiple Players" interpretation:** This is a planned feature for a **pre-level Seed Deck Loadout Screen**, where the player builds their active `currentDeck` from `unlockedPlants` before a level. (Currently, `SeedBank` provides a default static deck). Mention this interpretation explicitly in the design document.
 *   **OOP Design Patterns Tracker:** The rubric grades "Effective use of 5 design patterns" (25/100 points). Before adding subsystems, review `.agents/skills/design-patterns-tracker/SKILL.md` to map them onto needed patterns. Keep the status table updated in your commits.
