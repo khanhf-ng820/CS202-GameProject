@@ -22,6 +22,7 @@ public:
     SeedBank(int initialSun = 40000);
 
     void initDefaultDeck();
+    void initFromDeck(const std::vector<std::string>& chosenPlants);
     void update(float dt, Vector2 mousePos, bool mouseClicked);
     void draw(Resources& res, Vector2 mousePos) const;
 

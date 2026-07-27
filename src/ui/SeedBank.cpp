@@ -56,6 +56,49 @@ void SeedBank::initDefaultDeck() {
     }
 }
 
+void SeedBank::initFromDeck(const std::vector<std::string>& chosenPlants) {
+    m_packets.clear();
+    m_selectedPacketIndex = -1;
+    m_isShovelSelected = false;
+
+    float startX = 82.0f;
+    float startY = 8.0f;
+    float cardW = 60.0f;
+    float cardH = 75.0f;
+    float spacing = 62.0f;
+
+    struct PlantInfo {
+        int cost;
+        float cd;
+        std::string tex;
+    };
+
+    auto getPlantInfo = [](const std::string& type) -> PlantInfo {
+        if (type == "SunFlower")  return { 50,  10.0f, "SUNFLOWER" };
+        if (type == "PeaShooter") return { 100, 10.0f, "PEASHOOTER" };
+        if (type == "Wallnut")    return { 50,  30.0f, "WALLNUT" };
+        if (type == "SnowPea")    return { 175, 10.0f, "SNOWPEA" };
+        if (type == "Repeater")   return { 200, 10.0f, "REPEATER" };
+        if (type == "CherryBomb") return { 150, 35.0f, "CHERRYBOMB" };
+        if (type == "Jalapeno")   return { 125, 35.0f, "JALAPENO" };
+        if (type == "FirePea")    return { 175, 10.0f, "FIREPEA" };
+        if (type == "GatlingPea") return { 250, 10.0f, "GATLINGPEA" };
+        if (type == "Cornpult")   return { 100, 10.0f, "CORNPULT" };
+        if (type == "Melonpult")  return { 300, 10.0f, "MELONPULT" };
+        if (type == "Torchwood")  return { 175, 10.0f, "TORCHWOOD" };
+        if (type == "Chomper")    return { 150, 30.0f, "CHOMPER" };
+        return { 100, 10.0f, type };
+    };
+
+    for (size_t i = 0; i < chosenPlants.size(); ++i) {
+        std::string pType = chosenPlants[i];
+        PlantInfo info = getPlantInfo(pType);
+
+        float x = startX + i * spacing;
+        m_packets.push_back(SeedPacket(pType, info.cost, info.cd, info.tex, { x, startY, cardW, cardH }));
+    }
+}
+
 void SeedBank::update(float dt, Vector2 mousePos, bool mouseClicked) {
     for (auto& packet : m_packets) {
         packet.update(dt);

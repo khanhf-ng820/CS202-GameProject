@@ -23,7 +23,8 @@
 #include <cstdlib>
 
 Level1::Level1(Resources& res, RenderTexture2D targetScreen)
-    : res(res), targetScreen(targetScreen), m_seedBank(40000),
+    : res(res), targetScreen(targetScreen), m_phase(LevelPhase::SeedSelection),
+      m_seedSelectMenu(res), m_seedBank(40000),
       m_skySunTimer(0.0f), m_waveTimer(12.0f), m_currentWave(0),
       m_maxWaves(5), m_levelWon(false), m_levelLost(false),
       m_finalWaveAnnounced(false) 
@@ -309,11 +310,20 @@ void Level1::updateCollisions(float dt) {
 }
 
 void Level1::update(float dt) {
+    Vector2 mousePos = GetVirtualMousePosition();
+    bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+
+    if (m_phase == LevelPhase::SeedSelection) {
+        if (m_seedSelectMenu.update(dt, mousePos, mouseClicked)) {
+            m_seedBank.initFromDeck(m_seedSelectMenu.getChosenDeck());
+            m_phase = LevelPhase::ActiveWave;
+        }
+        return;
+    }
+
     if (m_levelWon || m_levelLost) return;
 
     // Update SeedBank
-    Vector2 mousePos = GetVirtualMousePosition();
-    bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     bool rightClicked = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
@@ -514,64 +524,69 @@ void Level1::draw() {
         }
     }
 
-    // 2. Draw hover highlight cell on lawn grid
     Vector2 mousePos = GetVirtualMousePosition();
-    int hoverRow, hoverCol;
-    if (getGridCell(mousePos, hoverRow, hoverCol)) {
-        float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
-        float cellY = 80.0f + hoverRow * 100.0f;
-        float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
-        float cellH = 100.0f;
-        DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
-    }
 
-    // 3. Draw Plants
-    for (int r = 0; r < 5; ++r) {
-        for (int c = 0; c < 9; ++c) {
-            if (m_grid[r][c] && !m_grid[r][c]->isDead()) {
-                m_grid[r][c]->draw();
+    if (m_phase == LevelPhase::SeedSelection) {
+        m_seedSelectMenu.draw(res, mousePos);
+    } else {
+        // 2. Draw hover highlight cell on lawn grid
+        int hoverRow, hoverCol;
+        if (getGridCell(mousePos, hoverRow, hoverCol)) {
+            float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
+            float cellY = 80.0f + hoverRow * 100.0f;
+            float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
+            float cellH = 100.0f;
+            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+        }
+
+        // 3. Draw Plants
+        for (int r = 0; r < 5; ++r) {
+            for (int c = 0; c < 9; ++c) {
+                if (m_grid[r][c] && !m_grid[r][c]->isDead()) {
+                    m_grid[r][c]->draw();
+                }
             }
         }
-    }
 
-    // 4. Draw Zombies
-    for (const auto& z : m_zombies) {
-        if (!z->isFinished()) {
-            z->draw();
+        // 4. Draw Zombies
+        for (const auto& z : m_zombies) {
+            if (!z->isFinished()) {
+                z->draw();
+            }
         }
-    }
 
-    // 5. Draw Projectiles
-    for (const auto& p : m_projectiles) {
-        p.draw();
-    }
+        // 5. Draw Projectiles
+        for (const auto& p : m_projectiles) {
+            p.draw();
+        }
 
-    // 6. Draw Particle & Splat Effects
-    for (const auto& eff : m_effects) {
-        eff.draw();
-    }
+        // 6. Draw Particle & Splat Effects
+        for (const auto& eff : m_effects) {
+            eff.draw();
+        }
 
-    // 7. Draw Sun Items
-    for (const auto& s : m_suns) {
-        s.draw();
-    }
+        // 7. Draw Sun Items
+        for (const auto& s : m_suns) {
+            s.draw();
+        }
 
-    // 7. Draw Top SeedBank & Plant Seed Packets UI
-    m_seedBank.draw(res, mousePos);
+        // 7. Draw Top SeedBank & Plant Seed Packets UI
+        m_seedBank.draw(res, mousePos);
 
-    // 8. Draw Win / Loss Overlays
-    if (m_levelWon) {
-        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
-        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
-        DrawText("LEVEL COMPLETED!", 260, 240, 28, GOLD);
-        DrawText("You defeated all zombies!", 270, 290, 18, WHITE);
-        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
-    } else if (m_levelLost) {
-        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
-        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
-        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 215, 240, 22, RED);
-        DrawText("Game Over!", 350, 290, 20, WHITE);
-        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+        // 8. Draw Win / Loss Overlays
+        if (m_levelWon) {
+            DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
+            DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
+            DrawText("LEVEL COMPLETED!", 260, 240, 28, GOLD);
+            DrawText("You defeated all zombies!", 270, 290, 18, WHITE);
+            DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+        } else if (m_levelLost) {
+            DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
+            DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
+            DrawText("THE ZOMBIES ATE YOUR BRAINS!", 215, 240, 22, RED);
+            DrawText("Game Over!", 350, 290, 20, WHITE);
+            DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+        }
     }
 
     EndTextureMode();

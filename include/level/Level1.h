@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "resources.h"
 #include "SeedBank.h"
+#include "SeedSelectMenu.h"
 #include "Plant.h"
 #include "Zombie.h"
 #include "particle.h"
@@ -11,6 +12,10 @@
 #include <memory>
 #include <string>
 
+enum class LevelPhase {
+    SeedSelection,
+    ActiveWave
+};
 
 class Level1 {
 public:
@@ -25,6 +30,8 @@ private:
     Resources& res;
     RenderTexture2D targetScreen;
 
+    LevelPhase m_phase;
+    SeedSelectMenu m_seedSelectMenu;
     SeedBank m_seedBank;
     
     // 5x9 Lawn Grid for plant placement
