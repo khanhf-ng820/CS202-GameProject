@@ -48,6 +48,7 @@ public:
 
 private:
     void PopulateAnimations();
+    ReanimKeyframe GetInterpolatedKeyframe(const ReanimTrack& track, float frameFloat, int animIndex) const;
 
     ReanimDefinition m_def;
     const Resources* m_resources = nullptr;

@@ -86,6 +86,55 @@ void Reanimation::Update(float dt) {
     }
 }
 
+ReanimKeyframe Reanimation::GetInterpolatedKeyframe(const ReanimTrack& track, float frameFloat, int animIndex) const {
+    if (track.keyframes.empty()) return ReanimKeyframe{};
+
+    int f1 = (int)floorf(frameFloat);
+    if (f1 < 0) f1 = 0;
+    if (f1 >= (int)track.keyframes.size()) f1 = (int)track.keyframes.size() - 1;
+
+    float fraction = frameFloat - (float)f1;
+    if (fraction <= 0.0001f) {
+        return track.keyframes[f1];
+    }
+
+    int startFrame = 0;
+    int endFrame = (int)track.keyframes.size() - 1;
+    int loopStartFrame = 0;
+
+    if (animIndex >= 0 && animIndex < (int)m_anims.size()) {
+        startFrame = m_anims[animIndex].startFrame;
+        endFrame = m_anims[animIndex].endFrame;
+        loopStartFrame = (int)GetLoopStartTime(animIndex);
+    }
+
+    int f2 = f1 + 1;
+    if (f2 > endFrame) {
+        f2 = (loopStartFrame >= startFrame && loopStartFrame <= endFrame) ? loopStartFrame : startFrame;
+    }
+
+    if (f2 < 0 || f2 >= (int)track.keyframes.size()) {
+        return track.keyframes[f1];
+    }
+
+    const auto& kf1 = track.keyframes[f1];
+    const auto& kf2 = track.keyframes[f2];
+
+    if (kf1.f == -1 || kf2.f == -1) {
+        return kf1;
+    }
+
+    ReanimKeyframe result = kf1;
+    result.x = kf1.x + (kf2.x - kf1.x) * fraction;
+    result.y = kf1.y + (kf2.y - kf1.y) * fraction;
+    result.sx = kf1.sx + (kf2.sx - kf1.sx) * fraction;
+    result.sy = kf1.sy + (kf2.sy - kf1.sy) * fraction;
+    result.kx = kf1.kx + (kf2.kx - kf1.kx) * fraction;
+    result.ky = kf1.ky + (kf2.ky - kf1.ky) * fraction;
+
+    return result;
+}
+
 void Reanimation::Draw(float x, float y, float scale) const {
     Draw(x, y, scale, WHITE);
 }
@@ -132,8 +181,9 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
 
         if (stemIsConstantInCurrent && stemTrack && baseStart >= 0 && baseStart < (int)stemTrack->keyframes.size() &&
             baseFrame >= 0 && baseFrame < (int)stemTrack->keyframes.size()) {
-            stem_offset_x = stemTrack->keyframes[baseFrame].x - stemTrack->keyframes[baseStart].x;
-            stem_offset_y = stemTrack->keyframes[baseFrame].y - stemTrack->keyframes[baseStart].y;
+            ReanimKeyframe interpolatedStem = GetInterpolatedKeyframe(*stemTrack, m_baseFrameFloat, m_baseAnimIndex);
+            stem_offset_x = interpolatedStem.x - stemTrack->keyframes[baseStart].x;
+            stem_offset_y = interpolatedStem.y - stemTrack->keyframes[baseStart].y;
         }
     }
 
@@ -148,7 +198,9 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
             continue;
         }
 
-        const ReanimKeyframe* kf_ptr = nullptr;
+        ReanimKeyframe kf_holder;
+        bool hasKeyframe = false;
+        bool usedOverlayTrack = false;
         std::string resolvedImageName;
 
         // Determine if the current overlay animation actually animates this track
@@ -174,18 +226,21 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
 
         // Try overlay (current animation) frame if this track is animated by overlay
         if (!overlayIsConstant && currentFrame >= 0 && currentFrame < (int)track.keyframes.size()) {
-            const auto& kf_overlay = track.keyframes[currentFrame];
-            if (kf_overlay.f != -1) {
-                kf_ptr = &kf_overlay;
-                // Resolve image name: if this frame has one, use it;
-                // otherwise search backwards for the most recent image name
-                if (!kf_overlay.imageName.empty()) {
-                    resolvedImageName = kf_overlay.imageName;
-                } else {
-                    for (int j = currentFrame - 1; j >= 0; --j) {
-                        if (!track.keyframes[j].imageName.empty()) {
-                            resolvedImageName = track.keyframes[j].imageName;
-                            break;
+            if (track.keyframes[currentFrame].f != -1) {
+                kf_holder = GetInterpolatedKeyframe(track, m_currentFrameFloat, m_currentAnimIndex);
+                if (kf_holder.f != -1) {
+                    hasKeyframe = true;
+                    usedOverlayTrack = true;
+                    // Resolve image name: if this frame has one, use it;
+                    // otherwise search backwards for the most recent image name
+                    if (!track.keyframes[currentFrame].imageName.empty()) {
+                        resolvedImageName = track.keyframes[currentFrame].imageName;
+                    } else {
+                        for (int j = currentFrame - 1; j >= 0; --j) {
+                            if (!track.keyframes[j].imageName.empty()) {
+                                resolvedImageName = track.keyframes[j].imageName;
+                                break;
+                            }
                         }
                     }
                 }
@@ -193,20 +248,23 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
         }
 
         // Fallback to base animation if overlay frame is hidden or overlay track is un-animated
-        if ((!kf_ptr || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
+        if ((!hasKeyframe || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
             int baseFrame = (int)m_baseFrameFloat;
             if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size()) {
-                const auto& kf_base = track.keyframes[baseFrame];
-                if (kf_base.f != -1) {
-                    if (!kf_ptr) kf_ptr = &kf_base;
-                    if (resolvedImageName.empty()) {
-                        if (!kf_base.imageName.empty()) {
-                            resolvedImageName = kf_base.imageName;
-                        } else {
-                            for (int j = baseFrame - 1; j >= 0; --j) {
-                                if (!track.keyframes[j].imageName.empty()) {
-                                    resolvedImageName = track.keyframes[j].imageName;
-                                    break;
+                if (track.keyframes[baseFrame].f != -1) {
+                    kf_holder = GetInterpolatedKeyframe(track, m_baseFrameFloat, m_baseAnimIndex);
+                    if (kf_holder.f != -1) {
+                        hasKeyframe = true;
+                        usedOverlayTrack = false;
+                        if (resolvedImageName.empty()) {
+                            if (!track.keyframes[baseFrame].imageName.empty()) {
+                                resolvedImageName = track.keyframes[baseFrame].imageName;
+                            } else {
+                                for (int j = baseFrame - 1; j >= 0; --j) {
+                                    if (!track.keyframes[j].imageName.empty()) {
+                                        resolvedImageName = track.keyframes[j].imageName;
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -215,7 +273,7 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
             }
         }
 
-        if (!kf_ptr || resolvedImageName.empty()) {
+        if (!hasKeyframe || resolvedImageName.empty()) {
             continue;
         }
 
@@ -225,8 +283,8 @@ void Reanimation::Draw(float x, float y, float scale, Color tint) const {
             resolvedImageName = imgOverrideIt->second;
         }
 
-        ReanimKeyframe kf = *kf_ptr;
-        if (m_currentAnimIndex != m_baseAnimIndex && !overlayIsConstant && kf_ptr == &track.keyframes[currentFrame]) {
+        ReanimKeyframe kf = kf_holder;
+        if (m_currentAnimIndex != m_baseAnimIndex && !overlayIsConstant && usedOverlayTrack) {
             kf.x += stem_offset_x;
             kf.y += stem_offset_y;
         }
@@ -433,35 +491,38 @@ Rectangle Reanimation::GetTrackBounds(const std::string& trackName, float x, flo
             return {0, 0, 0, 0};
         }
 
-        const ReanimKeyframe* kf_ptr = nullptr;
+        ReanimKeyframe kf_holder;
+        bool hasKeyframe = false;
         std::string resolvedImageName;
 
         // Try current frame
-        const auto& kf_overlay = track.keyframes[currentFrame];
-        if (kf_overlay.f != -1) {
-            kf_ptr = &kf_overlay;
-            if (!kf_overlay.imageName.empty()) {
-                resolvedImageName = kf_overlay.imageName;
-            } else {
-                for (int j = currentFrame - 1; j >= 0; --j) {
-                    if (!track.keyframes[j].imageName.empty()) {
-                        resolvedImageName = track.keyframes[j].imageName;
-                        break;
+        if (currentFrame >= 0 && currentFrame < (int)track.keyframes.size() && track.keyframes[currentFrame].f != -1) {
+            kf_holder = GetInterpolatedKeyframe(track, m_currentFrameFloat, m_currentAnimIndex);
+            if (kf_holder.f != -1) {
+                hasKeyframe = true;
+                if (!track.keyframes[currentFrame].imageName.empty()) {
+                    resolvedImageName = track.keyframes[currentFrame].imageName;
+                } else {
+                    for (int j = currentFrame - 1; j >= 0; --j) {
+                        if (!track.keyframes[j].imageName.empty()) {
+                            resolvedImageName = track.keyframes[j].imageName;
+                            break;
+                        }
                     }
                 }
             }
         }
 
         // Fallback to base animation
-        if ((!kf_ptr || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
+        if ((!hasKeyframe || resolvedImageName.empty()) && m_baseAnimIndex >= 0 && m_baseAnimIndex < (int)m_anims.size()) {
             int baseFrame = (int)m_baseFrameFloat;
-            if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size()) {
-                const auto& kf_base = track.keyframes[baseFrame];
-                if (kf_base.f != -1) {
-                    if (!kf_ptr) kf_ptr = &kf_base;
+            if (baseFrame >= 0 && baseFrame < (int)track.keyframes.size() && track.keyframes[baseFrame].f != -1) {
+                kf_holder = GetInterpolatedKeyframe(track, m_baseFrameFloat, m_baseAnimIndex);
+                if (kf_holder.f != -1) {
+                    hasKeyframe = true;
                     if (resolvedImageName.empty()) {
-                        if (!kf_base.imageName.empty()) {
-                            resolvedImageName = kf_base.imageName;
+                        if (!track.keyframes[baseFrame].imageName.empty()) {
+                            resolvedImageName = track.keyframes[baseFrame].imageName;
                         } else {
                             for (int j = baseFrame - 1; j >= 0; --j) {
                                 if (!track.keyframes[j].imageName.empty()) {
@@ -475,7 +536,7 @@ Rectangle Reanimation::GetTrackBounds(const std::string& trackName, float x, flo
             }
         }
 
-        if (!kf_ptr || resolvedImageName.empty()) {
+        if (!hasKeyframe || resolvedImageName.empty()) {
             return {0, 0, 0, 0};
         }
 
@@ -485,7 +546,7 @@ Rectangle Reanimation::GetTrackBounds(const std::string& trackName, float x, flo
             resolvedImageName = imgOverrideIt->second;
         }
 
-        const auto& kf = *kf_ptr;
+        ReanimKeyframe kf = kf_holder;
 
         Texture2D tex = m_resources->GetTexture(resolvedImageName);
         if (tex.id == 0) {
