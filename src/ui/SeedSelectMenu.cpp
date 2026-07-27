@@ -59,7 +59,6 @@ void SeedSelectMenu::initCatalog(Resources& res) {
         { "Repeater",    200, "REPEATER" },
         { "CherryBomb",  150, "CHERRYBOMB" },
         { "Jalapeno",    125, "JALAPENO" },
-        { "FirePea",     175, "FIREPEA" },
         { "GatlingPea",  250, "GATLINGPEA" },
         { "Cornpult",    100, "CORNPULT" },
         { "Melonpult",   300, "MELONPULT" },

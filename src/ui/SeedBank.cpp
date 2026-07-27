@@ -81,7 +81,6 @@ void SeedBank::initFromDeck(const std::vector<std::string>& chosenPlants) {
         if (type == "Repeater")   return { 200, 10.0f, "REPEATER" };
         if (type == "CherryBomb") return { 150, 35.0f, "CHERRYBOMB" };
         if (type == "Jalapeno")   return { 125, 35.0f, "JALAPENO" };
-        if (type == "FirePea")    return { 175, 10.0f, "FIREPEA" };
         if (type == "GatlingPea") return { 250, 10.0f, "GATLINGPEA" };
         if (type == "Cornpult")   return { 100, 10.0f, "CORNPULT" };
         if (type == "Melonpult")  return { 300, 10.0f, "MELONPULT" };
