@@ -3,8 +3,8 @@
 
 SeedBank::SeedBank(int initialSun)
     : m_selectedPacketIndex(-1), m_sunCount(initialSun), m_isShovelSelected(false) {
-    m_bankBounds = { 10.0f, 5.0f, 580.0f, 87.0f };
-    m_shovelBounds = { 715.0f, 5.0f, 70.0f, 72.0f };
+    m_bankBounds = { 0.0f, 0.0f, 446.0f, 87.0f };
+    m_shovelBounds = { 447.0f, 0.0f, 70.0f, 72.0f };
 
     Resources& res = Resources::GetInstance();
     std::string sunPng = res.GetAssetPath("assets/data/_ContinuumBold14.png");
@@ -22,11 +22,11 @@ void SeedBank::initDefaultDeck() {
     m_packets.clear();
     
     // Position of cards inside top SeedBank bar
-    float startX = 82.0f;
+    float startX = 80.0f;
     float startY = 8.0f;
-    float cardW = 60.0f;
-    float cardH = 75.0f;
-    float spacing = 62.0f;
+    float cardW = 50.0f;
+    float cardH = 70.0f;
+    float spacing = 53.0f;
 
     struct DeckItem {
         std::string type;
@@ -61,11 +61,11 @@ void SeedBank::initFromDeck(const std::vector<std::string>& chosenPlants) {
     m_selectedPacketIndex = -1;
     m_isShovelSelected = false;
 
-    float startX = 82.0f;
+    float startX = 80.0f;
     float startY = 8.0f;
-    float cardW = 60.0f;
-    float cardH = 75.0f;
-    float spacing = 62.0f;
+    float cardW = 50.0f;
+    float cardH = 70.0f;
+    float spacing = 53.0f;
 
     struct PlantInfo {
         int cost;
