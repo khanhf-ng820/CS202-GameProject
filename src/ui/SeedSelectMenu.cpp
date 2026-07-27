@@ -68,12 +68,12 @@ void SeedSelectMenu::initCatalog(Resources& res) {
 
     float startX = 22.0f;
     float startY = 135.0f;
-    float spacingX = 54.0f;
+    float spacingX = 53.0f;
     float spacingY = 74.0f;
     float cardW = 50.0f;
     float cardH = 70.0f;
 
-    int cols = 4;
+    int cols = 8;
     int index = 0;
 
     for (const auto& entry : entries) {
@@ -90,6 +90,8 @@ void SeedSelectMenu::initCatalog(Resources& res) {
             { x, y, cardW, cardH },
             false
         });
+
+        m_plantCosts[entry.type] = entry.cost;
 
         index++;
     }
@@ -153,9 +155,17 @@ void SeedSelectMenu::draw(Resources& res, Vector2 mousePos) const {
         DrawRectangleRec(m_bankBounds, DARKGRAY);
     }
 
-    // Draw Sun Count on top SeedBank
+    // Draw Sun Count on top SeedBank (matching SeedBank::draw positioning)
     std::string sunText = "40000";
-    m_sunFont.DrawText(sunText.c_str(), 18.0f, 58.0f, 0.9f, BLACK);
+    m_sunFont.DrawTextCentered(sunText.c_str(), { m_bankBounds.x + 4.0f, m_bankBounds.y + 60.0f, 66.0f, 22.0f }, 0.9f, BLACK);
+
+    auto drawSunCostLabel = [&](int cost, Rectangle bounds, Color tint) {
+        std::string costStr = std::to_string(cost);
+        int textWidth = m_priceFont.MeasureText(costStr.c_str(), 1.0f);
+        float textX = bounds.x + (bounds.width - (float)textWidth) / 2.0f;
+        float textY = bounds.y + bounds.height - 16.0f;
+        m_priceFont.DrawText(costStr.c_str(), textX, textY, 1.0f, tint);
+    };
 
     // Draw chosen seed packets in top SeedBank slots
     for (size_t i = 0; i < m_chosenPlants.size(); ++i) {
@@ -178,6 +188,11 @@ void SeedSelectMenu::draw(Resources& res, Vector2 mousePos) const {
             DrawRectangleRec(slotRect, GREEN);
             m_font.DrawTextCentered(pType.c_str(), slotRect, 0.4f, WHITE);
         }
+
+        // Draw sun cost label on top SeedBank packet (matching SeedPacket::draw)
+        auto it = m_plantCosts.find(pType);
+        int cost = (it != m_plantCosts.end()) ? it->second : 100;
+        drawSunCostLabel(cost, slotRect, BLACK);
     }
 
     // 2. Draw Chooser Background Panel at (0, 87)
@@ -208,6 +223,9 @@ void SeedSelectMenu::draw(Resources& res, Vector2 mousePos) const {
             } else {
                 DrawRectangleRec(card.bounds, DARKGRAY);
             }
+
+            // Draw sun cost label on selected/dimmed grid card
+            drawSunCostLabel(card.cost, card.bounds, Color{ 60, 60, 60, 200 });
         } else {
             // Draw active card
             if (cardTex.id != 0) {
@@ -224,12 +242,8 @@ void SeedSelectMenu::draw(Resources& res, Vector2 mousePos) const {
                 m_font.DrawTextCentered(card.plantType.c_str(), card.bounds, 0.4f, WHITE);
             }
 
-            // Draw card cost
-            std::string costStr = std::to_string(card.cost);
-            int costWidth = m_priceFont.MeasureText(costStr.c_str(), 0.6f);
-            float textX = card.bounds.x + (card.bounds.width - (float)costWidth) / 2.0f;
-            float textY = card.bounds.y + card.bounds.height - 18.0f;
-            m_priceFont.DrawText(costStr.c_str(), textX, textY, 0.6f, BLACK);
+            // Draw sun cost label on unselected grid card
+            drawSunCostLabel(card.cost, card.bounds, BLACK);
         }
     }
 

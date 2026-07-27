@@ -73,25 +73,25 @@ void SeedBank::initFromDeck(const std::vector<std::string>& chosenPlants) {
         std::string tex;
     };
 
-    auto getPlantInfo = [](const std::string& type) -> PlantInfo {
-        if (type == "SunFlower")  return { 50,  10.0f, "SUNFLOWER" };
-        if (type == "PeaShooter") return { 100, 10.0f, "PEASHOOTER" };
-        if (type == "Wallnut")    return { 50,  30.0f, "WALLNUT" };
-        if (type == "SnowPea")    return { 175, 10.0f, "SNOWPEA" };
-        if (type == "Repeater")   return { 200, 10.0f, "REPEATER" };
-        if (type == "CherryBomb") return { 150, 35.0f, "CHERRYBOMB" };
-        if (type == "Jalapeno")   return { 125, 35.0f, "JALAPENO" };
-        if (type == "GatlingPea") return { 250, 10.0f, "GATLINGPEA" };
-        if (type == "Cornpult")   return { 100, 10.0f, "CORNPULT" };
-        if (type == "Melonpult")  return { 300, 10.0f, "MELONPULT" };
-        if (type == "Torchwood")  return { 175, 10.0f, "TORCHWOOD" };
-        if (type == "Chomper")    return { 150, 30.0f, "CHOMPER" };
-        return { 100, 10.0f, type };
+    static const std::unordered_map<std::string, PlantInfo> plantInfoTable = {
+        { "SunFlower",  { 50,  10.0f, "SUNFLOWER" } },
+        { "PeaShooter", { 100, 10.0f, "PEASHOOTER" } },
+        { "Wallnut",    { 50,  30.0f, "WALLNUT" } },
+        { "SnowPea",    { 175, 10.0f, "SNOWPEA" } },
+        { "Repeater",   { 200, 10.0f, "REPEATER" } },
+        { "CherryBomb", { 150, 35.0f, "CHERRYBOMB" } },
+        { "Jalapeno",   { 125, 35.0f, "JALAPENO" } },
+        { "GatlingPea", { 250, 10.0f, "GATLINGPEA" } },
+        { "Cornpult",   { 100, 10.0f, "CORNPULT" } },
+        { "Melonpult",  { 300, 10.0f, "MELONPULT" } },
+        { "Torchwood",  { 175, 10.0f, "TORCHWOOD" } },
+        { "Chomper",    { 150, 30.0f, "CHOMPER" } }
     };
 
     for (size_t i = 0; i < chosenPlants.size(); ++i) {
         std::string pType = chosenPlants[i];
-        PlantInfo info = getPlantInfo(pType);
+        auto it = plantInfoTable.find(pType);
+        PlantInfo info = (it != plantInfoTable.end()) ? it->second : PlantInfo{ 100, 10.0f, pType };
 
         float x = startX + i * spacing;
         m_packets.push_back(SeedPacket(pType, info.cost, info.cd, info.tex, { x, startY, cardW, cardH }));

@@ -4,6 +4,7 @@
 #include "BitmapFont.h"
 #include <vector>
 #include <string>
+#include <unordered_map>
 
 struct SeedSelectCard {
     std::string plantType;
@@ -17,6 +18,7 @@ class SeedSelectMenu {
 private:
     std::vector<SeedSelectCard> m_availableCards;
     std::vector<std::string> m_chosenPlants; // Max 7 deck size
+    std::unordered_map<std::string, int> m_plantCosts;
     
     Rectangle m_bankBounds;
     Rectangle m_chooserBounds;
