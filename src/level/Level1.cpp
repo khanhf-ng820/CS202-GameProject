@@ -352,7 +352,7 @@ void Level1::update(float dt) {
                     if (!zombie->isDead()) {
                         float zombieX = zombie->getX();
                         float zombieY = zombie->getY();
-                        bool isSameRow = ((zombieY - plantY) < 20.0f && (zombieY - plantY) > -55.0fg);
+                        bool isSameRow = ((zombieY - plantY) < 20.0f && (zombieY - plantY) > -55.0f);
 
                         if (isSameRow) {
                             float dist = zombieX - plantX;

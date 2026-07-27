@@ -10,7 +10,7 @@ public:
     Melonpult(Resources& res, int x, int y);
     ~Melonpult() override;
 
-    void set_distance(float dist) { distance = dist; }
+    void set_distance(float dist) override { distance = dist; }
     void update(float deltaTime, std::vector<Projectile>& outProjectiles, std::vector<SunItem>& outSuns) override;
     void draw() override;
 };
