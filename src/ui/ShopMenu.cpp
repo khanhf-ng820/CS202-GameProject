@@ -5,13 +5,14 @@
 
 ShopMenu::ShopMenu(Resources& res)
     : m_res(res), m_currentPage(0), m_totalPages(4) {
-    // Load store background, car, and button textures
+    // Load store background, car, price tag, and button textures
     m_shopBack          = res.GetTexture("STORE_BACKGROUND");
     m_car               = res.GetTexture("STORE_CAR");
     m_mainMenuBtn       = res.GetTexture("STORE_MAINMENUBUTTON");
     m_mainMenuBtnHl     = res.GetTexture("STORE_MAINMENUBUTTONHIGHLIGHT");
     m_mainMenuBtnDown   = res.GetTexture("STORE_MAINMENUBUTTONDOWN");
     m_shopSign          = res.GetTexture("STORE_SIGN");
+    m_priceTag          = res.GetTexture("STORE_PRICETAG");
 
     // Load PREV / NEXT button textures
     m_prevBtn           = res.GetTexture("STORE_PREVBUTTON");
@@ -36,6 +37,10 @@ ShopMenu::ShopMenu(Resources& res)
     std::string hotTxt = res.GetAssetPath("assets/data/HouseofTerror28.txt");
     m_houseOfTerrorFont.Load(hotPng, hotTxt);
 
+    std::string briannePng = res.GetAssetPath("assets/data/_BrianneTod16.png");
+    std::string brianneTxt = res.GetAssetPath("assets/data/BrianneTod16.txt");
+    m_brianneTodFont.Load(briannePng, brianneTxt);
+
     // Grid coordinates for the 8 shelf slots
     struct SlotCoord {
         float x, y, w, h;
@@ -57,52 +62,53 @@ ShopMenu::ShopMenu(Resources& res)
     struct ItemRawDef {
         const char* name;
         const char* key;
+        const char* priceStr;
     };
 
     ItemRawDef pagesDefs[4][8] = {
         // Page 1
         {
-            { "Gatling Pea",     "GATLINGPEA" },
-            { "Twin Sunflower",  "TWINSUNFLOWER" },
-            { "Gloom-Shroom",    "GLOOMSHROOM" },
-            { "Cattail",         "CATTAIL" },
-            { "Winter Melon",    "WINTERMELON" },
-            { "Gold Magnet",     "GOLDMAGNET" },
-            { "Spikerock",       "SPIKEROCK" },
-            { "Cob Cannon",      "COBCANNON" },
+            { "Gatling Pea",     "GATLINGPEA",    "$5,000" },
+            { "Twin Sunflower",  "TWINSUNFLOWER", "$5,000" },
+            { "Gloom-Shroom",    "GLOOMSHROOM",   "$7,500" },
+            { "Cattail",         "CATTAIL",       "$10,000" },
+            { "Winter Melon",    "WINTERMELON",   "$10,000" },
+            { "Gold Magnet",     "GOLDMAGNET",    "$3,000" },
+            { "Spikerock",       "SPIKEROCK",     "$7,500" },
+            { "Cob Cannon",      "COBCANNON",     "$20,000" },
         },
         // Page 2
         {
-            { "Imitater",        "IMITATER" },
-            { "Jalapeno",        "JALAPENO" },
-            { "Squash",          "SQUASH" },
-            { "Potato Mine",     "POTATOMINE" },
-            { "Cherry Bomb",     "CHERRYBOMB" },
-            { "Garlic",          "GARLIC" },
-            { "Pumpkin",         "PUMPKIN" },
-            { "Torchwood",       "TORCHWOOD" },
+            { "Imitater",        "IMITATER",      "$30,000" },
+            { "Jalapeno",        "JALAPENO",      "$1,000" },
+            { "Squash",          "SQUASH",        "$1,000" },
+            { "Potato Mine",     "POTATOMINE",    "$500" },
+            { "Cherry Bomb",     "CHERRYBOMB",    "$2,500" },
+            { "Garlic",          "GARLIC",        "$800" },
+            { "Pumpkin",         "PUMPKIN",       "$2,000" },
+            { "Torchwood",       "TORCHWOOD",     "$3,500" },
         },
         // Page 3
         {
-            { "Melon-Pult",      "MELONPULT" },
-            { "Cabbage-Pult",    "CABBAGEPULT" },
-            { "Corn-Pult",       "CORNPULT" },
-            { "Coffee Bean",     "COFFEEBEAN" },
-            { "Doom-Shroom",     "DOOMSHROOM" },
-            { "Ice-Shroom",      "ICESHROOM" },
-            { "Hypno-Shroom",    "HYPNOSHROOM" },
-            { "Scaredy-Shroom",  "SCAREDYSHROOM" },
+            { "Melon-Pult",      "MELONPULT",     "$5,000" },
+            { "Cabbage-Pult",    "CABBAGEPULT",   "$1,500" },
+            { "Corn-Pult",       "CORNPULT",      "$2,000" },
+            { "Coffee Bean",     "COFFEEBEAN",    "$1,000" },
+            { "Doom-Shroom",     "DOOMSHROOM",    "$6,000" },
+            { "Ice-Shroom",      "ICESHROOM",     "$4,000" },
+            { "Hypno-Shroom",    "HYPNOSHROOM",   "$3,000" },
+            { "Scaredy-Shroom",  "SCAREDYSHROOM", "$1,000" },
         },
         // Page 4
         {
-            { "Puff-Shroom",     "PUFFSHROOM" },
-            { "Sun-Shroom",      "SUNSHROOM" },
-            { "Fume-Shroom",     "FUMESHROOM" },
-            { "Magnet-Shroom",   "MAGNETSHROOM" },
-            { "Lily Pad",        "LILYPAD" },
-            { "Tangle Kelp",     "TANGLEKELP" },
-            { "Sea-Shroom",      "SEASHROOM" },
-            { "Plantern",        "PLANTERN" },
+            { "Puff-Shroom",     "PUFFSHROOM",    "$500" },
+            { "Sun-Shroom",      "SUNSHROOM",     "$1,000" },
+            { "Fume-Shroom",     "FUMESHROOM",    "$2,500" },
+            { "Magnet-Shroom",   "MAGNETSHROOM",  "$3,000" },
+            { "Lily Pad",        "LILYPAD",       "$1,000" },
+            { "Tangle Kelp",     "TANGLEKELP",    "$1,500" },
+            { "Sea-Shroom",      "SEASHROOM",     "$2,000" },
+            { "Plantern",        "PLANTERN",      "$1,500" },
         }
     };
 
@@ -115,7 +121,9 @@ ShopMenu::ShopMenu(Resources& res)
                 pagesDefs[p][i].key,
                 tex,
                 { slots[i].x, slots[i].y, slots[i].w, slots[i].h },
-                false
+                false,
+                false,
+                pagesDefs[p][i].priceStr
             });
         }
     }
@@ -256,6 +264,21 @@ void ShopMenu::draw() {
                     m_font.DrawTextCentered(item.name.c_str(), item.bounds, 0.5f, WHITE);
                 }
             }
+
+            // Draw Price Tag below seed packet (top edge touching packet's bottom edge)
+            float tagW = (m_priceTag.id != 0) ? (float)m_priceTag.width : 56.0f;
+            float tagH = (m_priceTag.id != 0) ? (float)m_priceTag.height : 17.0f;
+            float tagX = item.bounds.x + (item.bounds.width - tagW) / 2.0f;
+            float tagY = item.bounds.y + item.bounds.height;
+            Rectangle tagRect = { tagX, tagY, tagW, tagH };
+
+            if (m_priceTag.id != 0) {
+                DrawTexture(m_priceTag, (int)tagX, (int)tagY, WHITE);
+            } else {
+                DrawRectangleRec(tagRect, YELLOW);
+            }
+
+            m_brianneTodFont.DrawTextCentered(item.priceStr.c_str(), tagRect, 0.8f, BLACK);
         }
     }
 

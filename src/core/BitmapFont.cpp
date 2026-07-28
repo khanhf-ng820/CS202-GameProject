@@ -201,6 +201,15 @@ bool BitmapFont::Load(const std::string& pngPath, const std::string& txtPath) {
     // Load the atlas image
     Image img = LoadImage(pngPath.c_str());
     if (img.data == nullptr) {
+        // Fallback check for PopCap font atlas files with a leading underscore (e.g. _BrianneTod16.png)
+        size_t lastSlash = pngPath.find_last_of("/\\");
+        std::string altPath = (lastSlash == std::string::npos)
+            ? "_" + pngPath
+            : pngPath.substr(0, lastSlash + 1) + "_" + pngPath.substr(lastSlash + 1);
+        img = LoadImage(altPath.c_str());
+    }
+
+    if (img.data == nullptr) {
         std::cerr << "BitmapFont: Failed to load atlas image: " << pngPath << std::endl;
         return false;
     }
@@ -242,6 +251,8 @@ bool BitmapFont::Load(const std::string& pngPath, const std::string& txtPath) {
         std::cerr << "BitmapFont: Failed to open descriptor: " << txtPath << std::endl;
         return false;
     }
+
+    m_glyphHeight = 0;
 
     std::vector<char> charList;
     std::vector<int> widthList;

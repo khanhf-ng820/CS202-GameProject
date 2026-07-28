@@ -34,5 +34,5 @@ private:
 
     std::unordered_map<char, GlyphInfo> m_glyphs;
     std::unordered_map<std::string, int> m_kerning;  // 2-char key -> kern value
-    int m_glyphHeight = 36;  // Native glyph height from atlas
+    int m_glyphHeight = 0;  // Native glyph height from atlas (computed dynamically upon load)
 };
