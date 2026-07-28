@@ -14,6 +14,7 @@ struct ShopSeedItem {
     bool hovered;
     bool isSoldOut = false;
     std::string priceStr;
+    int priceValue = 0;
 };
 
 class ShopMenu {
@@ -31,6 +32,7 @@ private:
     BitmapFont m_font;
     BitmapFont m_houseOfTerrorFont;
     BitmapFont m_brianneTodFont;
+    BitmapFont m_continuumBoldFont;
 
     Reanimation m_crazyDave;
     Texture2D m_shopBack;
@@ -40,6 +42,9 @@ private:
     Texture2D m_mainMenuBtnDown;
     Texture2D m_shopSign;
     Texture2D m_priceTag;
+    Texture2D m_coinBank;
+
+    int m_playerMoney;
 
     Texture2D m_prevBtn;
     Texture2D m_prevBtnDisabled;

@@ -3,9 +3,19 @@
 #include "AudioManager.h"
 #include <iostream>
 
+static std::string FormatMoney(int amount) {
+    std::string s = std::to_string(amount);
+    int n = (int)s.length() - 3;
+    while (n > 0) {
+        s.insert(n, ",");
+        n -= 3;
+    }
+    return "$" + s;
+}
+
 ShopMenu::ShopMenu(Resources& res)
-    : m_res(res), m_currentPage(0), m_totalPages(4) {
-    // Load store background, car, price tag, and button textures
+    : m_res(res), m_currentPage(0), m_totalPages(4), m_playerMoney(1000000) {
+    // Load store background, car, price tag, coinbank, and button textures
     m_shopBack          = res.GetTexture("STORE_BACKGROUND");
     m_car               = res.GetTexture("STORE_CAR");
     m_mainMenuBtn       = res.GetTexture("STORE_MAINMENUBUTTON");
@@ -13,6 +23,7 @@ ShopMenu::ShopMenu(Resources& res)
     m_mainMenuBtnDown   = res.GetTexture("STORE_MAINMENUBUTTONDOWN");
     m_shopSign          = res.GetTexture("STORE_SIGN");
     m_priceTag          = res.GetTexture("STORE_PRICETAG");
+    m_coinBank          = res.GetTexture("COINBANK");
 
     // Load PREV / NEXT button textures
     m_prevBtn           = res.GetTexture("STORE_PREVBUTTON");
@@ -41,6 +52,10 @@ ShopMenu::ShopMenu(Resources& res)
     std::string brianneTxt = res.GetAssetPath("assets/data/BrianneTod16.txt");
     m_brianneTodFont.Load(briannePng, brianneTxt);
 
+    std::string continuumPng = res.GetAssetPath("assets/data/_ContinuumBold14.png");
+    std::string continuumTxt = res.GetAssetPath("assets/data/ContinuumBold14.txt");
+    m_continuumBoldFont.Load(continuumPng, continuumTxt);
+
     // Grid coordinates for the 8 shelf slots
     struct SlotCoord {
         float x, y, w, h;
@@ -63,52 +78,53 @@ ShopMenu::ShopMenu(Resources& res)
         const char* name;
         const char* key;
         const char* priceStr;
+        int priceValue;
     };
 
     ItemRawDef pagesDefs[4][8] = {
         // Page 1
         {
-            { "Gatling Pea",     "GATLINGPEA",    "$5,000" },
-            { "Twin Sunflower",  "TWINSUNFLOWER", "$5,000" },
-            { "Gloom-Shroom",    "GLOOMSHROOM",   "$7,500" },
-            { "Cattail",         "CATTAIL",       "$10,000" },
-            { "Winter Melon",    "WINTERMELON",   "$10,000" },
-            { "Gold Magnet",     "GOLDMAGNET",    "$3,000" },
-            { "Spikerock",       "SPIKEROCK",     "$7,500" },
-            { "Cob Cannon",      "COBCANNON",     "$20,000" },
+            { "Gatling Pea",     "GATLINGPEA",    "$5,000",  5000 },
+            { "Twin Sunflower",  "TWINSUNFLOWER", "$5,000",  5000 },
+            { "Gloom-Shroom",    "GLOOMSHROOM",   "$7,500",  7500 },
+            { "Cattail",         "CATTAIL",       "$10,000", 10000 },
+            { "Winter Melon",    "WINTERMELON",   "$10,000", 10000 },
+            { "Gold Magnet",     "GOLDMAGNET",    "$3,000",  3000 },
+            { "Spikerock",       "SPIKEROCK",     "$7,500",  7500 },
+            { "Cob Cannon",      "COBCANNON",     "$20,000", 20000 },
         },
         // Page 2
         {
-            { "Imitater",        "IMITATER",      "$30,000" },
-            { "Jalapeno",        "JALAPENO",      "$1,000" },
-            { "Squash",          "SQUASH",        "$1,000" },
-            { "Potato Mine",     "POTATOMINE",    "$500" },
-            { "Cherry Bomb",     "CHERRYBOMB",    "$2,500" },
-            { "Garlic",          "GARLIC",        "$800" },
-            { "Pumpkin",         "PUMPKIN",       "$2,000" },
-            { "Torchwood",       "TORCHWOOD",     "$3,500" },
+            { "Imitater",        "IMITATER",      "$30,000", 30000 },
+            { "Jalapeno",        "JALAPENO",      "$1,000",  1000 },
+            { "Squash",          "SQUASH",        "$1,000",  1000 },
+            { "Potato Mine",     "POTATOMINE",    "$500",    500 },
+            { "Cherry Bomb",     "CHERRYBOMB",    "$2,500",  2500 },
+            { "Garlic",          "GARLIC",        "$800",    800 },
+            { "Pumpkin",         "PUMPKIN",       "$2,000",  2000 },
+            { "Torchwood",       "TORCHWOOD",     "$3,500",  3500 },
         },
         // Page 3
         {
-            { "Melon-Pult",      "MELONPULT",     "$5,000" },
-            { "Cabbage-Pult",    "CABBAGEPULT",   "$1,500" },
-            { "Corn-Pult",       "CORNPULT",      "$2,000" },
-            { "Coffee Bean",     "COFFEEBEAN",    "$1,000" },
-            { "Doom-Shroom",     "DOOMSHROOM",    "$6,000" },
-            { "Ice-Shroom",      "ICESHROOM",     "$4,000" },
-            { "Hypno-Shroom",    "HYPNOSHROOM",   "$3,000" },
-            { "Scaredy-Shroom",  "SCAREDYSHROOM", "$1,000" },
+            { "Melon-Pult",      "MELONPULT",     "$5,000",  5000 },
+            { "Cabbage-Pult",    "CABBAGEPULT",   "$1,500",  1500 },
+            { "Corn-Pult",       "CORNPULT",      "$2,000",  2000 },
+            { "Coffee Bean",     "COFFEEBEAN",    "$1,000",  1000 },
+            { "Doom-Shroom",     "DOOMSHROOM",    "$6,000",  6000 },
+            { "Ice-Shroom",      "ICESHROOM",     "$4,000",  4000 },
+            { "Hypno-Shroom",    "HYPNOSHROOM",   "$3,000",  3000 },
+            { "Scaredy-Shroom",  "SCAREDYSHROOM", "$1,000",  1000 },
         },
         // Page 4
         {
-            { "Puff-Shroom",     "PUFFSHROOM",    "$500" },
-            { "Sun-Shroom",      "SUNSHROOM",     "$1,000" },
-            { "Fume-Shroom",     "FUMESHROOM",    "$2,500" },
-            { "Magnet-Shroom",   "MAGNETSHROOM",  "$3,000" },
-            { "Lily Pad",        "LILYPAD",       "$1,000" },
-            { "Tangle Kelp",     "TANGLEKELP",    "$1,500" },
-            { "Sea-Shroom",      "SEASHROOM",     "$2,000" },
-            { "Plantern",        "PLANTERN",      "$1,500" },
+            { "Puff-Shroom",     "PUFFSHROOM",    "$500",    500 },
+            { "Sun-Shroom",      "SUNSHROOM",     "$1,000",  1000 },
+            { "Fume-Shroom",     "FUMESHROOM",    "$2,500",  2500 },
+            { "Magnet-Shroom",   "MAGNETSHROOM",  "$3,000",  3000 },
+            { "Lily Pad",        "LILYPAD",       "$1,000",  1000 },
+            { "Tangle Kelp",     "TANGLEKELP",    "$1,500",  1500 },
+            { "Sea-Shroom",      "SEASHROOM",     "$2,000",  2000 },
+            { "Plantern",        "PLANTERN",      "$1,500",  1500 },
         }
     };
 
@@ -123,7 +139,8 @@ ShopMenu::ShopMenu(Resources& res)
                 { slots[i].x, slots[i].y, slots[i].w, slots[i].h },
                 false,
                 false,
-                pagesDefs[p][i].priceStr
+                pagesDefs[p][i].priceStr,
+                pagesDefs[p][i].priceValue
             });
         }
     }
@@ -192,7 +209,10 @@ void ShopMenu::update(float dt, bool& showShop) {
             } else {
                 item.hovered = isButtonHovered(mousePos, item.bounds, item.textureKey);
                 if (item.hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                    item.isSoldOut = true;
+                    if (m_playerMoney >= item.priceValue) {
+                        m_playerMoney -= item.priceValue;
+                        item.isSoldOut = true;
+                    }
                 }
             }
         }
@@ -341,4 +361,21 @@ void ShopMenu::draw() {
         DrawRectangleRec(btnRect, BROWN);
         m_houseOfTerrorFont.DrawTextCentered("MAIN MENU", { btnRect.x - 8.f, btnRect.y - 4.0f, btnRect.width, btnRect.height }, 0.75f, Color{ 102, 152, 235, 255 });
     }
+
+    // 10. Draw Money Counter (COINBANK in bottom right corner: 660, 558)
+    float cbW = (m_coinBank.id != 0) ? (float)m_coinBank.width : 128.0f;
+    float cbH = (m_coinBank.id != 0) ? (float)m_coinBank.height : 31.0f;
+    float cbX = 800.0f - cbW - 12.0f;
+    float cbY = 600.0f - cbH - 10.0f;
+    Rectangle cbRect = { cbX, cbY, cbW, cbH };
+
+    if (m_coinBank.id != 0) {
+        DrawTexture(m_coinBank, (int)cbX, (int)cbY, WHITE);
+    } else {
+        DrawRectangleRec(cbRect, DARKGRAY);
+    }
+
+    std::string moneyText = FormatMoney(m_playerMoney);
+    Color greenColor = Color{ 181, 246, 90, 255 };
+    m_continuumBoldFont.DrawTextRightAligned(moneyText.c_str(), cbRect, 10.0f, 1.0f, greenColor);
 }

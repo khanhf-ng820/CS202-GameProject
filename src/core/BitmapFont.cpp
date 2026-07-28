@@ -23,56 +23,38 @@ static std::string Trim(const std::string& s) {
 // ---------------------------------------------------------------------------
 static std::vector<char> ParseCharList(const std::string& body) {
     std::vector<char> result;
-    size_t pos = 0;
-    while (pos < body.size()) {
-        // Look for a single-quoted character
-        size_t q1 = body.find('\'', pos);
-        if (q1 == std::string::npos) break;
-        size_t q2 = body.find('\'', q1 + 1);
-        if (q2 == std::string::npos) break;
-
-        std::string inside = body.substr(q1 + 1, q2 - q1 - 1);
-        if (inside.size() == 1 && static_cast<unsigned char>(inside[0]) < 128) {
-            result.push_back(inside[0]);
-        } else {
-            // Non-ASCII or multi-byte: push a placeholder so indices stay aligned
-            result.push_back('\0');
-        }
-
-        // Also handle escaped quote inside quotes — but PvZ fonts don't use this,
-        // and the descriptor uses "'" (double-quoted) for the apostrophe entry.
-        pos = q2 + 1;
+    size_t openParen = body.find('(');
+    size_t closeParen = body.rfind(')');
+    if (openParen == std::string::npos || closeParen == std::string::npos || closeParen <= openParen) {
+        return result;
     }
 
-    // Check for double-quoted entries like "'" which represents the apostrophe
-    // The descriptor has: "'", '"' patterns
-    // Actually let's also scan for double-quoted single chars
-    pos = 0;
-    size_t idx = 0;
-    while (pos < body.size() && idx < result.size()) {
-        size_t q1 = body.find('\'', pos);
-        size_t dq1 = body.find('"', pos);
+    std::string content = body.substr(openParen + 1, closeParen - openParen - 1);
+    size_t i = 0;
+    while (i < content.size()) {
+        // Skip whitespace and delimiter commas between character tokens
+        while (i < content.size() && (content[i] == ' ' || content[i] == '\t' || content[i] == '\r' || content[i] == '\n' || content[i] == ',')) {
+            i++;
+        }
+        if (i >= content.size()) break;
 
-        if (dq1 != std::string::npos && (q1 == std::string::npos || dq1 < q1)) {
-            // Found a double-quoted entry before the next single-quoted one
-            size_t dq2 = body.find('"', dq1 + 1);
-            if (dq2 != std::string::npos) {
-                std::string inside = body.substr(dq1 + 1, dq2 - dq1 - 1);
+        char quote = content[i];
+        if (quote == '\'' || quote == '"') {
+            i++;
+            size_t endQuote = content.find(quote, i);
+            if (endQuote != std::string::npos) {
+                std::string inside = content.substr(i, endQuote - i);
                 if (inside.size() == 1 && static_cast<unsigned char>(inside[0]) < 128) {
-                    // This is a valid char — but we already parsed via single quotes
-                    // so this might be the apostrophe "'" entry
+                    result.push_back(inside[0]);
+                } else {
+                    result.push_back('\0');
                 }
-                pos = dq2 + 1;
+                i = endQuote + 1;
             } else {
                 break;
             }
-        } else if (q1 != std::string::npos) {
-            size_t q2 = body.find('\'', q1 + 1);
-            if (q2 == std::string::npos) break;
-            pos = q2 + 1;
-            idx++;
         } else {
-            break;
+            i++;
         }
     }
 
@@ -419,6 +401,19 @@ void BitmapFont::DrawTextCentered(const char* text, Rectangle bounds, float scal
     float textH = (float)m_glyphHeight * scale;
 
     float x = bounds.x + (bounds.width - (float)textW) / 2.0f;
+    float y = bounds.y + (bounds.height - textH) / 2.0f;
+
+    DrawText(text, x, y, scale, tint);
+}
+
+// ---------------------------------------------------------------------------
+// BitmapFont::DrawTextRightAligned
+// ---------------------------------------------------------------------------
+void BitmapFont::DrawTextRightAligned(const char* text, Rectangle bounds, float paddingRight, float scale, Color tint) const {
+    int textW = MeasureText(text, scale);
+    float textH = (float)m_glyphHeight * scale;
+
+    float x = bounds.x + bounds.width - paddingRight - (float)textW;
     float y = bounds.y + (bounds.height - textH) / 2.0f;
 
     DrawText(text, x, y, scale, tint);

@@ -20,6 +20,9 @@ public:
     // Draw text centered within a bounding rectangle.
     void DrawTextCentered(const char* text, Rectangle bounds, float scale, Color tint) const;
 
+    // Draw text right-aligned within a bounding rectangle with padding on the right.
+    void DrawTextRightAligned(const char* text, Rectangle bounds, float paddingRight, float scale, Color tint) const;
+
     // Measure the total pixel width of a string at the given scale.
     int MeasureText(const char* text, float scale) const;
 
