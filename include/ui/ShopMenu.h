@@ -12,6 +12,7 @@ struct ShopSeedItem {
     Texture2D texture;
     Rectangle bounds;
     bool hovered;
+    bool isSoldOut = false;
 };
 
 class ShopMenu {

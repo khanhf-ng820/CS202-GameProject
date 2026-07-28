@@ -176,10 +176,17 @@ void ShopMenu::update(float dt, bool& showShop) {
         }
     }
 
-    // Update pixel-perfect hover checks for current page seed packets
+    // Update pixel-perfect hover checks and click interactions for current page seed packets
     if (m_currentPage >= 0 && m_currentPage < (int)m_pages.size()) {
         for (auto& item : m_pages[m_currentPage]) {
-            item.hovered = isButtonHovered(mousePos, item.bounds, item.textureKey);
+            if (item.isSoldOut) {
+                item.hovered = false;
+            } else {
+                item.hovered = isButtonHovered(mousePos, item.bounds, item.textureKey);
+                if (item.hovered && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                    item.isSoldOut = true;
+                }
+            }
         }
     }
 }
@@ -214,26 +221,40 @@ void ShopMenu::draw() {
     // 4. Draw Crazy Dave (left side of 800x600 window in front of fence)
     m_crazyDave.Draw(-40.0f, 50.0f, 1.0f);
 
-    // 5. Draw Shop Seed Packets for current page with pixel-perfect hover highlight
+    // 5. Draw Shop Seed Packets for current page with pixel-perfect hover highlight or Sold Out state
     if (m_currentPage >= 0 && m_currentPage < (int)m_pages.size()) {
         for (const auto& item : m_pages[m_currentPage]) {
             if (item.texture.id != 0) {
+                Color tint = item.isSoldOut ? Color{ 100, 100, 100, 255 } : WHITE;
                 DrawTexturePro(
                     item.texture,
                     { 0.0f, 0.0f, (float)item.texture.width, (float)item.texture.height },
                     item.bounds,
                     { 0.0f, 0.0f },
                     0.0f,
-                    WHITE
+                    tint
                 );
-                if (item.hovered) {
+                if (item.isSoldOut) {
+                    // Render "Sold Out" in 2 lines centered using House of Terror font in RED
+                    Rectangle line1Bounds = { item.bounds.x, item.bounds.y + 14.0f, item.bounds.width, 20.0f };
+                    Rectangle line2Bounds = { item.bounds.x, item.bounds.y + 36.0f, item.bounds.width, 20.0f };
+                    m_houseOfTerrorFont.DrawTextCentered("Sold", line1Bounds, 0.45f, RED);
+                    m_houseOfTerrorFont.DrawTextCentered("Out", line2Bounds, 0.45f, RED);
+                } else if (item.hovered) {
                     // Pixel-perfect hover highlight (yellow border glow)
                     DrawRectangleLinesEx(item.bounds, 2.0f, YELLOW);
                 }
             } else {
-                Color boxColor = item.hovered ? ColorAlpha(YELLOW, 0.8f) : ColorAlpha(GRAY, 0.8f);
+                Color boxColor = item.isSoldOut ? DARKGRAY : (item.hovered ? ColorAlpha(YELLOW, 0.8f) : ColorAlpha(GRAY, 0.8f));
                 DrawRectangleRec(item.bounds, boxColor);
-                m_font.DrawTextCentered(item.name.c_str(), item.bounds, 0.5f, WHITE);
+                if (item.isSoldOut) {
+                    Rectangle line1Bounds = { item.bounds.x, item.bounds.y + 14.0f, item.bounds.width, 20.0f };
+                    Rectangle line2Bounds = { item.bounds.x, item.bounds.y + 36.0f, item.bounds.width, 20.0f };
+                    m_houseOfTerrorFont.DrawTextCentered("Sold", line1Bounds, 0.45f, RED);
+                    m_houseOfTerrorFont.DrawTextCentered("Out", line2Bounds, 0.45f, RED);
+                } else {
+                    m_font.DrawTextCentered(item.name.c_str(), item.bounds, 0.5f, WHITE);
+                }
             }
         }
     }
