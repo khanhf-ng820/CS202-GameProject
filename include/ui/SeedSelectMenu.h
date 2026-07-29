@@ -34,6 +34,7 @@ private:
     Texture2D m_confirmBtnTex;
     Texture2D m_confirmBtnGlowTex;
     Texture2D m_confirmBtnDisabledTex;
+    Texture2D m_silhouetteTex;
 
     void initCatalog(Resources& res);
 

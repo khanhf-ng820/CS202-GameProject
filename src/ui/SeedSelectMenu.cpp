@@ -24,6 +24,9 @@ SeedSelectMenu::SeedSelectMenu(Resources& res) {
     m_confirmBtnDisabledTex = res.GetTexture("SEEDCHOOSER_BUTTON_DISABLED");
     if (m_confirmBtnDisabledTex.id == 0) m_confirmBtnDisabledTex = res.GetTexture("SeedChooser_Button_Disabled");
 
+    m_silhouetteTex = res.GetTexture("SEEDPACKETSILHOUETTE");
+    if (m_silhouetteTex.id == 0) m_silhouetteTex = res.GetTexture("SeedPacketSilhouette");
+
     // Load fonts
     std::string fontPng = res.GetAssetPath("assets/data/DwarvenTodcraft24.png");
     std::string fontTxt = res.GetAssetPath("assets/data/DwarvenTodcraft24.txt");
@@ -102,7 +105,7 @@ bool SeedSelectMenu::update(float dt, Vector2 mousePos, bool mouseClicked) {
 
     // 1. Check top SeedBank slots (unselect plant if clicked in top bar)
     for (size_t i = 0; i < m_chosenPlants.size(); ++i) {
-        Rectangle slotRect = { 80.0f + i * 53.0f, 8.0f, 50.0f, 70.0f };
+        Rectangle slotRect = { 79.0f + i * 51.0f, 8.0f, 50.0f, 70.0f };
         if (CheckCollisionPointRec(mousePos, slotRect)) {
             std::string typeToRemove = m_chosenPlants[i];
             m_chosenPlants.erase(m_chosenPlants.begin() + i);
@@ -167,9 +170,29 @@ void SeedSelectMenu::draw(Resources& res, Vector2 mousePos) const {
         m_priceFont.DrawText(costStr.c_str(), textX, textY, 1.0f, tint);
     };
 
-    // Draw chosen seed packets in top SeedBank slots
+    // Draw 7 seed packet silhouettes at all 7 slot positions in top SeedBank
+    for (size_t i = 0; i < 7; ++i) {
+        float slotX = 79.0f + i * 51.0f;
+        float slotY = 8.0f;
+        Rectangle slotRect = { slotX, slotY, 50.0f, 70.0f };
+
+        if (m_silhouetteTex.id != 0) {
+            DrawTexturePro(
+                m_silhouetteTex,
+                { 0.0f, 0.0f, (float)m_silhouetteTex.width, (float)m_silhouetteTex.height },
+                slotRect,
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
+        } else {
+            DrawRectangleRec(slotRect, ColorAlpha(BLACK, 0.35f));
+        }
+    }
+
+    // Draw chosen seed packets on top of silhouettes in top SeedBank slots
     for (size_t i = 0; i < m_chosenPlants.size(); ++i) {
-        float slotX = 80.0f + i * 53.0f;
+        float slotX = 79.0f + i * 51.0f;
         float slotY = 8.0f;
         Rectangle slotRect = { slotX, slotY, 50.0f, 70.0f };
 
@@ -202,8 +225,8 @@ void SeedSelectMenu::draw(Resources& res, Vector2 mousePos) const {
         DrawRectangleRec(m_chooserBounds, Color{ 40, 30, 20, 240 });
     }
 
-    // Draw header text
-    m_font.DrawText("Choose your seeds", 130.0f, 98.0f, 0.65f, GOLD);
+    // Draw header text centered horizontally & vertically across top bar
+    m_font.DrawTextCentered("CHOOSE YOUR PLANTS!", { 0.0f, 87.0f, 465.0f, 33.0f }, 0.65f, GOLD);
 
     // 3. Draw available cards grid
     for (const auto& card : m_availableCards) {
@@ -251,27 +274,52 @@ void SeedSelectMenu::draw(Resources& res, Vector2 mousePos) const {
     bool isHovered = CheckCollisionPointRec(mousePos, m_confirmBtnBounds);
     bool isEnabled = !m_chosenPlants.empty();
 
-    Texture2D btnTex = m_confirmBtnTex;
     if (!isEnabled) {
-        if (m_confirmBtnDisabledTex.id != 0) btnTex = m_confirmBtnDisabledTex;
-    } else if (isHovered && m_confirmBtnGlowTex.id != 0) {
-        btnTex = m_confirmBtnGlowTex;
-    }
-
-    if (btnTex.id != 0) {
-        DrawTexturePro(
-            btnTex,
-            { 0.0f, 0.0f, (float)btnTex.width, (float)btnTex.height },
-            m_confirmBtnBounds,
-            { 0.0f, 0.0f },
-            0.0f,
-            WHITE
-        );
+        if (m_confirmBtnDisabledTex.id != 0) {
+            DrawTexturePro(
+                m_confirmBtnDisabledTex,
+                { 0.0f, 0.0f, (float)m_confirmBtnDisabledTex.width, (float)m_confirmBtnDisabledTex.height },
+                m_confirmBtnBounds,
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
+        } else {
+            DrawRectangleRec(m_confirmBtnBounds, GRAY);
+        }
     } else {
-        DrawRectangleRec(m_confirmBtnBounds, isEnabled ? (isHovered ? GOLD : ORANGE) : GRAY);
+        // Enabled state: ALWAYS draw normal button PNG (SeedChooser_Button.png)
+        if (m_confirmBtnTex.id != 0) {
+            DrawTexturePro(
+                m_confirmBtnTex,
+                { 0.0f, 0.0f, (float)m_confirmBtnTex.width, (float)m_confirmBtnTex.height },
+                m_confirmBtnBounds,
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
+        } else {
+            DrawRectangleRec(m_confirmBtnBounds, ORANGE);
+        }
+
+        // If hovered, overlay Glow PNG (SeedChooser_Button_Glow.png) on top
+        if (isHovered && m_confirmBtnGlowTex.id != 0) {
+            DrawTexturePro(
+                m_confirmBtnGlowTex,
+                { 0.0f, 0.0f, (float)m_confirmBtnGlowTex.width, (float)m_confirmBtnGlowTex.height },
+                m_confirmBtnBounds,
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
+        }
     }
 
-    // Centered "LET'S ROCK!" label on confirm button
-    Color labelColor = isEnabled ? Color{ 220, 200, 80, 255 } : Color{ 120, 120, 120, 255 };
-    m_houseOfTerrorFont.DrawTextCentered("LET'S ROCK!", m_confirmBtnBounds, 0.65f, labelColor);
+    // Centered "LET'S ROCK!" label on confirm button with Dwarven Todcraft font (m_font)
+    Color labelColor = GRAY;
+    if (isEnabled) {
+        labelColor = isHovered ? GREEN : WHITE;
+    }
+
+    m_font.DrawTextCentered("LET'S ROCK!", m_confirmBtnBounds, 0.65f, labelColor);
 }
