@@ -13,6 +13,7 @@ enum class MenuAction {
     Options,
     Help,
     Shop,
+    ZenGarden,
     Quit
 };
 
@@ -41,6 +42,8 @@ private:
     Texture2D m_quitBtnHl;
     Texture2D m_storeBtn;
     Texture2D m_storeBtnHl;
+    Texture2D m_zenGardenBtn;
+    Texture2D m_zenGardenBtnHl;
 
     bool isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName);
 };

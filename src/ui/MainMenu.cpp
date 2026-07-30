@@ -57,6 +57,8 @@ MainMenu::MainMenu(Resources& res)
     m_quitBtnHl    = res.GetTexture("SELECTORSCREEN_QUIT2");
     m_storeBtn     = res.GetTexture("SELECTORSCREEN_STORE");
     m_storeBtnHl   = res.GetTexture("SELECTORSCREEN_STOREHIGHLIGHT");
+    m_zenGardenBtn   = res.GetTexture("SELECTORSCREEN_ZENGARDEN");
+    m_zenGardenBtnHl = res.GetTexture("SELECTORSCREEN_ZENGARDENHIGHLIGHT");
 
     // Load the DwarvenTodcraft24 bitmap font
     std::string fontPng = res.GetAssetPath("assets/data/DwarvenTodcraft24.png");
@@ -154,6 +156,17 @@ void MainMenu::update(float dt) {
             m_action = MenuAction::Shop;
         }
     }
+
+    // Zen Garden button (potted sprout asset on lawn)
+    float zenW = (m_zenGardenBtn.id != 0) ? (float)m_zenGardenBtn.width : 191.0f;
+    float zenH = (m_zenGardenBtn.id != 0) ? (float)m_zenGardenBtn.height : 163.0f;
+    Rectangle zenRect = { 250.0f, 425.0f, zenW, zenH };
+    if (isGraveButtonHovered(mousePos, zenRect, "SELECTORSCREEN_ZENGARDEN")) {
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            m_action = MenuAction::ZenGarden;
+            AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/gravebutton.ogg"));
+        }
+    }
 }
 
 void MainMenu::draw() {
@@ -237,6 +250,16 @@ void MainMenu::draw() {
         bool hovered = isGraveButtonHovered(mousePos, storeRect, "SELECTORSCREEN_STORE");
         Texture2D tex = hovered ? (m_storeBtnHl.id != 0 ? m_storeBtnHl : m_storeBtn) : m_storeBtn;
         DrawTexture(tex, (int)storeRect.x, (int)storeRect.y, WHITE);
+    }
+
+    // Draw Zen Garden button
+    float zenW = (m_zenGardenBtn.id != 0) ? (float)m_zenGardenBtn.width : 191.0f;
+    float zenH = (m_zenGardenBtn.id != 0) ? (float)m_zenGardenBtn.height : 163.0f;
+    Rectangle zenRect = { 250.0f, 425.0f, zenW, zenH };
+    if (m_zenGardenBtn.id != 0) {
+        bool hovered = isGraveButtonHovered(mousePos, zenRect, "SELECTORSCREEN_ZENGARDEN");
+        Texture2D tex = hovered ? (m_zenGardenBtnHl.id != 0 ? m_zenGardenBtnHl : m_zenGardenBtn) : m_zenGardenBtn;
+        DrawTexture(tex, (int)zenRect.x, (int)zenRect.y, WHITE);
     }
 }
 

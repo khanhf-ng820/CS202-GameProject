@@ -85,6 +85,9 @@ int main() {
         } else if (menu) {
             menu->update(dt);
             if (menu->getAction() == MenuAction::StartAdventure) {
+                // Clicking Start Adventure button now does nothing
+                menu->resetAction();
+            } else if (menu->getAction() == MenuAction::ZenGarden) {
                 Testing testingState(res, targetScreen);
                 testingState.run();
                 menu->resetAction();
