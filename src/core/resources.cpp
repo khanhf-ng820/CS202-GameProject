@@ -46,69 +46,145 @@ Resources& Resources::GetInstance() {
     return instance;
 }
 
-void Resources::LoadAll(const std::string& filePath) {
-    // Load background
-    std::string bgPath = GetAssetPath("assets/images/background1.png");
-    background = LoadTexture(bgPath.c_str());
-    if (background.id != 0) {
-        GenTextureMipmaps(&background);
-        SetTextureFilter(background, TEXTURE_FILTER_BILINEAR);
-    } else {
-        std::cerr << "Warning: Failed to load background from " << bgPath << std::endl;
-    }
+void Resources::LoadFile(const std::string& path) {
+    size_t lastDot = path.find_last_of('.');
+    if (lastDot == std::string::npos) return;
 
-    // Load textures
-    FilePathList files = LoadDirectoryFiles(filePath.c_str());
-    for (unsigned int i = 0; i < files.count; i++) {
-        std::string path = files.paths[i];
-        // Check if extension is .png, .jpg, or .jpeg
-        size_t lastDot = path.find_last_of('.');
-        if (lastDot != std::string::npos) {
-            std::string ext = ToUpper(path.substr(lastDot));
-            if (ext == ".PNG" || ext == ".JPG" || ext == ".JPEG") {
-                std::string stem = GetFileStem(path);
-                // Skip standalone mask files ending with '_' (e.g. Store_Car_.png)
-                if (!stem.empty() && stem.back() == '_') {
-                    continue;
+    std::string ext = ToUpper(path.substr(lastDot));
+    if (ext == ".PNG" || ext == ".JPG" || ext == ".JPEG") {
+        std::string stem = GetFileStem(path);
+        if (!stem.empty() && stem.back() == '_') {
+            return;
+        }
+
+        std::string key = ToUpper(stem);
+        if (textures.find(key) != textures.end()) {
+            return; // Already loaded
+        }
+
+        Image img = LoadImage(path.c_str());
+        if (img.data != nullptr) {
+            std::string basePathWithoutExt = path.substr(0, lastDot);
+            std::string maskPng = basePathWithoutExt + "_.png";
+            std::string maskJpg = basePathWithoutExt + "_.jpg";
+            std::string maskPath = "";
+
+            if (FileExists(maskPng.c_str())) {
+                maskPath = maskPng;
+            } else if (FileExists(maskJpg.c_str())) {
+                maskPath = maskJpg;
+            }
+
+            if (!maskPath.empty()) {
+                Image alphaMask = LoadImage(maskPath.c_str());
+                if (alphaMask.data != nullptr) {
+                    ImageAlphaMask(&img, alphaMask);
+                    UnloadImage(alphaMask);
                 }
+            }
 
-                std::string key = ToUpper(stem);
-
-                Image img = LoadImage(path.c_str());
-                if (img.data != nullptr) {
-                    // Check for matching mask file (e.g., Store_Car_.png or Store_Car_.jpg)
-                    std::string basePathWithoutExt = path.substr(0, lastDot);
-                    std::string maskPng = basePathWithoutExt + "_.png";
-                    std::string maskJpg = basePathWithoutExt + "_.jpg";
-                    std::string maskPath = "";
-
-                    if (FileExists(maskPng.c_str())) {
-                        maskPath = maskPng;
-                    } else if (FileExists(maskJpg.c_str())) {
-                        maskPath = maskJpg;
-                    }
-
-                    if (!maskPath.empty()) {
-                        Image alphaMask = LoadImage(maskPath.c_str());
-                        if (alphaMask.data != nullptr) {
-                            ImageAlphaMask(&img, alphaMask);
-                            UnloadImage(alphaMask);
-                        }
-                    }
-
-                    Texture2D tex = LoadTextureFromImage(img);
-                    if (tex.id != 0) {
-                        SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
-                        textures[key] = tex;
-                        images[key] = img;
-                    } else {
-                        UnloadImage(img);
-                    }
-                }
-            } else if (ext == ".REANIM") {
-                LoadReanim(path);
+            Texture2D tex = LoadTextureFromImage(img);
+            if (tex.id != 0) {
+                SetTextureFilter(tex, TEXTURE_FILTER_BILINEAR);
+                textures[key] = tex;
+                images[key] = img;
+            } else {
+                UnloadImage(img);
             }
         }
+    } else if (ext == ".REANIM") {
+        LoadReanim(path);
+    }
+}
+
+void Resources::LoadMinimalForLoadingScreen() {
+    if (background.id == 0) {
+        std::string bgPath = GetAssetPath("assets/images/background1.png");
+        background = LoadTexture(bgPath.c_str());
+        if (background.id != 0) {
+            GenTextureMipmaps(&background);
+            SetTextureFilter(background, TEXTURE_FILTER_BILINEAR);
+        }
+    }
+
+    std::string titlePath = GetAssetPath("assets/images/titlescreen.jpg");
+    LoadFile(titlePath);
+
+    std::string dirtPath = GetAssetPath("assets/images/LoadBar_dirt.png");
+    LoadFile(dirtPath);
+
+    std::string grassPath = GetAssetPath("assets/images/LoadBar_grass.png");
+    LoadFile(grassPath);
+
+    std::string sodCapPath = GetAssetPath("assets/reanim/SodRollCap.png");
+    LoadFile(sodCapPath);
+}
+
+void Resources::PrepareAssetLoadingQueue(const std::vector<std::string>& dirPaths) {
+    m_pendingFileQueue.clear();
+    m_loadedAssetCount = 0;
+
+    for (const auto& dirPath : dirPaths) {
+        std::string resolvedDir = GetAssetPath(dirPath);
+        if (!DirectoryExists(resolvedDir.c_str())) continue;
+
+        FilePathList files = LoadDirectoryFiles(resolvedDir.c_str());
+        for (unsigned int i = 0; i < files.count; i++) {
+            std::string path = files.paths[i];
+            size_t lastDot = path.find_last_of('.');
+            if (lastDot != std::string::npos) {
+                std::string ext = ToUpper(path.substr(lastDot));
+                if (ext == ".PNG" || ext == ".JPG" || ext == ".JPEG" || ext == ".REANIM") {
+                    std::string stem = GetFileStem(path);
+                    if (!stem.empty() && stem.back() == '_') {
+                        continue;
+                    }
+                    m_pendingFileQueue.push_back(path);
+                }
+            }
+        }
+        UnloadDirectoryFiles(files);
+    }
+
+    m_totalAssetCount = (int)m_pendingFileQueue.size();
+}
+
+bool Resources::StepAssetLoadingQueue(int batchSize) {
+    for (int i = 0; i < batchSize; ++i) {
+        if (m_pendingFileQueue.empty()) {
+            return true;
+        }
+        std::string nextFile = m_pendingFileQueue.back();
+        m_pendingFileQueue.pop_back();
+
+        LoadFile(nextFile);
+        m_loadedAssetCount++;
+    }
+
+    return m_pendingFileQueue.empty();
+}
+
+float Resources::GetLoadingProgress() const {
+    if (m_totalAssetCount <= 0) return 1.0f;
+    float progress = (float)m_loadedAssetCount / (float)m_totalAssetCount;
+    if (progress > 1.0f) progress = 1.0f;
+    if (progress < 0.0f) progress = 0.0f;
+    return progress;
+}
+
+void Resources::LoadAll(const std::string& filePath) {
+    if (background.id == 0) {
+        std::string bgPath = GetAssetPath("assets/images/background1.png");
+        background = LoadTexture(bgPath.c_str());
+        if (background.id != 0) {
+            GenTextureMipmaps(&background);
+            SetTextureFilter(background, TEXTURE_FILTER_BILINEAR);
+        }
+    }
+
+    FilePathList files = LoadDirectoryFiles(filePath.c_str());
+    for (unsigned int i = 0; i < files.count; i++) {
+        LoadFile(files.paths[i]);
     }
     UnloadDirectoryFiles(files);
 }

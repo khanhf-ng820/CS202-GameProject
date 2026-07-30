@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "resources.h"
 #include "AudioManager.h"
+#include "LoadingScreen.h"
 #include "MainMenu.h"
 #include "OptionsMenu.h"
 #include "ShopMenu.h"
@@ -9,6 +10,13 @@
 #include "Level1.h"
 #include <iostream>
 #include <string>
+#include <vector>
+#include <memory>
+
+enum class AppState {
+    Loading,
+    MainMenu
+};
 
 int main() {
     // Enable config flags for high quality drawing
@@ -23,22 +31,29 @@ int main() {
     SetTraceLogLevel(LOG_WARNING);
 
     Resources& res = Resources::GetInstance();
-    std::string reanimDir = res.GetAssetPath("assets/reanim");
-    res.LoadAll(reanimDir);
-    std::string imagesDir = res.GetAssetPath("assets/images");
-    res.LoadAll(imagesDir);
-    std::string particlesDir = res.GetAssetPath("assets/particles");
-    res.LoadAll(particlesDir);
-    std::string seedPacketsDir = res.GetAssetPath("assets/PlantSeedPackets");
-    res.LoadAll(seedPacketsDir);
+
+    // 1. Load minimal assets required for the Loading Screen
+    res.LoadMinimalForLoadingScreen();
+
+    // 2. Queue all remaining game assets across directories
+    std::vector<std::string> assetDirs = {
+        "assets/reanim",
+        "assets/images",
+        "assets/particles",
+        "assets/PlantSeedPackets"
+    };
+    res.PrepareAssetLoadingQueue(assetDirs);
 
     // Create virtual canvas render texture (800x600)
     RenderTexture2D targetScreen = LoadRenderTexture(800, 600);
     SetTextureFilter(targetScreen.texture, TEXTURE_FILTER_BILINEAR);
 
-    MainMenu menu(res);
-    OptionsMenu optionsMenu(res);
-    ShopMenu shopMenu(res);
+    LoadingScreen loadingScreen(res);
+    std::unique_ptr<MainMenu> menu;
+    std::unique_ptr<OptionsMenu> optionsMenu;
+    std::unique_ptr<ShopMenu> shopMenu;
+
+    AppState currentState = AppState::Loading;
     bool showOptions = false;
     bool showShop = false;
     bool exitGame = false;
@@ -54,44 +69,55 @@ int main() {
         // --- Update ---
         float dt = GetFrameTime();
         
-        if (showOptions) {
-            optionsMenu.update(dt, showOptions, windowWidth, windowHeight);
+        if (currentState == AppState::Loading) {
+            bool doneLoading = loadingScreen.update(dt);
+            if (doneLoading) {
+                // Immediately transition to Main Menu upon completing asset loading
+                menu = std::make_unique<MainMenu>(res);
+                optionsMenu = std::make_unique<OptionsMenu>(res);
+                shopMenu = std::make_unique<ShopMenu>(res);
+                currentState = AppState::MainMenu;
+            }
+        } else if (showOptions) {
+            optionsMenu->update(dt, showOptions, windowWidth, windowHeight);
         } else if (showShop) {
-            shopMenu.update(dt, showShop);
-        } else {
-            menu.update(dt);
-            if (menu.getAction() == MenuAction::StartAdventure) {
+            shopMenu->update(dt, showShop);
+        } else if (menu) {
+            menu->update(dt);
+            if (menu->getAction() == MenuAction::StartAdventure) {
                 Testing testingState(res, targetScreen);
                 testingState.run();
-                menu.resetAction();
-            } else if (menu.getAction() == MenuAction::Level1) {
+                menu->resetAction();
+            } else if (menu->getAction() == MenuAction::Level1) {
                 Level1 level1State(res, targetScreen);
                 level1State.run();
-                menu.resetAction();
-            } else if (menu.getAction() == MenuAction::Options) {
+                menu->resetAction();
+            } else if (menu->getAction() == MenuAction::Options) {
                 showOptions = true;
-                menu.resetAction();
-            } else if (menu.getAction() == MenuAction::Shop) {
+                menu->resetAction();
+            } else if (menu->getAction() == MenuAction::Shop) {
                 showShop = true;
-                menu.resetAction();
-            } else if (menu.getAction() == MenuAction::Quit) {
+                menu->resetAction();
+            } else if (menu->getAction() == MenuAction::Quit) {
                 exitGame = true;
             }
         }
 
         // Update UI interaction availability based on options menu visibility
-        SetUIInteractionEnabled(!showOptions && !showShop);
+        SetUIInteractionEnabled(currentState == AppState::MainMenu && !showOptions && !showShop);
 
         // --- Draw to Virtual Canvas ---
         BeginTextureMode(targetScreen);
         ClearBackground(RAYWHITE);
 
-        if (showShop) {
-            shopMenu.draw();
-        } else {
-            menu.draw();
-            if (showOptions) {
-                optionsMenu.draw();
+        if (currentState == AppState::Loading) {
+            loadingScreen.draw();
+        } else if (showShop && shopMenu) {
+            shopMenu->draw();
+        } else if (menu) {
+            menu->draw();
+            if (showOptions && optionsMenu) {
+                optionsMenu->draw();
             }
         }
 

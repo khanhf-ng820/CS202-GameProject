@@ -10,6 +10,13 @@ public:
     static Resources& GetInstance();
 
     void LoadAll(const std::string& filePath);
+    void LoadMinimalForLoadingScreen();
+    void PrepareAssetLoadingQueue(const std::vector<std::string>& dirPaths);
+    bool StepAssetLoadingQueue(int batchSize = 3);
+    int GetTotalAssetCount() const { return m_totalAssetCount; }
+    int GetLoadedAssetCount() const { return m_loadedAssetCount; }
+    float GetLoadingProgress() const;
+    void LoadFile(const std::string& path);
     void UnloadAll();
 
     std::string GetAssetPath(const std::string& relativePath);
@@ -24,6 +31,10 @@ private:
     std::unordered_map<std::string, Image> images;
     std::unordered_map<std::string, ReanimDefinition> reanims;
     Texture2D background;
+
+    std::vector<std::string> m_pendingFileQueue;
+    int m_totalAssetCount = 0;
+    int m_loadedAssetCount = 0;
 
     Resources() = default;
     ~Resources() = default;
