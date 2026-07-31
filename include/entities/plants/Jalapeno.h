@@ -12,6 +12,7 @@ private:
     JalapenoState m_state = JalapenoState::EXPLODING_SWELL;
     Reanimation m_fireAnim;
     float m_fireDurationTimer = 0.0f;
+    bool m_hasDealtDamage = false;
 
 public:
     Jalapeno(Resources& res, int x, int y);
@@ -21,4 +22,7 @@ public:
     void draw() override;
 
     bool isDead() const override;
+    bool isExplodingFire() const { return m_state == JalapenoState::EXPLODING_FIRE; }
+    bool hasDealtDamage() const { return m_hasDealtDamage; }
+    void markDamageDealt() { m_hasDealtDamage = true; }
 };

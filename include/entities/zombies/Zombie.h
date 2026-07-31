@@ -27,6 +27,11 @@ protected:
     bool m_isEating;       // Trạng thái đang ăn cây
     float m_eatTimer{ 0.0f }; // Timer đếm ngược/tích lũy để tạo vụn cây khi đang ăn
 
+    bool m_isCharred{ false };
+    Reanimation m_charredAnim;
+    float m_charredTimer{ 0.0f };
+    float m_deathTimer{ 0.0f };
+
 public:
     Zombie(Resources& res, float x, float y, int hp, float speed, int damage, std::string name);
     virtual ~Zombie() {}
@@ -45,8 +50,22 @@ public:
     Reanimation& getAnim() { return m_anim; }
 
     virtual bool isDead() const { return m_hp <= 0; }
-    virtual bool isFinished() const { return m_hp <= 0; }
+    virtual bool isFinished() const {
+        if (m_isCharred) {
+            return m_charredTimer >= 1.5f;
+        }
+        if (m_hp <= 0) {
+            std::string animName = m_anim.GetCurrentAnimName();
+            if (animName == "anim_death" || animName == "anim_death2" || animName == "anim_waterdeath") {
+                return m_deathTimer >= 2.2f;
+            }
+            return true;
+        }
+        return false;
+    }
     virtual void takeDamage(int damage) { m_hp -= damage; }
+    virtual void takeExplosiveDamage(int damage);
+    bool isCharred() const { return m_isCharred; }
     
     void setEating(bool isEating) { m_isEating = isEating; }
     bool isEating() const { return m_isEating; }

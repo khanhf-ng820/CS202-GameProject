@@ -21,33 +21,18 @@ BucketheadZombie::BucketheadZombie(Resources& res, float x, float y)
 BucketheadZombie::~BucketheadZombie() {}
 
 void BucketheadZombie::takeDamage(int damage) {
+    if (m_isCharred) return;
     Zombie::takeDamage(damage);
     if (m_hp <= 0) {
         if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
             m_anim.SetAnimation("anim_death2");
         }
-    } else if (m_hp <= 100) {
-        if (!m_hasLostArm) {
-            m_hasLostArm = true;
-            Resources& res = Resources::GetInstance();
-            FallingPart arm;
-            arm.texture = res.GetTexture("ZOMBIE_OUTERARM_LOWER");
-            arm.x = m_x + 45.0f; 
-            arm.y = m_y + 110.0f;
-            arm.vx = (float)GetRandomValue(-40, 20);
-            arm.vy = (float)GetRandomValue(-120, -40);
-            arm.rotation = 0;
-            arm.rotSpeed = (float)GetRandomValue(-150, 150);
-            arm.timer = 1.0f;
-            arm.active = true;
-            m_fallingParts.push_back(arm);
-        }
-    } else if (m_hp <= 270 && !m_hasLostBucket) {
+    } else if (m_hp <= 200 && !m_hasLostBucket) {
         m_hasLostBucket = true;
         m_anim.SetTrackVisible("anim_bucket", false);
         Resources& res = Resources::GetInstance();
         FallingPart bucket;
-        bucket.texture = res.GetTexture("ZOMBIE_BUCKET1");
+        bucket.texture = res.GetTexture("ZOMBIE_BUCKET3");
         bucket.x = m_x + 30.0f; 
         bucket.y = m_y + 10.0f;
         bucket.vx = (float)GetRandomValue(-30, 30);
@@ -57,14 +42,50 @@ void BucketheadZombie::takeDamage(int damage) {
         bucket.timer = 1.0f;
         bucket.active = true;
         m_fallingParts.push_back(bucket);
+    } else if (m_hp <= 100 && !m_hasLostArm) {
+        m_hasLostArm = true;
+        Resources& res = Resources::GetInstance();
+        FallingPart arm;
+        arm.texture = res.GetTexture("ZOMBIE_OUTERARM_LOWER");
+        arm.x = m_x + 45.0f; 
+        arm.y = m_y + 110.0f;
+        arm.vx = (float)GetRandomValue(-40, 20);
+        arm.vy = (float)GetRandomValue(-120, -40);
+        arm.rotation = 0;
+        arm.rotSpeed = (float)GetRandomValue(-150, 150);
+        arm.timer = 1.0f;
+        arm.active = true;
+        m_fallingParts.push_back(arm);
     }
 }
 
 void BucketheadZombie::update(float deltaTime) {
+    if (m_isCharred) {
+        m_charredAnim.Update(deltaTime);
+        m_charredTimer += deltaTime;
+        if (m_charredAnim.GetCurrentFrame() >= m_charredAnim.GetEndFrame() - 1) {
+            m_charredAnim.SetPaused(true);
+        }
+        return;
+    }
+
+    if (!m_hasLostBucket) {
+        if (m_hp <= 400) {
+            m_anim.OverrideTrackImage("anim_bucket", "Zombie_bucket3");
+        } else if (m_hp <= 600) {
+            m_anim.OverrideTrackImage("anim_bucket", "Zombie_bucket2");
+        } else {
+            m_anim.OverrideTrackImage("anim_bucket", "Zombie_bucket1");
+        }
+    }
+
     m_anim.Update(deltaTime);
 
     if (m_hp <= 0) {
         m_deathTimer += deltaTime;
+        if (m_anim.GetCurrentFrame() >= m_anim.GetEndFrame() - 1) {
+            m_anim.SetPaused(true);
+        }
     }
 
     std::string currentAnim = m_anim.GetCurrentAnimName();
@@ -187,6 +208,11 @@ void BucketheadZombie::update(float deltaTime) {
 }
 
 void BucketheadZombie::draw() {
+    if (m_isCharred) {
+        m_charredAnim.Draw(m_x, m_y, 1.0f);
+        return;
+    }
+
     m_anim.Draw(m_x, m_y, 1.0f);
 
     for (const auto& part : m_fallingParts) {

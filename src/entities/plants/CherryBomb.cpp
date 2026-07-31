@@ -1,11 +1,12 @@
 #include "CherryBomb.h"
+#include "AudioManager.h"
 
 CherryBomb::CherryBomb(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 150, "CherryBomb") {
     // Load reanim for CherryBomb
     getResources(res.GetAssetPath("assets/reanim/CherryBomb.reanim"));
-    m_anim.SetBaseAnimation("anim_idle");
-    m_anim.SetAnimation("anim_idle");
+    m_anim.SetBaseAnimation("anim_explode");
+    m_anim.SetAnimation("anim_explode");
 }
 
 CherryBomb::~CherryBomb() {
@@ -15,7 +16,7 @@ void CherryBomb::update(float deltaTime, std::vector<Projectile>& outProjectiles
     if (is_exploding_effect) {
         explosion_timer += deltaTime;
         if (explosion_timer >= 0.5f) { // Hide after 0.5s
-            m_hp = 0; // Die
+            takeDamage(m_hp); // Die and clear grid cell
         }
         return;
     }
@@ -28,10 +29,8 @@ void CherryBomb::update(float deltaTime, std::vector<Projectile>& outProjectiles
             is_exploding_effect = true;
             explosion_timer = 0.0f;
             did_explode = true;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/cherrybomb.ogg"));
         }
-    } else {
-        did_explode = false;
-        is_exploding_effect = false;
     }
 }
 

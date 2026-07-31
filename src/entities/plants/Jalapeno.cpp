@@ -1,4 +1,5 @@
 #include "Jalapeno.h"
+#include "AudioManager.h"
 
 Jalapeno::Jalapeno(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 125, "Jalapeno") {
@@ -20,6 +21,7 @@ void Jalapeno::update(float deltaTime, std::vector<Projectile>& outProjectiles, 
             m_state = JalapenoState::EXPLODING_FIRE;
             m_fireAnim.SetAnimation("anim_flame");
             m_fireDurationTimer = 0.0f;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/jalapeno.ogg"));
         }
     } else if (m_state == JalapenoState::EXPLODING_FIRE) {
         m_fireAnim.Update(deltaTime);
@@ -37,7 +39,7 @@ void Jalapeno::draw() {
     } else if (m_state == JalapenoState::EXPLODING_FIRE) {
         // Draw the fire wave spanning across the screen row (X from 0 to 1280)
         for (int i = 0; i < 12; ++i) {
-            m_fireAnim.Draw(i * 110 - 20, m_y - 45, 1.6f);
+            m_fireAnim.Draw(i * 110 - 20, m_y - 90, 1.6f);
         }
     }
 }

@@ -21,6 +21,7 @@ ZombieNormal::ZombieNormal(Resources& res, float x, float y)
 ZombieNormal::~ZombieNormal() {}
 
 void ZombieNormal::takeDamage(int damage) {
+    if (m_isCharred) return;
     Zombie::takeDamage(damage);
     if (m_hp <= 0) {
         if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
@@ -46,10 +47,22 @@ void ZombieNormal::takeDamage(int damage) {
 }
 
 void ZombieNormal::update(float deltaTime) {
+    if (m_isCharred) {
+        m_charredAnim.Update(deltaTime);
+        m_charredTimer += deltaTime;
+        if (m_charredAnim.GetCurrentFrame() >= m_charredAnim.GetEndFrame() - 1) {
+            m_charredAnim.SetPaused(true);
+        }
+        return;
+    }
+
     m_anim.Update(deltaTime);
 
     if (m_hp <= 0) {
         m_deathTimer += deltaTime;
+        if (m_anim.GetCurrentFrame() >= m_anim.GetEndFrame() - 1) {
+            m_anim.SetPaused(true);
+        }
     }
 
     std::string currentAnim = m_anim.GetCurrentAnimName();
@@ -154,6 +167,11 @@ void ZombieNormal::update(float deltaTime) {
 }
 
 void ZombieNormal::draw() {
+    if (m_isCharred) {
+        m_charredAnim.Draw(m_x, m_y, 1.0f);
+        return;
+    }
+
     m_anim.Draw(m_x, m_y, 1.0f);
 
     for (const auto& part : m_fallingParts) {

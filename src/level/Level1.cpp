@@ -254,6 +254,45 @@ void Level1::updateCollisions(float dt) {
         }
     }
 
+    // 1.8. Explosive Plants vs Zombies (Jalapeno & CherryBomb)
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            Plant* plant = m_grid[r][c].get();
+            if (!plant || plant->isDead()) continue;
+
+            if (plant->getName() == "Jalapeno") {
+                Jalapeno* jal = dynamic_cast<Jalapeno*>(plant);
+                if (jal && jal->isExplodingFire() && !jal->hasDealtDamage()) {
+                    jal->markDamageDealt();
+                    float plantY = (float)jal->getY();
+                    for (auto& z : m_zombies) {
+                        if (z->isDead()) continue;
+                        if (std::abs(z->getY() - plantY) < 55.0f) {
+                            z->takeExplosiveDamage(1800);
+                        }
+                    }
+                }
+            } else if (plant->getName() == "CherryBomb") {
+                CherryBomb* cb = dynamic_cast<CherryBomb*>(plant);
+                if (cb && cb->isExplodingEffect() && !cb->hasDealtDamage()) {
+                    cb->markDamageDealt();
+                    float cbCx = (float)cb->getX() + 40.0f;
+                    float cbCy = (float)cb->getY() + 40.0f;
+                    for (auto& z : m_zombies) {
+                        if (z->isDead()) continue;
+                        float zCx = z->getX() + 40.0f;
+                        float zCy = z->getY() + 40.0f;
+                        float dx = zCx - cbCx;
+                        float dy = zCy - cbCy;
+                        if (dx * dx + dy * dy <= 180.0f * 180.0f) {
+                            z->takeExplosiveDamage(1800);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     // 2. Zombies eating Plants
     for (auto& z : m_zombies) {
         if (z->isDead()) continue;
@@ -366,6 +405,10 @@ void Level1::update(float dt) {
                 }
 
                 std::string plantName = m_grid[r][c]->getName();
+                if (plantName == "CherryBomb" || plantName == "Jalapeno") {
+                    continue; // Let explosive plants manage their own swell/explode animations
+                }
+
                 std::string targetAnim;
                 if (shoot) {
                     targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||

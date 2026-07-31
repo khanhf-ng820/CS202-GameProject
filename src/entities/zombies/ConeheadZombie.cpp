@@ -22,33 +22,18 @@ ConeheadZombie::ConeheadZombie(Resources& res, float x, float y)
 ConeheadZombie::~ConeheadZombie() {}
 
 void ConeheadZombie::takeDamage(int damage) {
+    if (m_isCharred) return;
     Zombie::takeDamage(damage);
     if (m_hp <= 0) {
         if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
             m_anim.SetAnimation("anim_death");
         }
-    } else if (m_hp <= 100) {
-        if (!m_hasLostArm) {
-            m_hasLostArm = true;
-            Resources& res = Resources::GetInstance();
-            FallingPart arm;
-            arm.texture = res.GetTexture("ZOMBIE_OUTERARM_LOWER");
-            arm.x = m_x + 45.0f; 
-            arm.y = m_y + 110.0f;
-            arm.vx = (float)GetRandomValue(-40, 20);
-            arm.vy = (float)GetRandomValue(-120, -40);
-            arm.rotation = 0;
-            arm.rotSpeed = (float)GetRandomValue(-150, 150);
-            arm.timer = 1.0f;
-            arm.active = true;
-            m_fallingParts.push_back(arm);
-        }
-    } else if (m_hp <= 270 && !m_hasLostCone) {
+    } else if (m_hp <= 200 && !m_hasLostCone) {
         m_hasLostCone = true;
         m_anim.SetTrackVisible("anim_cone", false);
         Resources& res = Resources::GetInstance();
         FallingPart cone;
-        cone.texture = res.GetTexture("ZOMBIE_CONE1");
+        cone.texture = res.GetTexture("ZOMBIE_CONE3");
         cone.x = m_x + 30.0f; 
         cone.y = m_y + 10.0f;
         cone.vx = (float)GetRandomValue(-30, 30);
@@ -58,14 +43,50 @@ void ConeheadZombie::takeDamage(int damage) {
         cone.timer = 1.0f;
         cone.active = true;
         m_fallingParts.push_back(cone);
+    } else if (m_hp <= 100 && !m_hasLostArm) {
+        m_hasLostArm = true;
+        Resources& res = Resources::GetInstance();
+        FallingPart arm;
+        arm.texture = res.GetTexture("ZOMBIE_OUTERARM_LOWER");
+        arm.x = m_x + 45.0f; 
+        arm.y = m_y + 110.0f;
+        arm.vx = (float)GetRandomValue(-40, 20);
+        arm.vy = (float)GetRandomValue(-120, -40);
+        arm.rotation = 0;
+        arm.rotSpeed = (float)GetRandomValue(-150, 150);
+        arm.timer = 1.0f;
+        arm.active = true;
+        m_fallingParts.push_back(arm);
     }
 }
 
 void ConeheadZombie::update(float deltaTime) {
+    if (m_isCharred) {
+        m_charredAnim.Update(deltaTime);
+        m_charredTimer += deltaTime;
+        if (m_charredAnim.GetCurrentFrame() >= m_charredAnim.GetEndFrame() - 1) {
+            m_charredAnim.SetPaused(true);
+        }
+        return;
+    }
+
+    if (!m_hasLostCone) {
+        if (m_hp <= 310) {
+            m_anim.OverrideTrackImage("anim_cone", "Zombie_cone3");
+        } else if (m_hp <= 420) {
+            m_anim.OverrideTrackImage("anim_cone", "Zombie_cone2");
+        } else {
+            m_anim.OverrideTrackImage("anim_cone", "Zombie_cone1");
+        }
+    }
+
     m_anim.Update(deltaTime);
 
     if (m_hp <= 0) {
         m_deathTimer += deltaTime;
+        if (m_anim.GetCurrentFrame() >= m_anim.GetEndFrame() - 1) {
+            m_anim.SetPaused(true);
+        }
     }
 
     std::string currentAnim = m_anim.GetCurrentAnimName();
@@ -188,6 +209,11 @@ void ConeheadZombie::update(float deltaTime) {
 }
 
 void ConeheadZombie::draw() {
+    if (m_isCharred) {
+        m_charredAnim.Draw(m_x, m_y, 1.0f);
+        return;
+    }
+
     m_anim.Draw(m_x, m_y, 1.0f);
 
     for (const auto& part : m_fallingParts) {
