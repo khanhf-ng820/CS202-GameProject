@@ -56,7 +56,7 @@ void LoadingScreen::draw() {
         float maxGrassW = (m_grassTex.width > 0) ? (float)m_grassTex.width : 314.0f;
         float grassW = maxGrassW * progress;
         float grassX = dirtX + 3.0f;
-        float grassY = dirtY + 12.0f;
+        float grassY = dirtY - (float)m_grassTex.height + 15.0f;
 
         Rectangle srcRect = { 0.0f, 0.0f, grassW, (float)m_grassTex.height };
         Rectangle destRect = { grassX, grassY, grassW, (float)m_grassTex.height };
