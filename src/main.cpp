@@ -8,6 +8,7 @@
 #include "UIHelpers.h"
 #include "testing.h"
 #include "Level1.h"
+#include "BowlingLevel.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -85,7 +86,8 @@ int main() {
         } else if (menu) {
             menu->update(dt);
             if (menu->getAction() == MenuAction::StartAdventure) {
-                // Clicking Start Adventure button now does nothing
+                BowlingLevel bowlingState(res, targetScreen);
+                bowlingState.run();
                 menu->resetAction();
             } else if (menu->getAction() == MenuAction::ZenGarden) {
                 Testing testingState(res, targetScreen);
