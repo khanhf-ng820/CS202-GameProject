@@ -12,6 +12,15 @@ struct BowlingCard {
     std::string plantType;
 };
 
+struct BowlingNut {
+    float x;
+    float y;
+    int row;
+    float rotationAngle;
+    float rollSpeed;
+    float rotationSpeed;
+};
+
 class BowlingLevel {
 public:
     BowlingLevel(Resources& res, RenderTexture2D targetScreen);
@@ -30,6 +39,9 @@ private:
 
     std::vector<BowlingCard> m_cards;
     float m_cardSpawnTimer = 0.0f;
+
+    // Active rolling bowling nuts
+    std::vector<BowlingNut> m_bowlingNuts;
 
     // Grid state for placed plants
     std::unique_ptr<Plant> m_grid[5][9];

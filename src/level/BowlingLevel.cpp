@@ -93,17 +93,18 @@ void BowlingLevel::update(float dt) {
         int r, c;
         if (getGridCell(mousePos, r, c)) {
             // ONLY ALLOW placement on tiles to the left of the red bowling stripe (columns 0, 1, 2)
-            if (c <= 2 && m_grid[r][c] == nullptr) {
+            // Tile remains immediately available for future placements (m_grid is not occupied)
+            if (c <= 2) {
                 float cellW = (c == 0) ? 80.0f : 70.0f;
                 float cellH = 100.0f;
                 float cellX = 140.0f + (c == 0 ? 0.0f : 80.0f + (c - 1) * 70.0f);
                 float cellY = 80.0f + r * 100.0f;
                 float centerX = cellX + cellW / 2.0f;
                 float centerY = cellY + cellH / 2.0f;
-                int px = (int)(centerX - 40.0f);
-                int py = (int)(centerY - 35.0f);
 
-                m_grid[r][c] = std::make_unique<Wallnut>(res, px, py);
+                // Spawn rolling bowling nut moving to the right and rotating around its center
+                m_bowlingNuts.push_back({ centerX, centerY, r, 0.0f, 300.0f, 360.0f });
+
                 m_isHoldingCard = false;
                 m_heldPlantType = "";
                 AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant.ogg"));
@@ -111,7 +112,23 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 6. Update placed plants
+    // 6. Update rolling bowling nuts
+    for (auto& nut : m_bowlingNuts) {
+        nut.x += nut.rollSpeed * dt;
+        nut.rotationAngle += nut.rotationSpeed * dt;
+        if (nut.rotationAngle >= 360.0f) {
+            nut.rotationAngle -= 360.0f;
+        }
+    }
+
+    // Despawn bowling nuts that exit the screen on the right (x > 850.0f)
+    m_bowlingNuts.erase(
+        std::remove_if(m_bowlingNuts.begin(), m_bowlingNuts.end(),
+            [](const BowlingNut& nut) { return nut.x > 850.0f; }),
+        m_bowlingNuts.end()
+    );
+
+    // 7. Update placed plants (if any)
     std::vector<Projectile> dummyProjectiles;
     std::vector<SunItem> dummySuns;
     for (int r = 0; r < 5; ++r) {
@@ -176,7 +193,35 @@ void BowlingLevel::draw() {
         }
     }
 
-    // 4. Draw hover highlight cell on front lawn grid
+    // 4. Draw active rolling Wall-nut bowling entities rotating around center (using actual Wall-nut plant body sprite)
+    Texture2D nutBodyTex = res.GetTexture("WALLNUT_BODY");
+    if (nutBodyTex.id == 0) nutBodyTex = res.GetTexture("Wallnut_body");
+    if (nutBodyTex.id == 0) {
+        std::string bodyPath = res.GetAssetPath("assets/reanim/Wallnut_body.png");
+        res.LoadFile(bodyPath);
+        nutBodyTex = res.GetTexture("WALLNUT_BODY");
+    }
+
+    for (const auto& nut : m_bowlingNuts) {
+        float renderW = 60.0f;
+        float renderH = 65.0f;
+        Rectangle destRec = { nut.x, nut.y, renderW, renderH };
+        Vector2 origin = { renderW / 2.0f, renderH / 2.0f };
+        if (nutBodyTex.id != 0) {
+            DrawTexturePro(
+                nutBodyTex,
+                { 0.0f, 0.0f, (float)nutBodyTex.width, (float)nutBodyTex.height },
+                destRec,
+                origin,
+                nut.rotationAngle,
+                WHITE
+            );
+        } else {
+            DrawCircle((int)nut.x, (int)nut.y, 30.0f, BROWN);
+        }
+    }
+
+    // 5. Draw hover highlight cell on front lawn grid
     Vector2 mousePos = GetVirtualMousePosition();
     int hoverRow, hoverCol;
     if (getGridCell(mousePos, hoverRow, hoverCol)) {
@@ -187,7 +232,8 @@ void BowlingLevel::draw() {
 
         if (m_isHoldingCard) {
             // ONLY ALLOW placement on tiles to the left of the red bowling stripe (columns 0, 1, 2)
-            if (hoverCol <= 2 && m_grid[hoverRow][hoverCol] == nullptr) {
+            // Tiles are immediately available for placement
+            if (hoverCol <= 2) {
                 DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
             } else {
                 DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(RED, 0.6f));
@@ -215,13 +261,13 @@ void BowlingLevel::draw() {
     }
 
     // 6. Draw conveyor belt plant cards on top of conveyor belt bar
-    Texture2D wallnutTex = res.GetTexture("WALLNUT");
+    Texture2D cardTex = res.GetTexture("WALLNUT");
     for (const auto& card : m_cards) {
         Rectangle cardRect = { card.x, 8.0f, 50.0f, 70.0f };
-        if (wallnutTex.id != 0) {
+        if (cardTex.id != 0) {
             DrawTexturePro(
-                wallnutTex,
-                { 0.0f, 0.0f, (float)wallnutTex.width, (float)wallnutTex.height },
+                cardTex,
+                { 0.0f, 0.0f, (float)cardTex.width, (float)cardTex.height },
                 cardRect,
                 { 0.0f, 0.0f },
                 0.0f,
@@ -236,10 +282,10 @@ void BowlingLevel::draw() {
     // 7. Draw held card attached directly under mouse cursor
     if (m_isHoldingCard) {
         Rectangle cursorCardRect = { mousePos.x - 25.0f, mousePos.y - 35.0f, 50.0f, 70.0f };
-        if (wallnutTex.id != 0) {
+        if (cardTex.id != 0) {
             DrawTexturePro(
-                wallnutTex,
-                { 0.0f, 0.0f, (float)wallnutTex.width, (float)wallnutTex.height },
+                cardTex,
+                { 0.0f, 0.0f, (float)cardTex.width, (float)cardTex.height },
                 cursorCardRect,
                 { 0.0f, 0.0f },
                 0.0f,
