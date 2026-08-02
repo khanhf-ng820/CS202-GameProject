@@ -26,12 +26,43 @@ bool BowlingLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const
 }
 
 void BowlingLevel::update(float dt) {
-    // Advance conveyor belt animation frame (6 rows of 16px each in ConveyorBelt.png)
+    // 1. Advance conveyor belt animation frame (6 rows of 16px each in ConveyorBelt.png)
     m_animTimer += dt;
     float frameDuration = 0.08f; // ~12.5 FPS animation speed
     if (m_animTimer >= frameDuration) {
         m_animTimer -= frameDuration;
         m_currentFrame = (m_currentFrame + 1) % 6;
+    }
+
+    // 2. Spawn a Wall-nut card every 3 seconds at right end of conveyor belt (spawnX = 459.0f)
+    float spawnX = 459.0f;
+    float leftMinX = 9.0f;
+    float cardW = 50.0f;
+
+    m_cardSpawnTimer += dt;
+    if (m_cardSpawnTimer >= 3.0f) {
+        // Only spawn a new card if the conveyor belt has room (last card has moved left of spawn position)
+        if (m_cards.empty() || m_cards.back().x < spawnX) {
+            m_cards.push_back({ spawnX, "Wallnut" });
+            m_cardSpawnTimer = 0.0f;
+        } else {
+            // Conveyor belt is full; cap timer at 3.0s so a card spawns immediately when space opens up
+            m_cardSpawnTimer = 3.0f;
+        }
+    }
+
+    // 3. Move cards leftward toward left end of conveyor belt (leftMinX = 9.0f) with 0 spacing
+    float cardSpeed = 60.0f; // 60 px/s
+    for (size_t i = 0; i < m_cards.size(); ++i) {
+        float targetX = (i == 0) ? leftMinX : (m_cards[i - 1].x + cardW);
+        if (m_cards[i].x > targetX) {
+            m_cards[i].x -= cardSpeed * dt;
+            if (m_cards[i].x < targetX) {
+                m_cards[i].x = targetX;
+            }
+        } else if (m_cards[i].x < targetX) {
+            m_cards[i].x = targetX;
+        }
     }
 }
 
@@ -97,7 +128,7 @@ void BowlingLevel::draw() {
         DrawTexture(backdropTex, 0, 0, WHITE);
     }
 
-    // Draw animated moving conveyor belt strip (502x16px per frame) inside backdrop channel (x=7, y=66)
+    // Draw animated moving conveyor belt strip (502x16px per frame) inside backdrop channel (x=7, y=63)
     Texture2D conveyorTex = res.GetTexture("CONVEYORBELT");
     if (conveyorTex.id == 0) conveyorTex = res.GetTexture("ConveyorBelt");
     if (conveyorTex.id != 0) {
@@ -105,6 +136,25 @@ void BowlingLevel::draw() {
         Rectangle srcRec = { 0.0f, srcY, 502.0f, 16.0f };
         Rectangle destRec = { 7.0f, 63.0f, 502.0f, 16.0f };
         DrawTexturePro(conveyorTex, srcRec, destRec, { 0.0f, 0.0f }, 0.0f, WHITE);
+    }
+
+    // 5. Draw conveyor belt plant cards on top of conveyor belt bar
+    Texture2D wallnutTex = res.GetTexture("WALLNUT");
+    for (const auto& card : m_cards) {
+        Rectangle cardRect = { card.x, 8.0f, 50.0f, 70.0f };
+        if (wallnutTex.id != 0) {
+            DrawTexturePro(
+                wallnutTex,
+                { 0.0f, 0.0f, (float)wallnutTex.width, (float)wallnutTex.height },
+                cardRect,
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
+        } else {
+            DrawRectangleRec(cardRect, LIGHTGRAY);
+            DrawText("Wallnut", (int)cardRect.x + 2, (int)cardRect.y + 10, 10, BLACK);
+        }
     }
 
     EndTextureMode();

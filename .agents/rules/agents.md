@@ -89,3 +89,11 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 *   **Game State & Architecture:** Game state is managed via `MainMenu`, `OptionsMenu`, `ShopMenu` (Crazy Dave's Shop), and `Level1` (which handles the 5x9 grid, waves, economy via `SunItem`, and collisions). **Build on top of these existing systems** rather than reinventing them.
 *   **"Multiple Players" interpretation:** This is a planned feature for a **pre-level Seed Deck Loadout Screen**, where the player builds their active `currentDeck` from `unlockedPlants` before a level. (Currently, `SeedBank` provides a default static deck). Mention this interpretation explicitly in the design document.
 *   **OOP Design Patterns Tracker:** The rubric grades "Effective use of 5 design patterns" (25/100 points). Before adding subsystems, review `.agents/skills/design-patterns-tracker/SKILL.md` to map them onto needed patterns. Keep the status table updated in your commits.
+
+---
+
+## 🎳 Wall-nut Bowling Level (Conveyor Belt UI & Spawning)
+
+*   **Backdrop Slot Geometry:** In the Wall-nut Bowling level, `ConveyorBelt_backdrop.png` spans 516px width with an inner conveyor slot running from `x = 8.0f` to `x = 507.0f`. Unlike `SeedBank.png`, it contains no sun counter box on the left. Set `leftMinX = 9.0f` for Card 0 alignment.
+*   **Capacity-Gated Spawning:** Always gate conveyor belt card spawning in Wall-nut Bowling by `m_cards.empty() || m_cards.back().x < spawnX`. Pause the spawn timer when full (10 cards max) to prevent stationary card pile-up and overlap at the right spawn position (`spawnX = 459.0f`).
+
