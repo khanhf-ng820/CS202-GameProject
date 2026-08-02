@@ -5,6 +5,7 @@
 #include "Wallnut.h"
 #include <vector>
 #include <string>
+#include <algorithm>
 #include <memory>
 
 struct BowlingCard {
