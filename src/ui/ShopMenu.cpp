@@ -14,7 +14,7 @@ static std::string FormatMoney(int amount) {
 }
 
 ShopMenu::ShopMenu(Resources& res)
-    : m_res(res), m_currentPage(0), m_totalPages(4), m_playerMoney(1000000) {
+    : m_res(res), m_currentPage(0), m_totalPages(4), m_playerMoney(500000) {
     // Load store background, car, price tag, coinbank, and button textures
     m_shopBack          = res.GetTexture("STORE_BACKGROUND");
     m_car               = res.GetTexture("STORE_CAR");

@@ -76,6 +76,8 @@ void MainMenu::update(float dt) {
     // Reset action each frame
     m_action = MenuAction::None;
 
+    if (!IsUIInteractionEnabled()) return;
+
     // Animation is frozen; no need to call Update.
     // m_anim.Update(dt);
 
@@ -215,9 +217,16 @@ void MainMenu::draw() {
     float quitH = (m_quitBtn.id != 0) ? (float)m_quitBtn.height + 10.0f : 37.0f;
     Rectangle quitRect = { 715.0f, 510.0f, quitW, quitH };
 
+    if (!IsUIInteractionEnabled()) {
+        m_anim.ClearTrackImageOverride(TRACK_START_ADVENTURE);
+        m_anim.ClearTrackImageOverride(TRACK_SURVIVAL);
+        m_anim.ClearTrackImageOverride(TRACK_CHALLENGES);
+        m_anim.ClearTrackImageOverride(TRACK_ZEN_GARDEN);
+    }
+
     // Draw Options button
     if (m_optionsBtn.id != 0) {
-        bool hovered = CheckCollisionPointRec(mousePos, optRect);
+        bool hovered = IsUIInteractionEnabled() && CheckCollisionPointRec(mousePos, optRect);
         Texture2D tex = hovered ? (m_optionsBtnHl.id != 0 ? m_optionsBtnHl : m_optionsBtn) : m_optionsBtn;
         DrawTexture(tex, (int)optRect.x, (int)optRect.y + 15, WHITE);
     } else {
@@ -226,7 +235,7 @@ void MainMenu::draw() {
 
     // Draw Help button
     if (m_helpBtn.id != 0) {
-        bool hovered = CheckCollisionPointRec(mousePos, helpRect);
+        bool hovered = IsUIInteractionEnabled() && CheckCollisionPointRec(mousePos, helpRect);
         Texture2D tex = hovered ? (m_helpBtnHl.id != 0 ? m_helpBtnHl : m_helpBtn) : m_helpBtn;
         DrawTexture(tex, (int)helpRect.x, (int)helpRect.y + 30, WHITE);
     } else {
@@ -235,7 +244,7 @@ void MainMenu::draw() {
 
     // Draw Quit button
     if (m_quitBtn.id != 0) {
-        bool hovered = CheckCollisionPointRec(mousePos, quitRect);
+        bool hovered = IsUIInteractionEnabled() && CheckCollisionPointRec(mousePos, quitRect);
         Texture2D tex = hovered ? (m_quitBtnHl.id != 0 ? m_quitBtnHl : m_quitBtn) : m_quitBtn;
         DrawTexture(tex, (int)quitRect.x + 5, (int)quitRect.y + 5, WHITE);
     } else {
@@ -272,6 +281,7 @@ void MainMenu::resetAction() {
 }
 
 bool MainMenu::isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName) {
+    if (!IsUIInteractionEnabled()) return false;
     if (!CheckCollisionPointRec(mousePos, bounds)) return false;
     int localX = (int)((mousePos.x - bounds.x) / REANIM_SCALE);
     int localY = (int)((mousePos.y - bounds.y) / REANIM_SCALE);
