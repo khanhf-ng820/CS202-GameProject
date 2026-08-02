@@ -26,7 +26,13 @@ bool BowlingLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const
 }
 
 void BowlingLevel::update(float dt) {
-    // Currently no dynamic gameplay state needed for lawn preview
+    // Advance conveyor belt animation frame (6 rows of 16px each in ConveyorBelt.png)
+    m_animTimer += dt;
+    float frameDuration = 0.08f; // ~12.5 FPS animation speed
+    if (m_animTimer >= frameDuration) {
+        m_animTimer -= frameDuration;
+        m_currentFrame = (m_currentFrame + 1) % 6;
+    }
 }
 
 void BowlingLevel::draw() {
@@ -82,6 +88,23 @@ void BowlingLevel::draw() {
         float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
         float cellH = 100.0f;
         DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+    }
+
+    // 4. Draw ConveyorBelt_backdrop at (0,0) (matching Level 1 SeedBank position)
+    Texture2D backdropTex = res.GetTexture("CONVEYORBELT_BACKDROP");
+    if (backdropTex.id == 0) backdropTex = res.GetTexture("ConveyorBelt_backdrop");
+    if (backdropTex.id != 0) {
+        DrawTexture(backdropTex, 0, 0, WHITE);
+    }
+
+    // Draw animated moving conveyor belt strip (502x16px per frame) inside backdrop channel (x=7, y=66)
+    Texture2D conveyorTex = res.GetTexture("CONVEYORBELT");
+    if (conveyorTex.id == 0) conveyorTex = res.GetTexture("ConveyorBelt");
+    if (conveyorTex.id != 0) {
+        float srcY = (float)m_currentFrame * 16.0f;
+        Rectangle srcRec = { 0.0f, srcY, 502.0f, 16.0f };
+        Rectangle destRec = { 7.0f, 63.0f, 502.0f, 16.0f };
+        DrawTexturePro(conveyorTex, srcRec, destRec, { 0.0f, 0.0f }, 0.0f, WHITE);
     }
 
     EndTextureMode();

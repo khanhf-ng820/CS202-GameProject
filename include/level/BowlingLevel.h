@@ -15,5 +15,8 @@ private:
     Resources& res;
     RenderTexture2D targetScreen;
 
+    float m_animTimer = 0.0f;
+    int m_currentFrame = 0;
+
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
 };
