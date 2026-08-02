@@ -1,8 +1,11 @@
 #pragma once
 #include "raylib.h"
 #include "resources.h"
+#include "Plant.h"
+#include "Wallnut.h"
 #include <vector>
 #include <string>
+#include <memory>
 
 struct BowlingCard {
     float x;
@@ -27,6 +30,13 @@ private:
 
     std::vector<BowlingCard> m_cards;
     float m_cardSpawnTimer = 0.0f;
+
+    // Grid state for placed plants
+    std::unique_ptr<Plant> m_grid[5][9];
+
+    // Cursor card pickup state
+    bool m_isHoldingCard = false;
+    std::string m_heldPlantType = "";
 
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
 };

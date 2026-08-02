@@ -3,7 +3,13 @@
 #include "AudioManager.h"
 
 BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
-    : res(res), targetScreen(targetScreen) {}
+    : res(res), targetScreen(targetScreen) {
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            m_grid[r][c] = nullptr;
+        }
+    }
+}
 
 bool BowlingLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
     float startX = 140.0f;
@@ -64,6 +70,57 @@ void BowlingLevel::update(float dt) {
             m_cards[i].x = targetX;
         }
     }
+
+    Vector2 mousePos = GetVirtualMousePosition();
+
+    // 4. Handle card pickup from conveyor belt (when not currently holding a card)
+    if (!m_isHoldingCard && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        for (size_t i = 0; i < m_cards.size(); ++i) {
+            Rectangle cardRect = { m_cards[i].x, 8.0f, 50.0f, 70.0f };
+            if (CheckCollisionPointRec(mousePos, cardRect)) {
+                m_isHoldingCard = true;
+                m_heldPlantType = m_cards[i].plantType;
+                m_cards.erase(m_cards.begin() + i);
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/seedlift.ogg"));
+                break;
+            }
+        }
+    }
+
+    // 5. Handle plant placement on lawn grid (when holding a card)
+    // Note: Deselecting is disabled per requirements — player MUST place the card!
+    if (m_isHoldingCard && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        int r, c;
+        if (getGridCell(mousePos, r, c)) {
+            // ONLY ALLOW placement on tiles to the left of the red bowling stripe (columns 0, 1, 2)
+            if (c <= 2 && m_grid[r][c] == nullptr) {
+                float cellW = (c == 0) ? 80.0f : 70.0f;
+                float cellH = 100.0f;
+                float cellX = 140.0f + (c == 0 ? 0.0f : 80.0f + (c - 1) * 70.0f);
+                float cellY = 80.0f + r * 100.0f;
+                float centerX = cellX + cellW / 2.0f;
+                float centerY = cellY + cellH / 2.0f;
+                int px = (int)(centerX - 40.0f);
+                int py = (int)(centerY - 35.0f);
+
+                m_grid[r][c] = std::make_unique<Wallnut>(res, px, py);
+                m_isHoldingCard = false;
+                m_heldPlantType = "";
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant.ogg"));
+            }
+        }
+    }
+
+    // 6. Update placed plants
+    std::vector<Projectile> dummyProjectiles;
+    std::vector<SunItem> dummySuns;
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            if (m_grid[r][c]) {
+                m_grid[r][c]->update(dt, dummyProjectiles, dummySuns);
+            }
+        }
+    }
 }
 
 void BowlingLevel::draw() {
@@ -110,7 +167,16 @@ void BowlingLevel::draw() {
         );
     }
 
-    // 3. Draw hover highlight cell on front lawn grid
+    // 3. Draw placed plants on lawn grid
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            if (m_grid[r][c]) {
+                m_grid[r][c]->draw();
+            }
+        }
+    }
+
+    // 4. Draw hover highlight cell on front lawn grid
     Vector2 mousePos = GetVirtualMousePosition();
     int hoverRow, hoverCol;
     if (getGridCell(mousePos, hoverRow, hoverCol)) {
@@ -118,10 +184,20 @@ void BowlingLevel::draw() {
         float cellY = 80.0f + hoverRow * 100.0f;
         float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
         float cellH = 100.0f;
-        DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+
+        if (m_isHoldingCard) {
+            // ONLY ALLOW placement on tiles to the left of the red bowling stripe (columns 0, 1, 2)
+            if (hoverCol <= 2 && m_grid[hoverRow][hoverCol] == nullptr) {
+                DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+            } else {
+                DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(RED, 0.6f));
+            }
+        } else {
+            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+        }
     }
 
-    // 4. Draw ConveyorBelt_backdrop at (0,0) (matching Level 1 SeedBank position)
+    // 5. Draw ConveyorBelt_backdrop at (0,0) (matching Level 1 SeedBank position)
     Texture2D backdropTex = res.GetTexture("CONVEYORBELT_BACKDROP");
     if (backdropTex.id == 0) backdropTex = res.GetTexture("ConveyorBelt_backdrop");
     if (backdropTex.id != 0) {
@@ -138,7 +214,7 @@ void BowlingLevel::draw() {
         DrawTexturePro(conveyorTex, srcRec, destRec, { 0.0f, 0.0f }, 0.0f, WHITE);
     }
 
-    // 5. Draw conveyor belt plant cards on top of conveyor belt bar
+    // 6. Draw conveyor belt plant cards on top of conveyor belt bar
     Texture2D wallnutTex = res.GetTexture("WALLNUT");
     for (const auto& card : m_cards) {
         Rectangle cardRect = { card.x, 8.0f, 50.0f, 70.0f };
@@ -154,6 +230,24 @@ void BowlingLevel::draw() {
         } else {
             DrawRectangleRec(cardRect, LIGHTGRAY);
             DrawText("Wallnut", (int)cardRect.x + 2, (int)cardRect.y + 10, 10, BLACK);
+        }
+    }
+
+    // 7. Draw held card attached directly under mouse cursor
+    if (m_isHoldingCard) {
+        Rectangle cursorCardRect = { mousePos.x - 25.0f, mousePos.y - 35.0f, 50.0f, 70.0f };
+        if (wallnutTex.id != 0) {
+            DrawTexturePro(
+                wallnutTex,
+                { 0.0f, 0.0f, (float)wallnutTex.width, (float)wallnutTex.height },
+                cursorCardRect,
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
+        } else {
+            DrawRectangleRec(cursorCardRect, LIGHTGRAY);
+            DrawText("Wallnut", (int)cursorCardRect.x + 2, (int)cursorCardRect.y + 10, 10, BLACK);
         }
     }
 
