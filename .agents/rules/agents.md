@@ -2,6 +2,7 @@
 trigger: always_on
 description: Core project rules, build quirks, and architecture for the PvZ codebase
 ---
+
 # Agent Instructions — Plants vs. Zombies (CS202 OOP Course)
 
 This codebase uses C++20 and Raylib. Keep your edits concise, and follow these project-specific quirks to avoid critical bugs and build failures.
