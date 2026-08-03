@@ -18,10 +18,12 @@ struct BowlingCard {
 struct BowlingNut {
     float x;
     float y;
-    int row;
+    float vx;
+    float vy;
     float rotationAngle;
-    float rollSpeed;
     float rotationSpeed;
+    const Zombie* lastHitZombie = nullptr;
+    float hitCooldown = 0.0f;
 };
 
 class BowlingLevel {

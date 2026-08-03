@@ -112,8 +112,8 @@ void BowlingLevel::update(float dt) {
                 float centerX = cellX + cellW / 2.0f;
                 float centerY = cellY + cellH / 2.0f;
 
-                // Spawn rolling bowling nut moving to the right and rotating around its center
-                m_bowlingNuts.push_back({ centerX, centerY, r, 0.0f, 300.0f, 360.0f });
+                // Spawn rolling bowling nut moving to the right and rotating around its center (vx = 300.0f, vy = 0.0f)
+                m_bowlingNuts.push_back({ centerX, centerY, 300.0f, 0.0f, 0.0f, 360.0f, nullptr, 0.0f });
 
                 m_isHoldingCard = false;
                 m_heldPlantType = "";
@@ -122,12 +122,55 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 7. Update rolling bowling nuts
+    // 7. Update rolling bowling nuts & handle zombie collisions + boundary bouncing
     for (auto& nut : m_bowlingNuts) {
-        nut.x += nut.rollSpeed * dt;
+        nut.x += nut.vx * dt;
+        nut.y += nut.vy * dt;
         nut.rotationAngle += nut.rotationSpeed * dt;
         if (nut.rotationAngle >= 360.0f) {
             nut.rotationAngle -= 360.0f;
+        }
+
+        if (nut.hitCooldown > 0.0f) {
+            nut.hitCooldown -= dt;
+        }
+
+        // Top / Bottom lawn boundary bounce (top edge of row 0: y = 80.0f, bottom edge of row 4: y = 580.0f)
+        if (nut.y <= 80.0f && nut.vy < 0.0f) {
+            nut.y = 80.0f;
+            nut.vy = -nut.vy;
+        } else if (nut.y >= 580.0f && nut.vy > 0.0f) {
+            nut.y = 580.0f;
+            nut.vy = -nut.vy;
+        }
+
+        // Collision detection with active zombies (center-to-center distance <= 42.0f, front approach dx <= 10.0f, ignoring last hit zombie & respecting hitCooldown)
+        for (auto& z : m_zombies) {
+            if (!z->isDead() && nut.hitCooldown <= 0.0f && z.get() != nut.lastHitZombie) {
+                float zCx = z->getX() + 40.0f;
+                float zCy = z->getY() + 50.0f;
+                float dx = nut.x - zCx;
+                float dy = nut.y - zCy;
+
+                // Only collide if Wall-nut is approaching from the front (dx <= 10.0f)
+                if (dx <= 10.0f) {
+                    float dist = sqrtf(dx * dx + dy * dy);
+                    if (dist <= 42.0f) {
+                        if (nut.vy == 0.0f) {
+                            // If rolling completely horizontally, change velocity to add upward or downward y-axis component at random
+                            float dir = (GetRandomValue(0, 1) == 0) ? -180.0f : 180.0f;
+                            nut.vy = dir;
+                        } else {
+                            // If rolling with upward/downward y-axis component, multiply y-axis component by -1 (flip direction)
+                            nut.vy = -nut.vy;
+                        }
+                        nut.lastHitZombie = z.get(); // Track hit zombie to prevent double-bouncing on the same zombie
+                        nut.hitCooldown = 0.25f;    // 250ms deflection cooldown to allow clearing closely spaced zombie clusters
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowling.ogg"));
+                        break;
+                    }
+                }
+            }
         }
     }
 
