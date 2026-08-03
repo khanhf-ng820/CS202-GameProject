@@ -32,6 +32,8 @@ bool BowlingLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const
 }
 
 void BowlingLevel::update(float dt) {
+    if (m_levelWon || m_levelLost) return;
+
     // 1. Advance conveyor belt animation frame (6 rows of 16px each in ConveyorBelt.png)
     m_animTimer += dt;
     float frameDuration = 0.08f; // ~12.5 FPS animation speed
@@ -73,7 +75,15 @@ void BowlingLevel::update(float dt) {
 
     Vector2 mousePos = GetVirtualMousePosition();
 
-    // 4. Handle card pickup from conveyor belt (when not currently holding a card)
+    // 4. Handle right-click on grid to spawn ZombieNormal at right of lane (x = 700.0f, y = 50.0f + r * 100.0f)
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        int r, c;
+        if (getGridCell(mousePos, r, c)) {
+            m_zombies.push_back(std::make_unique<ZombieNormal>(res, 700.0f, 50.0f + r * 100.0f));
+        }
+    }
+
+    // 5. Handle card pickup from conveyor belt (when not currently holding a card)
     if (!m_isHoldingCard && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         for (size_t i = 0; i < m_cards.size(); ++i) {
             Rectangle cardRect = { m_cards[i].x, 8.0f, 50.0f, 70.0f };
@@ -87,7 +97,7 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 5. Handle plant placement on lawn grid (when holding a card)
+    // 6. Handle plant placement on lawn grid (when holding a card)
     // Note: Deselecting is disabled per requirements — player MUST place the card!
     if (m_isHoldingCard && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         int r, c;
@@ -112,7 +122,7 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 6. Update rolling bowling nuts
+    // 7. Update rolling bowling nuts
     for (auto& nut : m_bowlingNuts) {
         nut.x += nut.rollSpeed * dt;
         nut.rotationAngle += nut.rotationSpeed * dt;
@@ -128,7 +138,18 @@ void BowlingLevel::update(float dt) {
         m_bowlingNuts.end()
     );
 
-    // 7. Update placed plants (if any)
+    // 8. Update zombies (right to left movement) and check loss condition
+    for (auto& z : m_zombies) {
+        if (!z->isDead()) {
+            z->update(dt);
+            // Check loss condition: Zombie reaches house (x < 160.0f)
+            if (z->getX() < 160.0f) {
+                m_levelLost = true;
+            }
+        }
+    }
+
+    // 9. Update placed plants (if any)
     std::vector<Projectile> dummyProjectiles;
     std::vector<SunItem> dummySuns;
     for (int r = 0; r < 5; ++r) {
@@ -193,7 +214,14 @@ void BowlingLevel::draw() {
         }
     }
 
-    // 4. Draw active rolling Wall-nut bowling entities rotating around center (using actual Wall-nut plant body sprite)
+    // 4. Draw active zombies
+    for (const auto& z : m_zombies) {
+        if (!z->isDead()) {
+            z->draw();
+        }
+    }
+
+    // 5. Draw active rolling Wall-nut bowling entities rotating around center (using actual Wall-nut plant body sprite)
     Texture2D nutBodyTex = res.GetTexture("WALLNUT_BODY");
     if (nutBodyTex.id == 0) nutBodyTex = res.GetTexture("Wallnut_body");
     if (nutBodyTex.id == 0) {
@@ -221,7 +249,7 @@ void BowlingLevel::draw() {
         }
     }
 
-    // 5. Draw hover highlight cell on front lawn grid
+    // 6. Draw hover highlight cell on front lawn grid
     Vector2 mousePos = GetVirtualMousePosition();
     int hoverRow, hoverCol;
     if (getGridCell(mousePos, hoverRow, hoverCol)) {
@@ -243,7 +271,7 @@ void BowlingLevel::draw() {
         }
     }
 
-    // 5. Draw ConveyorBelt_backdrop at (0,0) (matching Level 1 SeedBank position)
+    // 7. Draw ConveyorBelt_backdrop at (0,0) (matching Level 1 SeedBank position)
     Texture2D backdropTex = res.GetTexture("CONVEYORBELT_BACKDROP");
     if (backdropTex.id == 0) backdropTex = res.GetTexture("ConveyorBelt_backdrop");
     if (backdropTex.id != 0) {
@@ -260,7 +288,7 @@ void BowlingLevel::draw() {
         DrawTexturePro(conveyorTex, srcRec, destRec, { 0.0f, 0.0f }, 0.0f, WHITE);
     }
 
-    // 6. Draw conveyor belt plant cards on top of conveyor belt bar
+    // 8. Draw conveyor belt plant cards on top of conveyor belt bar
     Texture2D cardTex = res.GetTexture("WALLNUT");
     for (const auto& card : m_cards) {
         Rectangle cardRect = { card.x, 8.0f, 50.0f, 70.0f };
@@ -279,7 +307,7 @@ void BowlingLevel::draw() {
         }
     }
 
-    // 7. Draw held card attached directly under mouse cursor
+    // 9. Draw held card attached directly under mouse cursor
     if (m_isHoldingCard) {
         Rectangle cursorCardRect = { mousePos.x - 25.0f, mousePos.y - 35.0f, 50.0f, 70.0f };
         if (cardTex.id != 0) {
@@ -297,9 +325,24 @@ void BowlingLevel::draw() {
         }
     }
 
+    // 10. Draw Win / Loss Overlays (identical to Level 1)
+    if (m_levelWon) {
+        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
+        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
+        DrawText("LEVEL COMPLETED!", 260, 240, 28, GOLD);
+        DrawText("You defeated all zombies!", 270, 290, 18, WHITE);
+        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+    } else if (m_levelLost) {
+        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
+        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
+        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 215, 240, 22, RED);
+        DrawText("Game Over!", 350, 290, 20, WHITE);
+        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+    }
+
     EndTextureMode();
 
-    // 3. Draw targetScreen stretched to actual window dimensions
+    // 11. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -326,7 +369,7 @@ void BowlingLevel::run() {
         update(dt);
         draw();
 
-        if (IsKeyPressed(KEY_ESCAPE)) {
+        if (IsKeyPressed(KEY_ESCAPE) || (m_levelWon && IsKeyPressed(KEY_ENTER))) {
             break;
         }
     }

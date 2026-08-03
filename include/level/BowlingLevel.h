@@ -3,6 +3,8 @@
 #include "resources.h"
 #include "Plant.h"
 #include "Wallnut.h"
+#include "Zombie.h"
+#include "ZombieNormal.h"
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -43,6 +45,13 @@ private:
 
     // Active rolling bowling nuts
     std::vector<BowlingNut> m_bowlingNuts;
+
+    // Active zombies
+    std::vector<std::unique_ptr<Zombie>> m_zombies;
+
+    // Level progression & game over state
+    bool m_levelWon = false;
+    bool m_levelLost = false;
 
     // Grid state for placed plants
     std::unique_ptr<Plant> m_grid[5][9];
