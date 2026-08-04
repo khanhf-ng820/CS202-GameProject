@@ -50,6 +50,8 @@ private:
 
     // Active zombies
     std::vector<std::unique_ptr<Zombie>> m_zombies;
+    std::vector<std::pair<const Zombie*, float>> m_hitDebugTimers;
+    bool m_showDebug = true;
 
     // Level progression & game over state
     bool m_levelWon = false;

@@ -331,6 +331,8 @@ public:
 
 ### Building the Project
 
+#### macOS/Linux:
+
 ```bash
 # Run the automated build script (applies mandatory CMAKE_POLICY_VERSION_MINIMUM shim)
 bash build.sh
@@ -339,3 +341,13 @@ bash build.sh
 ./build/PvZGame
 ```
 
+#### Windows:
+
+```powershell
+# Run the automated build script (applies mandatory CMAKE_POLICY_VERSION_MINIMUM shim)
+cmake -S . -B build "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+cmake --build build --config Release --parallel 4
+
+# Run executable
+.\build\PvZGame.exe
+```

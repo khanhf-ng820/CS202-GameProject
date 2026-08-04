@@ -75,7 +75,13 @@ void BowlingLevel::update(float dt) {
 
     Vector2 mousePos = GetVirtualMousePosition();
 
-    // 4. Handle right-click on grid to spawn ZombieNormal at right of lane (x = 700.0f, y = 50.0f + r * 100.0f)
+    // 4. Handle Debug toggle button click (700, 10, 90, 30)
+    Rectangle debugBtnRect = { 700.0f, 10.0f, 90.0f, 30.0f };
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, debugBtnRect)) {
+        m_showDebug = !m_showDebug;
+    }
+
+    // 5. Handle right-click on grid to spawn ZombieNormal at right of lane (x = 700.0f, y = 50.0f + r * 100.0f)
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         int r, c;
         if (getGridCell(mousePos, r, c)) {
@@ -166,6 +172,20 @@ void BowlingLevel::update(float dt) {
                         }
                         nut.lastHitZombie = z.get(); // Track hit zombie to prevent double-bouncing on the same zombie
                         nut.hitCooldown = 0.25f;    // 250ms deflection cooldown to allow clearing closely spaced zombie clusters
+
+                        // Track hit debug timer for 0.6s hit highlight (turns RED -> BLUE)
+                        bool foundDebug = false;
+                        for (auto& item : m_hitDebugTimers) {
+                            if (item.first == z.get()) {
+                                item.second = 0.6f;
+                                foundDebug = true;
+                                break;
+                            }
+                        }
+                        if (!foundDebug) {
+                            m_hitDebugTimers.push_back({ z.get(), 0.6f });
+                        }
+
                         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowling.ogg"));
                         break;
                     }
@@ -173,6 +193,16 @@ void BowlingLevel::update(float dt) {
             }
         }
     }
+
+    // Update hit debug timers (decrement and cleanup)
+    for (auto& item : m_hitDebugTimers) {
+        item.second -= dt;
+    }
+    m_hitDebugTimers.erase(
+        std::remove_if(m_hitDebugTimers.begin(), m_hitDebugTimers.end(),
+            [](const std::pair<const Zombie*, float>& item) { return item.second <= 0.0f; }),
+        m_hitDebugTimers.end()
+    );
 
     // Despawn bowling nuts that exit the screen on the right (x > 850.0f)
     m_bowlingNuts.erase(
@@ -257,14 +287,38 @@ void BowlingLevel::draw() {
         }
     }
 
-    // 4. Draw active zombies
+    // 4. Draw active zombies & debug overlays (bounding boxes, center points, collision zones, hit highlight)
     for (const auto& z : m_zombies) {
         if (!z->isDead()) {
             z->draw();
+
+            if (m_showDebug) {
+                float zCx = z->getX() + 40.0f;
+                float zCy = z->getY() + 50.0f;
+
+                bool isHit = false;
+                for (const auto& item : m_hitDebugTimers) {
+                    if (item.first == z.get()) {
+                        isHit = true;
+                        break;
+                    }
+                }
+
+                Color debugColor = isHit ? BLUE : RED;
+
+                // Draw semi-transparent collision zone (R = 42.0f, front approach dx <= 10.0f: sector from 76.23° to 283.77°)
+                DrawCircleSector({ zCx, zCy }, 42.0f, 76.23f, 283.77f, 36, ColorAlpha(debugColor, 0.35f));
+
+                // Draw red/blue bounding box around zombie (80x100px)
+                DrawRectangleLinesEx({ z->getX(), z->getY(), 80.0f, 100.0f }, 2.0f, debugColor);
+
+                // Draw center point of zombie
+                DrawCircle((int)zCx, (int)zCy, 4.0f, debugColor);
+            }
         }
     }
 
-    // 5. Draw active rolling Wall-nut bowling entities rotating around center (using actual Wall-nut plant body sprite)
+    // 5. Draw active rolling Wall-nut bowling entities rotating around center & debug overlays
     Texture2D nutBodyTex = res.GetTexture("WALLNUT_BODY");
     if (nutBodyTex.id == 0) nutBodyTex = res.GetTexture("Wallnut_body");
     if (nutBodyTex.id == 0) {
@@ -290,7 +344,21 @@ void BowlingLevel::draw() {
         } else {
             DrawCircle((int)nut.x, (int)nut.y, 30.0f, BROWN);
         }
+
+        if (m_showDebug) {
+            // Draw red bounding box around Wall-nut (60x65px centered at nut position)
+            DrawRectangleLinesEx({ nut.x - 30.0f, nut.y - 32.5f, 60.0f, 65.0f }, 2.0f, RED);
+
+            // Draw red center point of Wall-nut
+            DrawCircle((int)nut.x, (int)nut.y, 4.0f, RED);
+        }
     }
+
+    // Draw Debug toggle button in top right UI area (700, 10, 90, 30)
+    Rectangle debugBtnRect = { 700.0f, 10.0f, 90.0f, 30.0f };
+    DrawRectangleRec(debugBtnRect, m_showDebug ? DARKGREEN : DARKGRAY);
+    DrawRectangleLinesEx(debugBtnRect, 2.0f, WHITE);
+    DrawText(m_showDebug ? "Debug: ON" : "Debug: OFF", 708, 17, 14, WHITE);
 
     // 6. Draw hover highlight cell on front lawn grid
     Vector2 mousePos = GetVirtualMousePosition();
