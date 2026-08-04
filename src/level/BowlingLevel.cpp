@@ -154,7 +154,7 @@ void BowlingLevel::update(float dt) {
         for (auto& z : m_zombies) {
             if (!z->isDead() && nut.hitCooldown <= 0.0f && z.get() != nut.lastHitZombie) {
                 float zCx = z->getX() + 40.0f;
-                float zCy = z->getY() + 50.0f;
+                float zCy = z->getY() + 80.0f; // Align collision center Y (130.0f + row * 100.0f) with Wall-nut center Y
                 float dx = nut.x - zCx;
                 float dy = nut.y - zCy;
 
@@ -294,7 +294,7 @@ void BowlingLevel::draw() {
 
             if (m_showDebug) {
                 float zCx = z->getX() + 40.0f;
-                float zCy = z->getY() + 50.0f;
+                float zCy = z->getY() + 80.0f; // Align collision center Y (130.0f + row * 100.0f) with Wall-nut center Y
 
                 bool isHit = false;
                 for (const auto& item : m_hitDebugTimers) {
