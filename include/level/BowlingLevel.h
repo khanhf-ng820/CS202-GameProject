@@ -24,6 +24,8 @@ struct BowlingNut {
     float rotationSpeed;
     const Zombie* lastHitZombie = nullptr;
     float hitCooldown = 0.0f;
+    bool isGiant = false;
+    std::vector<const Zombie*> hitZombies;
 };
 
 class BowlingLevel {

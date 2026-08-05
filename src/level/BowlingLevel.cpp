@@ -51,7 +51,8 @@ void BowlingLevel::update(float dt) {
     if (m_cardSpawnTimer >= 3.0f) {
         // Only spawn a new card if the conveyor belt has room (last card has moved left of spawn position)
         if (m_cards.empty() || m_cards.back().x < spawnX) {
-            m_cards.push_back({ spawnX, "Wallnut" });
+            std::string plantType = (GetRandomValue(1, 100) <= 20) ? "GiantWallnut" : "Wallnut";
+            m_cards.push_back({ spawnX, plantType });
             m_cardSpawnTimer = 0.0f;
         } else {
             // Conveyor belt is full; cap timer at 3.0s so a card spawns immediately when space opens up
@@ -119,7 +120,8 @@ void BowlingLevel::update(float dt) {
                 float centerY = cellY + cellH / 2.0f;
 
                 // Spawn rolling bowling nut moving to the right and rotating around its center (vx = 300.0f, vy = 0.0f)
-                m_bowlingNuts.push_back({ centerX, centerY, 300.0f, 0.0f, 0.0f, 360.0f, nullptr, 0.0f });
+                bool isGiant = (m_heldPlantType == "GiantWallnut");
+                m_bowlingNuts.push_back({ centerX, centerY, 300.0f, 0.0f, 0.0f, 360.0f, nullptr, 0.0f, isGiant, {} });
 
                 m_isHoldingCard = false;
                 m_heldPlantType = "";
@@ -141,53 +143,93 @@ void BowlingLevel::update(float dt) {
             nut.hitCooldown -= dt;
         }
 
-        // Top / Bottom lawn boundary bounce (top edge of row 0: y = 80.0f, bottom edge of row 4: y = 580.0f)
-        if (nut.y <= 80.0f && nut.vy < 0.0f) {
-            nut.y = 80.0f;
-            nut.vy = -nut.vy;
-        } else if (nut.y >= 580.0f && nut.vy > 0.0f) {
-            nut.y = 580.0f;
-            nut.vy = -nut.vy;
-        }
+        if (!nut.isGiant) {
+            // Top / Bottom lawn boundary bounce (top edge of row 0: y = 80.0f, bottom edge of row 4: y = 580.0f)
+            if (nut.y <= 80.0f && nut.vy < 0.0f) {
+                nut.y = 80.0f;
+                nut.vy = -nut.vy;
+            } else if (nut.y >= 580.0f && nut.vy > 0.0f) {
+                nut.y = 580.0f;
+                nut.vy = -nut.vy;
+            }
 
-        // Collision detection with active zombies (center-to-center distance <= 42.0f, front approach dx <= 10.0f, ignoring last hit zombie & respecting hitCooldown)
-        for (auto& z : m_zombies) {
-            if (!z->isDead() && nut.hitCooldown <= 0.0f && z.get() != nut.lastHitZombie) {
-                float zCx = z->getX() + 40.0f;
-                float zCy = z->getY() + 80.0f; // Align collision center Y (130.0f + row * 100.0f) with Wall-nut center Y
-                float dx = nut.x - zCx;
-                float dy = nut.y - zCy;
+            // Collision detection with active zombies for normal Wall-nut
+            for (auto& z : m_zombies) {
+                if (!z->isDead() && nut.hitCooldown <= 0.0f && z.get() != nut.lastHitZombie) {
+                    float zCx = z->getX() + 40.0f;
+                    float zCy = z->getY() + 80.0f; // Align collision center Y (130.0f + row * 100.0f) with Wall-nut center Y
+                    float dx = nut.x - zCx;
+                    float dy = nut.y - zCy;
 
-                // Only collide if Wall-nut is approaching from the front (dx <= 10.0f)
-                if (dx <= 10.0f) {
-                    float dist = sqrtf(dx * dx + dy * dy);
-                    if (dist <= 42.0f) {
-                        if (nut.vy == 0.0f) {
-                            // If rolling completely horizontally, change velocity to add upward or downward y-axis component at random
-                            float dir = (GetRandomValue(0, 1) == 0) ? -180.0f : 180.0f;
-                            nut.vy = dir;
-                        } else {
-                            // If rolling with upward/downward y-axis component, multiply y-axis component by -1 (flip direction)
-                            nut.vy = -nut.vy;
+                    // Only collide if Wall-nut is approaching from the front (dx <= 10.0f)
+                    if (dx <= 10.0f) {
+                        float dist = sqrtf(dx * dx + dy * dy);
+                        if (dist <= 42.0f) {
+                            if (nut.vy == 0.0f) {
+                                float dir = (GetRandomValue(0, 1) == 0) ? -180.0f : 180.0f;
+                                nut.vy = dir;
+                            } else {
+                                nut.vy = -nut.vy;
+                            }
+                            nut.lastHitZombie = z.get(); // Track hit zombie to prevent double-bouncing on the same zombie
+                            nut.hitCooldown = 0.25f;    // 250ms deflection cooldown to allow clearing closely spaced zombie clusters
+
+                            bool foundDebug = false;
+                            for (auto& item : m_hitDebugTimers) {
+                                if (item.first == z.get()) {
+                                    item.second = 0.6f;
+                                    foundDebug = true;
+                                    break;
+                                }
+                            }
+                            if (!foundDebug) {
+                                m_hitDebugTimers.push_back({ z.get(), 0.6f });
+                            }
+
+                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowling.ogg"));
+                            break;
                         }
-                        nut.lastHitZombie = z.get(); // Track hit zombie to prevent double-bouncing on the same zombie
-                        nut.hitCooldown = 0.25f;    // 250ms deflection cooldown to allow clearing closely spaced zombie clusters
+                    }
+                }
+            }
+        } else {
+            // Giant Wall-nut logic: NO bouncing, NO velocity change, STRICTLY SAME LANE ONLY
+            nut.vx = 300.0f;
+            nut.vy = 0.0f;
 
-                        // Track hit debug timer for 0.6s hit highlight (turns RED -> BLUE)
-                        bool foundDebug = false;
-                        for (auto& item : m_hitDebugTimers) {
-                            if (item.first == z.get()) {
-                                item.second = 0.6f;
-                                foundDebug = true;
-                                break;
+            for (auto& z : m_zombies) {
+                if (!z->isDead()) {
+                    float zCx = z->getX() + 40.0f;
+                    float zCy = z->getY() + 80.0f;
+
+                    // Strictly check if zombie is in the same lane (Y center match)
+                    if (fabsf(nut.y - zCy) < 10.0f) {
+                        float dx = nut.x - zCx;
+                        float dy = nut.y - zCy;
+
+                        if (dx <= 10.0f) {
+                            float dist = sqrtf(dx * dx + dy * dy);
+                            if (dist <= 84.0f) {
+                                // Check if this zombie hasn't been hit by this Giant Wall-nut yet
+                                if (std::find(nut.hitZombies.begin(), nut.hitZombies.end(), z.get()) == nut.hitZombies.end()) {
+                                    nut.hitZombies.push_back(z.get());
+
+                                    bool foundDebug = false;
+                                    for (auto& item : m_hitDebugTimers) {
+                                        if (item.first == z.get()) {
+                                            item.second = 0.6f;
+                                            foundDebug = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!foundDebug) {
+                                        m_hitDebugTimers.push_back({ z.get(), 0.6f });
+                                    }
+
+                                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowlingimpact2.ogg"));
+                                }
                             }
                         }
-                        if (!foundDebug) {
-                            m_hitDebugTimers.push_back({ z.get(), 0.6f });
-                        }
-
-                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowling.ogg"));
-                        break;
                     }
                 }
             }
@@ -328,8 +370,8 @@ void BowlingLevel::draw() {
     }
 
     for (const auto& nut : m_bowlingNuts) {
-        float renderW = 60.0f;
-        float renderH = 65.0f;
+        float renderW = nut.isGiant ? 120.0f : 60.0f;
+        float renderH = nut.isGiant ? 130.0f : 65.0f;
         Rectangle destRec = { nut.x, nut.y, renderW, renderH };
         Vector2 origin = { renderW / 2.0f, renderH / 2.0f };
         if (nutBodyTex.id != 0) {
@@ -342,12 +384,12 @@ void BowlingLevel::draw() {
                 WHITE
             );
         } else {
-            DrawCircle((int)nut.x, (int)nut.y, 30.0f, BROWN);
+            DrawCircle((int)nut.x, (int)nut.y, renderW / 2.0f, BROWN);
         }
 
         if (m_showDebug) {
-            // Draw red bounding box around Wall-nut (60x65px centered at nut position)
-            DrawRectangleLinesEx({ nut.x - 30.0f, nut.y - 32.5f, 60.0f, 65.0f }, 2.0f, RED);
+            // Draw red bounding box around Wall-nut (centered at nut position)
+            DrawRectangleLinesEx({ nut.x - renderW / 2.0f, nut.y - renderH / 2.0f, renderW, renderH }, 2.0f, RED);
 
             // Draw red center point of Wall-nut
             DrawCircle((int)nut.x, (int)nut.y, 4.0f, RED);
@@ -401,39 +443,38 @@ void BowlingLevel::draw() {
 
     // 8. Draw conveyor belt plant cards on top of conveyor belt bar
     Texture2D cardTex = res.GetTexture("WALLNUT");
-    for (const auto& card : m_cards) {
-        Rectangle cardRect = { card.x, 8.0f, 50.0f, 70.0f };
+    auto drawCard = [&](const std::string& plantType, Rectangle cRect) {
         if (cardTex.id != 0) {
             DrawTexturePro(
                 cardTex,
                 { 0.0f, 0.0f, (float)cardTex.width, (float)cardTex.height },
-                cardRect,
+                cRect,
                 { 0.0f, 0.0f },
                 0.0f,
                 WHITE
             );
         } else {
-            DrawRectangleRec(cardRect, LIGHTGRAY);
-            DrawText("Wallnut", (int)cardRect.x + 2, (int)cardRect.y + 10, 10, BLACK);
+            DrawRectangleRec(cRect, LIGHTGRAY);
+            DrawText("Wallnut", (int)cRect.x + 2, (int)cRect.y + 10, 10, BLACK);
         }
+
+        if (plantType == "GiantWallnut") {
+            DrawRectangleLinesEx(cRect, 2.0f, GOLD);
+            Rectangle badgeRec = { cRect.x, cRect.y + cRect.height - 16.0f, cRect.width, 16.0f };
+            DrawRectangleRec(badgeRec, ColorAlpha(BLACK, 0.75f));
+            DrawText("GIANT", (int)cRect.x + 8, (int)cRect.y + (int)cRect.height - 13, 10, GOLD);
+        }
+    };
+
+    for (const auto& card : m_cards) {
+        Rectangle cardRect = { card.x, 8.0f, 50.0f, 70.0f };
+        drawCard(card.plantType, cardRect);
     }
 
     // 9. Draw held card attached directly under mouse cursor
     if (m_isHoldingCard) {
         Rectangle cursorCardRect = { mousePos.x - 25.0f, mousePos.y - 35.0f, 50.0f, 70.0f };
-        if (cardTex.id != 0) {
-            DrawTexturePro(
-                cardTex,
-                { 0.0f, 0.0f, (float)cardTex.width, (float)cardTex.height },
-                cursorCardRect,
-                { 0.0f, 0.0f },
-                0.0f,
-                WHITE
-            );
-        } else {
-            DrawRectangleRec(cursorCardRect, LIGHTGRAY);
-            DrawText("Wallnut", (int)cursorCardRect.x + 2, (int)cursorCardRect.y + 10, 10, BLACK);
-        }
+        drawCard(m_heldPlantType, cursorCardRect);
     }
 
     // 10. Draw Win / Loss Overlays (identical to Level 1)
