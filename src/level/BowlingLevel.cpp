@@ -315,33 +315,40 @@ void BowlingLevel::draw() {
     }
 
     // 8. Draw conveyor belt plant cards on top of conveyor belt bar
-    Texture2D cardTex = res.GetTexture("WALLNUT");
     auto drawCard = [&](const std::string& plantType, Rectangle cRect) {
-        Color tint = (plantType == "ExplodeNut") ? RED : WHITE;
-        if (cardTex.id != 0) {
+        Texture2D tex = res.GetTexture("WALLNUT");
+        if (plantType == "GiantWallnut") {
+            Texture2D giantTex = res.GetTexture("GIANTWALLNUT");
+            if (giantTex.id == 0) giantTex = res.GetTexture("GiantWallnut");
+            if (giantTex.id == 0) {
+                std::string path = res.GetAssetPath("assets/PlantSeedPackets/GiantWallnut.png");
+                res.LoadFile(path);
+                giantTex = res.GetTexture("GIANTWALLNUT");
+            }
+            if (giantTex.id != 0) tex = giantTex;
+        } else if (plantType == "ExplodeNut") {
+            Texture2D explodeTex = res.GetTexture("EXPLODEONUT");
+            if (explodeTex.id == 0) explodeTex = res.GetTexture("ExplodeONut");
+            if (explodeTex.id == 0) {
+                std::string path = res.GetAssetPath("assets/PlantSeedPackets/ExplodeONut.png");
+                res.LoadFile(path);
+                explodeTex = res.GetTexture("EXPLODEONUT");
+            }
+            if (explodeTex.id != 0) tex = explodeTex;
+        }
+
+        if (tex.id != 0) {
             DrawTexturePro(
-                cardTex,
-                { 0.0f, 0.0f, (float)cardTex.width, (float)cardTex.height },
+                tex,
+                { 0.0f, 0.0f, (float)tex.width, (float)tex.height },
                 cRect,
                 { 0.0f, 0.0f },
                 0.0f,
-                tint
+                WHITE
             );
         } else {
-            DrawRectangleRec(cRect, (plantType == "ExplodeNut") ? MAROON : LIGHTGRAY);
-            DrawText("Wallnut", (int)cRect.x + 2, (int)cRect.y + 10, 10, WHITE);
-        }
-
-        if (plantType == "GiantWallnut") {
-            DrawRectangleLinesEx(cRect, 2.0f, GOLD);
-            Rectangle badgeRec = { cRect.x, cRect.y + cRect.height - 16.0f, cRect.width, 16.0f };
-            DrawRectangleRec(badgeRec, ColorAlpha(BLACK, 0.75f));
-            DrawText("GIANT", (int)cRect.x + 8, (int)cRect.y + (int)cRect.height - 13, 10, GOLD);
-        } else if (plantType == "ExplodeNut") {
-            DrawRectangleLinesEx(cRect, 2.0f, RED);
-            Rectangle badgeRec = { cRect.x, cRect.y + cRect.height - 16.0f, cRect.width, 16.0f };
-            DrawRectangleRec(badgeRec, ColorAlpha(BLACK, 0.75f));
-            DrawText("EXPLODE", (int)cRect.x + 2, (int)cRect.y + (int)cRect.height - 13, 9, RED);
+            DrawRectangleRec(cRect, LIGHTGRAY);
+            DrawText(plantType.c_str(), (int)cRect.x + 2, (int)cRect.y + 10, 10, BLACK);
         }
     };
 
