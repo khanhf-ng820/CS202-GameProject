@@ -10,23 +10,11 @@
 #include <algorithm>
 #include <memory>
 
+#include "BowlingNut.h"
+
 struct BowlingCard {
     float x;
     std::string plantType;
-};
-
-struct BowlingNut {
-    float x;
-    float y;
-    float vx;
-    float vy;
-    float rotationAngle;
-    float rotationSpeed;
-    const Zombie* lastHitZombie = nullptr;
-    float hitCooldown = 0.0f;
-    bool isGiant = false;
-    bool isExplode = false;
-    std::vector<const Zombie*> hitZombies;
 };
 
 class BowlingLevel {
@@ -49,7 +37,7 @@ private:
     float m_cardSpawnTimer = 0.0f;
 
     // Active rolling bowling nuts
-    std::vector<BowlingNut> m_bowlingNuts;
+    std::vector<std::unique_ptr<BowlingNut>> m_bowlingNuts;
 
     // Active zombies
     std::vector<std::unique_ptr<Zombie>> m_zombies;

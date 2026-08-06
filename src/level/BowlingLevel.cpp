@@ -125,10 +125,8 @@ void BowlingLevel::update(float dt) {
                 float centerX = cellX + cellW / 2.0f;
                 float centerY = cellY + cellH / 2.0f;
 
-                // Spawn rolling bowling nut moving to the right and rotating around its center (vx = 300.0f, vy = 0.0f)
-                bool isGiant = (m_heldPlantType == "GiantWallnut");
-                bool isExplode = (m_heldPlantType == "ExplodeNut");
-                m_bowlingNuts.push_back({ centerX, centerY, 300.0f, 0.0f, 0.0f, 360.0f, nullptr, 0.0f, isGiant, isExplode, {} });
+                // Spawn rolling bowling nut using factory method
+                m_bowlingNuts.push_back(BowlingNut::Create(m_heldPlantType, centerX, centerY));
 
                 m_isHoldingCard = false;
                 m_heldPlantType = "";
@@ -139,114 +137,7 @@ void BowlingLevel::update(float dt) {
 
     // 7. Update rolling bowling nuts & handle zombie collisions + boundary bouncing
     for (auto& nut : m_bowlingNuts) {
-        nut.x += nut.vx * dt;
-        nut.y += nut.vy * dt;
-        nut.rotationAngle += nut.rotationSpeed * dt;
-        if (nut.rotationAngle >= 360.0f) {
-            nut.rotationAngle -= 360.0f;
-        }
-
-        if (nut.hitCooldown > 0.0f) {
-            nut.hitCooldown -= dt;
-        }
-
-        if (!nut.isGiant && !nut.isExplode) {
-            // Top / Bottom lawn boundary bounce (top edge of row 0: y = 80.0f, bottom edge of row 4: y = 580.0f)
-            if (nut.y <= 80.0f && nut.vy < 0.0f) {
-                nut.y = 80.0f;
-                nut.vy = -nut.vy;
-            } else if (nut.y >= 580.0f && nut.vy > 0.0f) {
-                nut.y = 580.0f;
-                nut.vy = -nut.vy;
-            }
-
-            // Collision detection with active zombies for normal Wall-nut
-            for (auto& z : m_zombies) {
-                if (!z->isDead() && nut.hitCooldown <= 0.0f && z.get() != nut.lastHitZombie) {
-                    float zCx = z->getX() + 40.0f;
-                    float zCy = z->getY() + 80.0f; // Align collision center Y (130.0f + row * 100.0f) with Wall-nut center Y
-                    float dx = nut.x - zCx;
-                    float dy = nut.y - zCy;
-
-                    // Only collide if Wall-nut is approaching from the front (dx <= 10.0f)
-                    if (dx <= 10.0f) {
-                        float dist = sqrtf(dx * dx + dy * dy);
-                        if (dist <= 42.0f) {
-                            if (nut.vy == 0.0f) {
-                                float dir = (GetRandomValue(0, 1) == 0) ? -180.0f : 180.0f;
-                                nut.vy = dir;
-                            } else {
-                                nut.vy = -nut.vy;
-                            }
-                            nut.lastHitZombie = z.get(); // Track hit zombie to prevent double-bouncing on the same zombie
-                            nut.hitCooldown = 0.25f;    // 250ms deflection cooldown to allow clearing closely spaced zombie clusters
-
-                            bool foundDebug = false;
-                            for (auto& item : m_hitDebugTimers) {
-                                if (item.first == z.get()) {
-                                    item.second = 0.6f;
-                                    foundDebug = true;
-                                    break;
-                                }
-                            }
-                            if (!foundDebug) {
-                                m_hitDebugTimers.push_back({ z.get(), 0.6f });
-                            }
-
-                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowling.ogg"));
-                            break;
-                        }
-                    }
-                }
-            }
-        } else {
-            // Non-bouncing logic for Giant Wall-nut & Explode-o-nut (STRICTLY SAME LANE ONLY)
-            nut.vx = 300.0f;
-            nut.vy = 0.0f;
-
-            float hitRadius = nut.isGiant ? 84.0f : 42.0f;
-
-            for (auto& z : m_zombies) {
-                if (!z->isDead()) {
-                    float zCx = z->getX() + 40.0f;
-                    float zCy = z->getY() + 80.0f;
-
-                    // Strictly check if zombie is in the same lane (Y center match)
-                    if (fabsf(nut.y - zCy) < 10.0f) {
-                        float dx = nut.x - zCx;
-                        float dy = nut.y - zCy;
-
-                        if (dx <= 10.0f) {
-                            float dist = sqrtf(dx * dx + dy * dy);
-                            if (dist <= hitRadius) {
-                                // Check if this zombie hasn't been hit by this nut yet
-                                if (std::find(nut.hitZombies.begin(), nut.hitZombies.end(), z.get()) == nut.hitZombies.end()) {
-                                    nut.hitZombies.push_back(z.get());
-
-                                    bool foundDebug = false;
-                                    for (auto& item : m_hitDebugTimers) {
-                                        if (item.first == z.get()) {
-                                            item.second = 0.6f;
-                                            foundDebug = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!foundDebug) {
-                                        m_hitDebugTimers.push_back({ z.get(), 0.6f });
-                                    }
-
-                                    if (nut.isExplode) {
-                                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/cherrybomb.ogg"));
-                                    } else {
-                                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowlingimpact2.ogg"));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        nut->update(dt, m_zombies, m_hitDebugTimers, res);
     }
 
     // Update hit debug timers (decrement and cleanup)
@@ -262,7 +153,7 @@ void BowlingLevel::update(float dt) {
     // Despawn bowling nuts that exit the screen on the right (x > 850.0f)
     m_bowlingNuts.erase(
         std::remove_if(m_bowlingNuts.begin(), m_bowlingNuts.end(),
-            [](const BowlingNut& nut) { return nut.x > 850.0f; }),
+            [](const std::unique_ptr<BowlingNut>& nut) { return nut->isOffScreen(); }),
         m_bowlingNuts.end()
     );
 
@@ -374,41 +265,8 @@ void BowlingLevel::draw() {
     }
 
     // 5. Draw active rolling Wall-nut bowling entities rotating around center & debug overlays
-    Texture2D nutBodyTex = res.GetTexture("WALLNUT_BODY");
-    if (nutBodyTex.id == 0) nutBodyTex = res.GetTexture("Wallnut_body");
-    if (nutBodyTex.id == 0) {
-        std::string bodyPath = res.GetAssetPath("assets/reanim/Wallnut_body.png");
-        res.LoadFile(bodyPath);
-        nutBodyTex = res.GetTexture("WALLNUT_BODY");
-    }
-
     for (const auto& nut : m_bowlingNuts) {
-        float renderW = nut.isGiant ? 120.0f : 60.0f;
-        float renderH = nut.isGiant ? 130.0f : 65.0f;
-        Rectangle destRec = { nut.x, nut.y, renderW, renderH };
-        Vector2 origin = { renderW / 2.0f, renderH / 2.0f };
-        Color tint = nut.isExplode ? RED : WHITE;
-
-        if (nutBodyTex.id != 0) {
-            DrawTexturePro(
-                nutBodyTex,
-                { 0.0f, 0.0f, (float)nutBodyTex.width, (float)nutBodyTex.height },
-                destRec,
-                origin,
-                nut.rotationAngle,
-                tint
-            );
-        } else {
-            DrawCircle((int)nut.x, (int)nut.y, renderW / 2.0f, nut.isExplode ? RED : BROWN);
-        }
-
-        if (m_showDebug) {
-            // Draw red bounding box around Wall-nut (centered at nut position)
-            DrawRectangleLinesEx({ nut.x - renderW / 2.0f, nut.y - renderH / 2.0f, renderW, renderH }, 2.0f, RED);
-
-            // Draw red center point of Wall-nut
-            DrawCircle((int)nut.x, (int)nut.y, 4.0f, RED);
-        }
+        nut->draw(res, m_showDebug);
     }
 
     // Draw Debug toggle button in top right UI area (700, 10, 90, 30)
