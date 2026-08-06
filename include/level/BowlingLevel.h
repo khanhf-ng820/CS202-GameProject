@@ -25,6 +25,7 @@ struct BowlingNut {
     const Zombie* lastHitZombie = nullptr;
     float hitCooldown = 0.0f;
     bool isGiant = false;
+    bool isExplode = false;
     std::vector<const Zombie*> hitZombies;
 };
 

@@ -51,7 +51,13 @@ void BowlingLevel::update(float dt) {
     if (m_cardSpawnTimer >= 3.0f) {
         // Only spawn a new card if the conveyor belt has room (last card has moved left of spawn position)
         if (m_cards.empty() || m_cards.back().x < spawnX) {
-            std::string plantType = (GetRandomValue(1, 100) <= 20) ? "GiantWallnut" : "Wallnut";
+            int roll = GetRandomValue(1, 100);
+            std::string plantType = "Wallnut";
+            if (roll <= 20) {
+                plantType = "GiantWallnut";
+            } else if (roll <= 40) {
+                plantType = "ExplodeNut";
+            }
             m_cards.push_back({ spawnX, plantType });
             m_cardSpawnTimer = 0.0f;
         } else {
@@ -121,7 +127,8 @@ void BowlingLevel::update(float dt) {
 
                 // Spawn rolling bowling nut moving to the right and rotating around its center (vx = 300.0f, vy = 0.0f)
                 bool isGiant = (m_heldPlantType == "GiantWallnut");
-                m_bowlingNuts.push_back({ centerX, centerY, 300.0f, 0.0f, 0.0f, 360.0f, nullptr, 0.0f, isGiant, {} });
+                bool isExplode = (m_heldPlantType == "ExplodeNut");
+                m_bowlingNuts.push_back({ centerX, centerY, 300.0f, 0.0f, 0.0f, 360.0f, nullptr, 0.0f, isGiant, isExplode, {} });
 
                 m_isHoldingCard = false;
                 m_heldPlantType = "";
@@ -143,7 +150,7 @@ void BowlingLevel::update(float dt) {
             nut.hitCooldown -= dt;
         }
 
-        if (!nut.isGiant) {
+        if (!nut.isGiant && !nut.isExplode) {
             // Top / Bottom lawn boundary bounce (top edge of row 0: y = 80.0f, bottom edge of row 4: y = 580.0f)
             if (nut.y <= 80.0f && nut.vy < 0.0f) {
                 nut.y = 80.0f;
@@ -193,9 +200,11 @@ void BowlingLevel::update(float dt) {
                 }
             }
         } else {
-            // Giant Wall-nut logic: NO bouncing, NO velocity change, STRICTLY SAME LANE ONLY
+            // Non-bouncing logic for Giant Wall-nut & Explode-o-nut (STRICTLY SAME LANE ONLY)
             nut.vx = 300.0f;
             nut.vy = 0.0f;
+
+            float hitRadius = nut.isGiant ? 84.0f : 42.0f;
 
             for (auto& z : m_zombies) {
                 if (!z->isDead()) {
@@ -209,8 +218,8 @@ void BowlingLevel::update(float dt) {
 
                         if (dx <= 10.0f) {
                             float dist = sqrtf(dx * dx + dy * dy);
-                            if (dist <= 84.0f) {
-                                // Check if this zombie hasn't been hit by this Giant Wall-nut yet
+                            if (dist <= hitRadius) {
+                                // Check if this zombie hasn't been hit by this nut yet
                                 if (std::find(nut.hitZombies.begin(), nut.hitZombies.end(), z.get()) == nut.hitZombies.end()) {
                                     nut.hitZombies.push_back(z.get());
 
@@ -226,7 +235,11 @@ void BowlingLevel::update(float dt) {
                                         m_hitDebugTimers.push_back({ z.get(), 0.6f });
                                     }
 
-                                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowlingimpact2.ogg"));
+                                    if (nut.isExplode) {
+                                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/cherrybomb.ogg"));
+                                    } else {
+                                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bowlingimpact2.ogg"));
+                                    }
                                 }
                             }
                         }
@@ -374,6 +387,8 @@ void BowlingLevel::draw() {
         float renderH = nut.isGiant ? 130.0f : 65.0f;
         Rectangle destRec = { nut.x, nut.y, renderW, renderH };
         Vector2 origin = { renderW / 2.0f, renderH / 2.0f };
+        Color tint = nut.isExplode ? RED : WHITE;
+
         if (nutBodyTex.id != 0) {
             DrawTexturePro(
                 nutBodyTex,
@@ -381,10 +396,10 @@ void BowlingLevel::draw() {
                 destRec,
                 origin,
                 nut.rotationAngle,
-                WHITE
+                tint
             );
         } else {
-            DrawCircle((int)nut.x, (int)nut.y, renderW / 2.0f, BROWN);
+            DrawCircle((int)nut.x, (int)nut.y, renderW / 2.0f, nut.isExplode ? RED : BROWN);
         }
 
         if (m_showDebug) {
@@ -444,6 +459,7 @@ void BowlingLevel::draw() {
     // 8. Draw conveyor belt plant cards on top of conveyor belt bar
     Texture2D cardTex = res.GetTexture("WALLNUT");
     auto drawCard = [&](const std::string& plantType, Rectangle cRect) {
+        Color tint = (plantType == "ExplodeNut") ? RED : WHITE;
         if (cardTex.id != 0) {
             DrawTexturePro(
                 cardTex,
@@ -451,11 +467,11 @@ void BowlingLevel::draw() {
                 cRect,
                 { 0.0f, 0.0f },
                 0.0f,
-                WHITE
+                tint
             );
         } else {
-            DrawRectangleRec(cRect, LIGHTGRAY);
-            DrawText("Wallnut", (int)cRect.x + 2, (int)cRect.y + 10, 10, BLACK);
+            DrawRectangleRec(cRect, (plantType == "ExplodeNut") ? MAROON : LIGHTGRAY);
+            DrawText("Wallnut", (int)cRect.x + 2, (int)cRect.y + 10, 10, WHITE);
         }
 
         if (plantType == "GiantWallnut") {
@@ -463,6 +479,11 @@ void BowlingLevel::draw() {
             Rectangle badgeRec = { cRect.x, cRect.y + cRect.height - 16.0f, cRect.width, 16.0f };
             DrawRectangleRec(badgeRec, ColorAlpha(BLACK, 0.75f));
             DrawText("GIANT", (int)cRect.x + 8, (int)cRect.y + (int)cRect.height - 13, 10, GOLD);
+        } else if (plantType == "ExplodeNut") {
+            DrawRectangleLinesEx(cRect, 2.0f, RED);
+            Rectangle badgeRec = { cRect.x, cRect.y + cRect.height - 16.0f, cRect.width, 16.0f };
+            DrawRectangleRec(badgeRec, ColorAlpha(BLACK, 0.75f));
+            DrawText("EXPLODE", (int)cRect.x + 2, (int)cRect.y + (int)cRect.height - 13, 9, RED);
         }
     };
 
