@@ -45,8 +45,9 @@ MainMenu::MainMenu(Resources& res)
     m_anim.SetFrame(MENU_REST_FRAME);
     m_anim.SetPaused(true);
 
-    // Hide duplicate adventure button track to prevent overdrawing the highlight
+    // Hide duplicate adventure button & shadow tracks to prevent overdrawing and darkening
     m_anim.SetTrackVisible("SelectorScreen_Adventure_button", false);
+    m_anim.SetTrackVisible("SelectorScreen_Adventure_shadow", false);
 
     // Load bottom-bar button textures from the already-loaded resource map
     m_optionsBtn   = res.GetTexture("SELECTORSCREEN_OPTIONS1");
@@ -188,9 +189,10 @@ void MainMenu::draw() {
     };
 
     LevelLabel labels[] = {
-        { TRACK_SURVIVAL,   "Level 1" },
-        { TRACK_CHALLENGES, "Level 2" },
-        { TRACK_ZEN_GARDEN, "Level 3" },
+        { TRACK_START_ADVENTURE, "Wall-nut Bowling" },
+        { TRACK_SURVIVAL,        "Level 1" },
+        { TRACK_CHALLENGES,      "Level 2" },
+        { TRACK_ZEN_GARDEN,      "Level 3" },
     };
 
     for (const auto& lbl : labels) {
