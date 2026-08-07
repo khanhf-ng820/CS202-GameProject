@@ -189,10 +189,10 @@ void BowlingLevel::update(float dt) {
         m_hitDebugTimers.end()
     );
 
-    // Despawn bowling nuts that exit the screen on the right (x > 850.0f)
+    // Despawn bowling nuts that exit the screen on the right (x > 850.0f) or explode on impact
     m_bowlingNuts.erase(
         std::remove_if(m_bowlingNuts.begin(), m_bowlingNuts.end(),
-            [](const std::unique_ptr<BowlingNut>& nut) { return nut->isOffScreen(); }),
+            [](const std::unique_ptr<BowlingNut>& nut) { return nut->isOffScreen() || nut->isExploded(); }),
         m_bowlingNuts.end()
     );
 
@@ -200,8 +200,8 @@ void BowlingLevel::update(float dt) {
     for (auto& z : m_zombies) {
         if (!z->isFinished()) {
             z->update(dt);
-            // Check loss condition: Zombie reaches house (x < 160.0f)
-            if (z->getX() < 160.0f) {
+            // Check loss condition: Living Zombie reaches house (x < 160.0f)
+            if (!z->isDead() && z->getX() < 160.0f) {
                 m_levelLost = true;
             }
         }
@@ -292,10 +292,10 @@ void BowlingLevel::draw() {
 
     // 4. Draw active zombies & debug overlays (bounding boxes, center points, collision zones, hit highlight)
     for (const auto& z : m_zombies) {
-        if (!z->isDead()) {
+        if (!z->isFinished()) {
             z->draw();
 
-            if (m_showDebug) {
+            if (m_showDebug && !z->isDead()) {
                 float zCx = z->getX() + 40.0f;
                 float zCy = z->getY() + 80.0f; // Align collision center Y (130.0f + row * 100.0f) with Wall-nut center Y
 

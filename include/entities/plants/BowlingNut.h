@@ -17,6 +17,7 @@ protected:
     float m_vy;
     float m_rotationAngle;
     float m_rotationSpeed;
+    bool m_hasExploded{false};
 
 public:
     BowlingNut(float x, float y, float vx = 300.0f, float vy = 0.0f, float rotSpeed = 360.0f);
@@ -28,6 +29,7 @@ public:
     float getX() const { return m_x; }
     float getY() const { return m_y; }
     bool isOffScreen() const { return m_x > 850.0f; }
+    virtual bool isExploded() const { return m_hasExploded; }
 
     static std::unique_ptr<BowlingNut> Create(const std::string& plantType, float x, float y);
 };
@@ -56,6 +58,8 @@ public:
 class ExplodeBowlingNut : public BowlingNut {
 private:
     std::vector<const Zombie*> m_hitZombies;
+    bool m_isExplodingEffect{false};
+    float m_explosionTimer{0.0f};
 
 public:
     ExplodeBowlingNut(float x, float y);

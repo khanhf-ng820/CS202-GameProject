@@ -22,12 +22,8 @@ BucketheadZombie::~BucketheadZombie() {}
 
 void BucketheadZombie::takeDamage(int damage) {
     if (m_isCharred) return;
-    Zombie::takeDamage(damage);
-    if (m_hp <= 0) {
-        if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
-            m_anim.SetAnimation("anim_death2");
-        }
-    } else if (m_hp <= 200 && !m_hasLostBucket) {
+
+    if (!m_hasLostBucket && (m_hp - damage <= 200)) {
         m_hasLostBucket = true;
         m_anim.SetTrackVisible("anim_bucket", false);
         Resources& res = Resources::GetInstance();
@@ -42,6 +38,13 @@ void BucketheadZombie::takeDamage(int damage) {
         bucket.timer = 1.0f;
         bucket.active = true;
         m_fallingParts.push_back(bucket);
+    }
+
+    Zombie::takeDamage(damage);
+    if (m_hp <= 0) {
+        if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
+            m_anim.SetAnimation("anim_death2");
+        }
     } else if (m_hp <= 100 && !m_hasLostArm) {
         m_hasLostArm = true;
         Resources& res = Resources::GetInstance();

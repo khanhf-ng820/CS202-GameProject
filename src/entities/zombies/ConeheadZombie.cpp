@@ -23,12 +23,8 @@ ConeheadZombie::~ConeheadZombie() {}
 
 void ConeheadZombie::takeDamage(int damage) {
     if (m_isCharred) return;
-    Zombie::takeDamage(damage);
-    if (m_hp <= 0) {
-        if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
-            m_anim.SetAnimation("anim_death");
-        }
-    } else if (m_hp <= 200 && !m_hasLostCone) {
+
+    if (!m_hasLostCone && (m_hp - damage <= 200)) {
         m_hasLostCone = true;
         m_anim.SetTrackVisible("anim_cone", false);
         Resources& res = Resources::GetInstance();
@@ -43,6 +39,13 @@ void ConeheadZombie::takeDamage(int damage) {
         cone.timer = 1.0f;
         cone.active = true;
         m_fallingParts.push_back(cone);
+    }
+
+    Zombie::takeDamage(damage);
+    if (m_hp <= 0) {
+        if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
+            m_anim.SetAnimation("anim_death");
+        }
     } else if (m_hp <= 100 && !m_hasLostArm) {
         m_hasLostArm = true;
         Resources& res = Resources::GetInstance();

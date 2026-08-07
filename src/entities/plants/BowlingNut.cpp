@@ -49,6 +49,29 @@ void NormalBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zo
             if (dx <= 10.0f) {
                 float dist = sqrtf(dx * dx + dy * dy);
                 if (dist <= 42.0f) {
+                    // Deal zombie-type specific damage
+                    int damage = 200;
+                    std::string zName = z->getName();
+                    if (zName == "BucketheadZombie") {
+                        if (z->getHp() > 600) {
+                            damage = 300; // Hit 1: 810 -> 510 (heavily dented bucket)
+                        } else if (z->getHp() > 200) {
+                            damage = 310; // Hit 2: 510 -> 200 (loses bucket)
+                        } else {
+                            damage = 200; // Hit 3: 200 -> 0 (dies)
+                        }
+                    } else if (zName == "ConeheadZombie") {
+                        if (z->getHp() > 200) {
+                            damage = 340; // Hit 1: 540 -> 200 (loses cone)
+                        } else {
+                            damage = 200; // Hit 2: 200 -> 0 (dies)
+                        }
+                    } else {
+                        damage = 200; // NormalZombie, FlagZombie: 1 hit death
+                    }
+
+                    z->takeDamage(damage);
+
                     if (m_vy == 0.0f) {
                         float dir = (GetRandomValue(0, 1) == 0) ? -180.0f : 180.0f;
                         m_vy = dir;
@@ -143,6 +166,9 @@ void GiantBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zom
                         if (std::find(m_hitZombies.begin(), m_hitZombies.end(), z.get()) == m_hitZombies.end()) {
                             m_hitZombies.push_back(z.get());
 
+                            // Instantly kill the zombie (triggers armor detachment and death animations)
+                            z->takeDamage(1000);
+
                             bool foundDebug = false;
                             for (auto& item : hitDebugTimers) {
                                 if (item.first == z.get()) {
@@ -204,6 +230,17 @@ ExplodeBowlingNut::ExplodeBowlingNut(float x, float y)
     : BowlingNut(x, y, 300.0f, 0.0f, 360.0f) {}
 
 void ExplodeBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zombies, std::vector<std::pair<const Zombie*, float>>& hitDebugTimers, Resources& res) {
+    if (m_isExplodingEffect) {
+        m_vx = 0.0f;
+        m_vy = 0.0f;
+        m_rotationSpeed = 0.0f;
+        m_explosionTimer += dt;
+        if (m_explosionTimer >= 0.5f) {
+            m_hasExploded = true;
+        }
+        return;
+    }
+
     m_x += m_vx * dt;
     m_y += m_vy * dt;
     m_rotationAngle += m_rotationSpeed * dt;
@@ -226,23 +263,35 @@ void ExplodeBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& z
                 if (dx <= 10.0f) {
                     float dist = sqrtf(dx * dx + dy * dy);
                     if (dist <= 42.0f) {
-                        if (std::find(m_hitZombies.begin(), m_hitZombies.end(), z.get()) == m_hitZombies.end()) {
-                            m_hitZombies.push_back(z.get());
+                        m_isExplodingEffect = true;
+                        m_explosionTimer = 0.0f;
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/cherrybomb.ogg"));
 
-                            bool foundDebug = false;
-                            for (auto& item : hitDebugTimers) {
-                                if (item.first == z.get()) {
-                                    item.second = 0.6f;
-                                    foundDebug = true;
-                                    break;
+                        // Explode in 180px radius (3x3 area), instantly incinerating all zombies in range
+                        for (auto& targetZ : zombies) {
+                            if (!targetZ->isDead()) {
+                                float targetZcx = targetZ->getX() + 40.0f;
+                                float targetZcy = targetZ->getY() + 40.0f;
+                                float exDx = targetZcx - m_x;
+                                float exDy = targetZcy - m_y;
+                                if (exDx * exDx + exDy * exDy <= 180.0f * 180.0f) {
+                                    targetZ->takeExplosiveDamage(1800);
+
+                                    bool foundDebug = false;
+                                    for (auto& item : hitDebugTimers) {
+                                        if (item.first == targetZ.get()) {
+                                            item.second = 0.6f;
+                                            foundDebug = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!foundDebug) {
+                                        hitDebugTimers.push_back({ targetZ.get(), 0.6f });
+                                    }
                                 }
                             }
-                            if (!foundDebug) {
-                                hitDebugTimers.push_back({ z.get(), 0.6f });
-                            }
-
-                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/cherrybomb.ogg"));
                         }
+                        break;
                     }
                 }
             }
@@ -251,6 +300,61 @@ void ExplodeBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& z
 }
 
 void ExplodeBowlingNut::draw(Resources& res, bool showDebug) const {
+    if (m_isExplodingEffect) {
+        Texture2D powTex = res.GetTexture("Pow");
+        if (powTex.id == 0) powTex = res.GetTexture("POW");
+        if (powTex.id == 0) {
+            res.LoadFile(res.GetAssetPath("assets/reanim/Pow.png"));
+            powTex = res.GetTexture("Pow");
+            if (powTex.id == 0) powTex = res.GetTexture("POW");
+        }
+
+        Texture2D powieTex = res.GetTexture("ExplosionPowie");
+        if (powieTex.id == 0) powieTex = res.GetTexture("EXPLOSIONPOWIE");
+        if (powieTex.id == 0) {
+            res.LoadFile(res.GetAssetPath("assets/reanim/ExplosionPowie.png"));
+            powieTex = res.GetTexture("ExplosionPowie");
+            if (powieTex.id == 0) powieTex = res.GetTexture("EXPLOSIONPOWIE");
+        }
+
+        float progress = m_explosionTimer / 0.5f; // 0.0 -> 1.0
+        if (progress > 1.0f) progress = 1.0f;
+
+        // Scale out quickly (ease-out cubic)
+        float scale = 0.5f + 2.5f * (1.0f - powf(1.0f - progress, 3.0f));
+
+        // Fade out
+        unsigned char alpha = 255;
+        if (progress > 0.5f) {
+            alpha = (unsigned char)(255 * (1.0f - progress) / 0.5f);
+        }
+        Color tint = { 255, 255, 255, alpha };
+
+        if (powieTex.id != 0) {
+            DrawTexturePro(
+                powieTex,
+                { 0, 0, (float)powieTex.width, (float)powieTex.height },
+                { m_x, m_y, powieTex.width * scale * 1.5f, powieTex.height * scale * 1.5f },
+                { powieTex.width * scale * 1.5f / 2.0f, powieTex.height * scale * 1.5f / 2.0f },
+                progress * 90.0f,
+                tint
+            );
+        }
+
+        if (powTex.id != 0) {
+            DrawTexturePro(
+                powTex,
+                { 0, 0, (float)powTex.width, (float)powTex.height },
+                { m_x, m_y, powTex.width * scale, powTex.height * scale },
+                { powTex.width * scale / 2.0f, powTex.height * scale / 2.0f },
+                0.0f,
+                tint
+            );
+        }
+
+        return;
+    }
+
     Texture2D nutBodyTex = res.GetTexture("WALLNUT_BODY");
     if (nutBodyTex.id == 0) nutBodyTex = res.GetTexture("Wallnut_body");
     if (nutBodyTex.id == 0) {
