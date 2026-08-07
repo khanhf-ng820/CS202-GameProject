@@ -5,6 +5,9 @@
 #include "Wallnut.h"
 #include "Zombie.h"
 #include "ZombieNormal.h"
+#include "ConeheadZombie.h"
+#include "BucketheadZombie.h"
+#include "FlagZombie.h"
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -44,7 +47,11 @@ private:
     std::vector<std::pair<const Zombie*, float>> m_hitDebugTimers;
     bool m_showDebug = true;
 
-    // Level progression & game over state
+    // Level progression & wave state
+    int m_currentWave = 0;
+    int m_maxWaves = 5;
+    float m_waveTimer = 5.0f; // 5 seconds initial delay before Wave 1
+    bool m_finalWaveAnnounced = false;
     bool m_levelWon = false;
     bool m_levelLost = false;
 
@@ -56,4 +63,5 @@ private:
     std::string m_heldPlantType = "";
 
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
+    void spawnNextWave();
 };

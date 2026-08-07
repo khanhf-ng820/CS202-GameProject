@@ -31,8 +31,47 @@ bool BowlingLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const
     return false;
 }
 
+void BowlingLevel::spawnNextWave() {
+    m_currentWave++;
+    float spawnX = 700.0f;
+
+    auto laneY = [](int row) -> float {
+        return 50.0f + row * 100.0f;
+    };
+
+    if (m_currentWave == 1) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
+    } else if (m_currentWave == 2) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(3)));
+    } else if (m_currentWave == 3) {
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+    } else if (m_currentWave == 4) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+    } else if (m_currentWave == 5) {
+        // Final wave!
+        m_finalWaveAnnounced = true;
+        m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
+    }
+}
+
 void BowlingLevel::update(float dt) {
     if (m_levelWon || m_levelLost) return;
+
+    // 0. Wave spawn timer
+    if (m_currentWave < m_maxWaves) {
+        m_waveTimer -= dt;
+        if (m_waveTimer <= 0.0f) {
+            spawnNextWave();
+            m_waveTimer = 22.0f;
+        }
+    }
 
     // 1. Advance conveyor belt animation frame (6 rows of 16px each in ConveyorBelt.png)
     m_animTimer += dt;
@@ -159,12 +198,30 @@ void BowlingLevel::update(float dt) {
 
     // 8. Update zombies (right to left movement) and check loss condition
     for (auto& z : m_zombies) {
-        if (!z->isDead()) {
+        if (!z->isFinished()) {
             z->update(dt);
             // Check loss condition: Zombie reaches house (x < 160.0f)
             if (z->getX() < 160.0f) {
                 m_levelLost = true;
             }
+        }
+    }
+
+    // Clean up finished zombies
+    m_zombies.erase(std::remove_if(m_zombies.begin(), m_zombies.end(),
+        [](const std::unique_ptr<Zombie>& z) { return z->isFinished(); }), m_zombies.end());
+
+    // Check win condition: All waves spawned and all zombies defeated
+    if (m_currentWave >= m_maxWaves) {
+        bool anyZombieAlive = false;
+        for (const auto& z : m_zombies) {
+            if (!z->isDead()) {
+                anyZombieAlive = true;
+                break;
+            }
+        }
+        if (!anyZombieAlive) {
+            m_levelWon = true;
         }
     }
 
