@@ -1,7 +1,9 @@
 #include "BucketheadZombie.h"
+#include "rlgl.h"
+#include <algorithm>
 
 BucketheadZombie::BucketheadZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 810, 8.0f, 100, "BucketheadZombie") {
+    : Zombie(res, x, y, 1300, 8.0f, 100, "BucketheadZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
@@ -20,8 +22,8 @@ BucketheadZombie::BucketheadZombie(Resources& res, float x, float y)
 
 BucketheadZombie::~BucketheadZombie() {}
 
-void BucketheadZombie::takeDamage(int damage) {
-    if (m_isCharred) return;
+void BucketheadZombie::takeDamage(float damage) {
+    if (m_isCharred || m_isSquashed || m_isDevoured) return;
 
     if (!m_hasLostBucket && (m_hp - damage <= 200)) {
         m_hasLostBucket = true;
@@ -63,6 +65,13 @@ void BucketheadZombie::takeDamage(int damage) {
 }
 
 void BucketheadZombie::update(float deltaTime) {
+    if (m_isDevoured) return;
+
+    if (m_isSquashed) {
+        m_squashTimer += deltaTime;
+        return;
+    }
+
     if (m_isCharred) {
         m_charredAnim.Update(deltaTime);
         m_charredTimer += deltaTime;
@@ -211,6 +220,19 @@ void BucketheadZombie::update(float deltaTime) {
 }
 
 void BucketheadZombie::draw() {
+    if (m_isDevoured) return;
+
+    if (m_isSquashed) {
+        float alpha = std::clamp(1.0f - m_squashTimer / 2.0f, 0.0f, 1.0f);
+        rlPushMatrix();
+        rlTranslatef(0.0f, m_y + 120.0f, 0.0f);
+        rlScalef(1.15f, 0.20f, 1.0f);
+        rlTranslatef(0.0f, -(m_y + 120.0f), 0.0f);
+        m_anim.Draw(m_x, m_y, 1.0f, ColorAlpha(WHITE, alpha));
+        rlPopMatrix();
+        return;
+    }
+
     if (m_isCharred) {
         m_charredAnim.Draw(m_x, m_y, 1.0f);
         return;

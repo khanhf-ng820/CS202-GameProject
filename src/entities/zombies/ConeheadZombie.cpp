@@ -1,13 +1,14 @@
 #include "ConeheadZombie.h"
+#include "rlgl.h"
+#include <algorithm>
 
 ConeheadZombie::ConeheadZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 540, 8.0f, 100, "ConeheadZombie") {
+    : Zombie(res, x, y, 560, 8.0f, 100, "ConeheadZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
     m_anim.SetAnimation("anim_walk");
 
-    // Bật nón, ẩn các phụ kiện khác
     m_anim.SetTrackVisible("anim_bucket", false);
     m_anim.SetTrackVisible("anim_cone", true);
     m_anim.SetTrackVisible("anim_screendoor", false);
@@ -21,21 +22,22 @@ ConeheadZombie::ConeheadZombie(Resources& res, float x, float y)
 
 ConeheadZombie::~ConeheadZombie() {}
 
-void ConeheadZombie::takeDamage(int damage) {
-    if (m_isCharred) return;
+void ConeheadZombie::takeDamage(float damage) {
+    if (m_isCharred || m_isSquashed || m_isDevoured) return;
 
     if (!m_hasLostCone && (m_hp - damage <= 200)) {
         m_hasLostCone = true;
         m_anim.SetTrackVisible("anim_cone", false);
+
         Resources& res = Resources::GetInstance();
         FallingPart cone;
-        cone.texture = res.GetTexture("ZOMBIE_CONE3");
-        cone.x = m_x + 30.0f; 
-        cone.y = m_y + 10.0f;
-        cone.vx = (float)GetRandomValue(-30, 30);
+        cone.texture = res.GetTexture("ZOMBIE_CONE");
+        cone.x = m_x + 50.0f;
+        cone.y = m_y - 20.0f;
+        cone.vx = (float)GetRandomValue(20, 80);
         cone.vy = (float)GetRandomValue(-150, -50);
         cone.rotation = 0;
-        cone.rotSpeed = (float)GetRandomValue(-150, 150);
+        cone.rotSpeed = (float)GetRandomValue(-200, 200);
         cone.timer = 1.0f;
         cone.active = true;
         m_fallingParts.push_back(cone);
@@ -64,6 +66,13 @@ void ConeheadZombie::takeDamage(int damage) {
 }
 
 void ConeheadZombie::update(float deltaTime) {
+    if (m_isDevoured) return;
+
+    if (m_isSquashed) {
+        m_squashTimer += deltaTime;
+        return;
+    }
+
     if (m_isCharred) {
         m_charredAnim.Update(deltaTime);
         m_charredTimer += deltaTime;
@@ -76,7 +85,7 @@ void ConeheadZombie::update(float deltaTime) {
     if (!m_hasLostCone) {
         if (m_hp <= 310) {
             m_anim.OverrideTrackImage("anim_cone", "Zombie_cone3");
-        } else if (m_hp <= 420) {
+        } else if (m_hp <= 430) {
             m_anim.OverrideTrackImage("anim_cone", "Zombie_cone2");
         } else {
             m_anim.OverrideTrackImage("anim_cone", "Zombie_cone1");
@@ -101,7 +110,7 @@ void ConeheadZombie::update(float deltaTime) {
         m_anim.SetTrackVisible("anim_tongue", false);
         m_anim.SetTrackVisible("Zombie_outerarm_lower", false);
         m_anim.SetTrackVisible("Zombie_outerarm_hand", false);
-        m_anim.SetTrackVisible("anim_cone", false); // Rớt nón khi chết
+        m_anim.SetTrackVisible("anim_cone", false);
 
         if (!m_hasSpawnedDeathParts) {
             m_hasSpawnedDeathParts = true;
@@ -212,6 +221,19 @@ void ConeheadZombie::update(float deltaTime) {
 }
 
 void ConeheadZombie::draw() {
+    if (m_isDevoured) return;
+
+    if (m_isSquashed) {
+        float alpha = std::clamp(1.0f - m_squashTimer / 2.0f, 0.0f, 1.0f);
+        rlPushMatrix();
+        rlTranslatef(0.0f, m_y + 120.0f, 0.0f);
+        rlScalef(1.15f, 0.20f, 1.0f);
+        rlTranslatef(0.0f, -(m_y + 120.0f), 0.0f);
+        m_anim.Draw(m_x, m_y, 1.0f, ColorAlpha(WHITE, alpha));
+        rlPopMatrix();
+        return;
+    }
+
     if (m_isCharred) {
         m_charredAnim.Draw(m_x, m_y, 1.0f);
         return;

@@ -11,7 +11,7 @@ public:
 
     void update(float deltaTime) override;
     void draw() override;
-    void takeDamage(int damage) override;
+    void takeDamage(float damage) override;
 
 private:
     std::vector<FallingPart> m_fallingParts;

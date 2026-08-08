@@ -74,18 +74,27 @@ void SeedBank::initFromDeck(const std::vector<std::string>& chosenPlants) {
     };
 
     static const std::unordered_map<std::string, PlantInfo> plantInfoTable = {
-        { "SunFlower",  { 50,  10.0f, "SUNFLOWER" } },
-        { "PeaShooter", { 100, 10.0f, "PEASHOOTER" } },
-        { "Wallnut",    { 50,  30.0f, "WALLNUT" } },
-        { "SnowPea",    { 175, 10.0f, "SNOWPEA" } },
-        { "Repeater",   { 200, 10.0f, "REPEATER" } },
-        { "CherryBomb", { 150, 35.0f, "CHERRYBOMB" } },
-        { "Jalapeno",   { 125, 35.0f, "JALAPENO" } },
-        { "GatlingPea", { 250, 10.0f, "GATLINGPEA" } },
-        { "Cornpult",   { 100, 10.0f, "CORNPULT" } },
-        { "Melonpult",  { 300, 10.0f, "MELONPULT" } },
-        { "Torchwood",  { 175, 10.0f, "TORCHWOOD" } },
-        { "Chomper",    { 150, 30.0f, "CHOMPER" } }
+        { "SunFlower",   { 50,  10.0f, "SUNFLOWER" } },
+        { "PeaShooter",  { 100, 10.0f, "PEASHOOTER" } },
+        { "Wallnut",     { 50,  30.0f, "WALLNUT" } },
+        { "PotatoMine",  { 25,  30.0f, "POTATOMINE" } },
+        { "SnowPea",     { 175, 10.0f, "SNOWPEA" } },
+        { "Repeater",    { 200, 10.0f, "REPEATER" } },
+        { "CherryBomb",  { 150, 35.0f, "CHERRYBOMB" } },
+        { "Jalapeno",    { 125, 35.0f, "JALAPENO" } },
+        { "Squash",      { 50,  30.0f, "SQUASH" } },
+        { "GatlingPea",  { 250, 10.0f, "GATLINGPEA" } },
+        { "Cornpult",    { 100, 10.0f, "CORNPULT" } },
+        { "Cabbagepult", { 100, 10.0f, "CABBAGEPULT" } },
+        { "Melonpult",   { 300, 10.0f, "MELONPULT" } },
+        { "Torchwood",   { 175, 10.0f, "TORCHWOOD" } },
+        { "Chomper",     { 150, 30.0f, "CHOMPER" } },
+        { "FirePea",     { 175, 10.0f, "PEASHOOTER" } },
+        { "IceShroom",   { 75,  50.0f, "ICESHROOM" } },
+        { "Gravebuster", { 75,  10.0f, "GRAVEBUSTER" } },
+        { "Garlic",      { 50,  10.0f, "GARLIC" } },
+        { "Caltrop",     { 100, 10.0f, "CALTROP" } },
+        { "SpikeRock",   { 125, 10.0f, "SPIKEROCK" } }
     };
 
     for (size_t i = 0; i < chosenPlants.size(); ++i) {

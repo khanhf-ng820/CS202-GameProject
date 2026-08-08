@@ -1,7 +1,9 @@
 #include "FlagZombie.h"
+#include "rlgl.h"
+#include <algorithm>
 
 FlagZombie::FlagZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 200, 8.0f, 100, "FlagZombie") {
+    : Zombie(res, x, y, 300, 14.0f, 100, "FlagZombie") {
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
     m_anim.SetAnimation("anim_walk");
@@ -22,8 +24,8 @@ FlagZombie::FlagZombie(Resources& res, float x, float y)
 
 FlagZombie::~FlagZombie() {}
 
-void FlagZombie::takeDamage(int damage) {
-    if (m_isCharred) return;
+void FlagZombie::takeDamage(float damage) {
+    if (m_isCharred || m_isSquashed || m_isDevoured) return;
     Zombie::takeDamage(damage);
     if (m_hp <= 0) {
         if (m_anim.GetCurrentAnimName() != "anim_death" && m_anim.GetCurrentAnimName() != "anim_death2") {
@@ -33,6 +35,13 @@ void FlagZombie::takeDamage(int damage) {
 }
 
 void FlagZombie::update(float deltaTime) {
+    if (m_isDevoured) return;
+
+    if (m_isSquashed) {
+        m_squashTimer += deltaTime;
+        return;
+    }
+
     if (m_isCharred) {
         m_charredAnim.Update(deltaTime);
         m_charredTimer += deltaTime;
@@ -105,6 +114,19 @@ void FlagZombie::update(float deltaTime) {
 }
 
 void FlagZombie::draw() {
+    if (m_isDevoured) return;
+
+    if (m_isSquashed) {
+        float alpha = std::clamp(1.0f - m_squashTimer / 2.0f, 0.0f, 1.0f);
+        rlPushMatrix();
+        rlTranslatef(0.0f, m_y + 120.0f, 0.0f);
+        rlScalef(1.15f, 0.20f, 1.0f);
+        rlTranslatef(0.0f, -(m_y + 120.0f), 0.0f);
+        m_anim.Draw(m_x, m_y, 1.0f, ColorAlpha(WHITE, alpha));
+        rlPopMatrix();
+        return;
+    }
+
     if (m_isCharred) {
         m_charredAnim.Draw(m_x, m_y, 1.0f);
         return;
