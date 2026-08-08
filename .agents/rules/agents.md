@@ -20,7 +20,7 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
     cmake -S . -B build -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && cmake --build build --config Release --parallel 4
     ```
 *   **The `-DCMAKE_POLICY_VERSION_MINIMUM=3.5` flag is mandatory.** Recent CMake (4.0+) drops compatibility with very old minimum version declarations in raylib/raygui. Without this shim, dependency configuration fails.
-*   **For fast incremental compiles** (when no new files were added), you can run `bash remake.sh` (or `make -j4` directly inside `build/`).
+*   **For fast incremental compiles** (when no new files were added), you can run `bash remake.sh` (or `cmake --build build --config Release --parallel 4`).
 *   **raygui is header-only.** There is no compiled `raygui` target. Do not link against `raygui`; link against the wrapped interface target **`raygui_interface`**.
 *   **nlohmann_json** exports the namespaced target `nlohmann_json::nlohmann_json`. Use `#include <nlohmann/json.hpp>` directly.
 
