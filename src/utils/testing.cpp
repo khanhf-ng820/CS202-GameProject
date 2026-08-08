@@ -104,8 +104,17 @@ void Testing::run() {
             }
         }
         
-        if (currentZombie && !currentZombie->isDead()) {
-            currentZombie->draw();
+        if (currentZombie) {
+            if (!currentZombie->isDead()) {
+                currentZombie->draw();
+            } else {
+                if (DrawButton({ 600, 280, 180, 40 }, "RESPAWN ZOMBIE", RED, MAROON, WHITE)) {
+                    if (currentZombieType == 0) currentZombie = std::make_unique<FlagZombie>(res, 680, 360);
+                    else if (currentZombieType == 1) currentZombie = std::make_unique<ZombieNormal>(res, 680, 360);
+                    else if (currentZombieType == 2) currentZombie = std::make_unique<ConeheadZombie>(res, 680, 360);
+                    else if (currentZombieType == 3) currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360);
+                }
+            }
         }
 
         for (const auto& p : projectiles) {
@@ -118,69 +127,74 @@ void Testing::run() {
         DrawRectangleRec({ 0, 0, 320, 600.0f }, ColorAlpha(DARKBLUE, 0.75f));
         DrawRectangleLines(0, 0, 320, 600, ColorAlpha(WHITE, 0.3f));
 
-        DrawText("PLANT REANIMATOR", 20, 20, 22, SKYBLUE);
-        DrawText("C++ & Raylib Visualizer (OOP)", 20, 48, 14, GRAY);
-        DrawLine(20, 72, 300, 72, ColorAlpha(WHITE, 0.2f));
+        DrawText("PLANT REANIMATOR", 20, 15, 20, SKYBLUE);
+        DrawText("C++ & Raylib Visualizer (OOP)", 20, 38, 13, GRAY);
+        DrawLine(20, 58, 300, 58, ColorAlpha(WHITE, 0.2f));
 
-        DrawText("Select Plant Type:", 20, 85, 16, SKYBLUE);
+        DrawText("Select Plant Type:", 20, 68, 15, SKYBLUE);
         
-        if (DrawButton({ 20, 110, 135, 28 }, "Peashooter", currentPlantType == 0 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 0 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 90, 135, 22 }, "Peashooter", currentPlantType == 0 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 0 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 0) { currentPlantType = 0; currentPlant = std::make_unique<PeaShooter>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 165, 110, 135, 28 }, "Snow Pea", currentPlantType == 1 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 1 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 165, 90, 135, 22 }, "Snow Pea", currentPlantType == 1 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 1 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 1) { currentPlantType = 1; currentPlant = std::make_unique<SnowPea>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 20, 140, 135, 28 }, "Cornpult", currentPlantType == 2 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 2 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 115, 135, 22 }, "Cornpult", currentPlantType == 2 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 2 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 2) { currentPlantType = 2; currentPlant = std::make_unique<Cornpult>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 165, 140, 135, 28 }, "Fire Pea", currentPlantType == 3 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 3 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 165, 115, 135, 22 }, "Fire Pea", currentPlantType == 3 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 3 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 3) { currentPlantType = 3; currentPlant = std::make_unique<FirePea>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 20, 170, 135, 28 }, "Jalapeno", currentPlantType == 4 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 4 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 140, 135, 22 }, "Jalapeno", currentPlantType == 4 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 4 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 4) { currentPlantType = 4; currentPlant = std::make_unique<Jalapeno>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 165, 170, 135, 28 }, "Sunflower", currentPlantType == 5 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 5 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 165, 140, 135, 22 }, "Sunflower", currentPlantType == 5 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 5 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 5) { currentPlantType = 5; currentPlant = std::make_unique<SunFlower>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 20, 200, 135, 28 }, "Gatling Pea", currentPlantType == 6 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 6 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 165, 135, 22 }, "Gatling Pea", currentPlantType == 6 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 6 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 6) { currentPlantType = 6; currentPlant = std::make_unique<GatlingPea>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 165, 200, 135, 28 }, "Repeater", currentPlantType == 7 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 7 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 165, 165, 135, 22 }, "Repeater", currentPlantType == 7 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 7 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 7) { currentPlantType = 7; currentPlant = std::make_unique<Repeater>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 20, 230, 135, 28 }, "Melon Pult", currentPlantType == 8 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 8 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 190, 135, 22 }, "Melon Pult", currentPlantType == 8 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 8 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 8) { currentPlantType = 8; currentPlant = std::make_unique<Melonpult>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 165, 230, 135, 28 }, "Wallnut", currentPlantType == 9 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 9 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 165, 190, 135, 22 }, "Wallnut", currentPlantType == 9 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 9 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 9) { currentPlantType = 9; currentPlant = std::make_unique<Wallnut>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 20, 260, 135, 28 }, "Cherry Bomb", currentPlantType == 10 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 10 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 215, 135, 22 }, "Cherry Bomb", currentPlantType == 10 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 10 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 10) { currentPlantType = 10; currentPlant = std::make_unique<CherryBomb>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 165, 260, 135, 28 }, "Chomper", currentPlantType == 11 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 11 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 165, 215, 135, 22 }, "Chomper", currentPlantType == 11 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 11 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 11) { currentPlantType = 11; currentPlant = std::make_unique<Chomper>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
-        if (DrawButton({ 20, 290, 135, 28 }, "Torchwood", currentPlantType == 12 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 12 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 240, 135, 22 }, "Torchwood", currentPlantType == 12 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 12 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 12) { currentPlantType = 12; currentPlant = std::make_unique<Torchwood>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
 
-        DrawLine(20, 325, 300, 325, ColorAlpha(WHITE, 0.2f));
+        DrawLine(20, 270, 300, 270, ColorAlpha(WHITE, 0.2f));
         
-        DrawText("Select Zombie Type:", 20, 332, 16, SKYBLUE);
-        if (DrawButton({ 20, 355, 135, 28 }, "Flag Zombie", currentZombieType == 0 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 0 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        DrawText("Select Zombie Type:", 20, 276, 15, SKYBLUE);
+        if (DrawButton({ 20, 296, 135, 22 }, "Flag Zombie", currentZombieType == 0 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 0 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentZombieType != 0) { currentZombieType = 0; currentZombie = std::make_unique<FlagZombie>(res, 680, 360); }
         }
-        if (DrawButton({ 165, 355, 135, 28 }, "Normal Zombie", currentZombieType == 1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 165, 296, 135, 22 }, "Normal Zombie", currentZombieType == 1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentZombieType != 1) { currentZombieType = 1; currentZombie = std::make_unique<ZombieNormal>(res, 680, 360); }
         }
-        if (DrawButton({ 20, 385, 135, 28 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 321, 135, 22 }, "Conehead", currentZombieType == 2 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 2 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentZombieType != 2) { currentZombieType = 2; currentZombie = std::make_unique<ConeheadZombie>(res, 680, 360); }
+        }
+        if (DrawButton({ 165, 321, 135, 22 }, "Buckethead", currentZombieType == 3 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 3 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentZombieType != 3) { currentZombieType = 3; currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360); }
+        }
+        if (DrawButton({ 20, 346, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             currentZombieType = -1; currentZombie.reset();
         }
 
-        DrawLine(20, 420, 300, 420, ColorAlpha(WHITE, 0.2f));
-        DrawText("Select Animation:", 20, 428, 16, SKYBLUE);
+        DrawLine(20, 373, 300, 373, ColorAlpha(WHITE, 0.2f));
+        DrawText("Select Animation:", 20, 378, 15, SKYBLUE);
 
-        int startY = 455;
         Reanimation& activeAnim = (currentZombieType != -1 && currentZombie) ? currentZombie->getAnim() : currentPlant->getAnim();
         const auto& anims = activeAnim.GetAnimations();
         for (size_t i = 0; i < anims.size(); ++i) {
@@ -189,14 +203,18 @@ void Testing::run() {
             Color baseCol = isCurrent ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f);
             Color hoverCol = isCurrent ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f);
 
-            if (startY + 35 > 600.0f - 50) {
-                DrawText("...", 20, startY, 14, GRAY);
+            int r = (int)(i / 2);
+            int c = (int)(i % 2);
+            float btnX = (c == 0) ? 20.0f : 165.0f;
+            float btnY = 398.0f + r * 26.0f;
+
+            if (btnY + 22.0f > 600.0f - 10.0f) {
+                DrawText("...", 20, btnY, 14, GRAY);
                 break;
             }
-            if (DrawButton({ 20, (float)startY, 280, 30 }, label.c_str(), baseCol, hoverCol, WHITE)) {
+            if (DrawButton({ btnX, btnY, 135, 22 }, label.c_str(), baseCol, hoverCol, WHITE)) {
                 activeAnim.SetAnimationIndex((int)i);
             }
-            startY += 35;
         }
 
         DrawRectangleRec({ 340, 20, 450, 40 }, ColorAlpha(BLACK, 0.5f));
