@@ -201,7 +201,7 @@ void GiantBowlingNut::draw(Resources& res, bool showDebug) const {
 
     float renderW = 120.0f;
     float renderH = 130.0f;
-    Rectangle destRec = { m_x, m_y, renderW, renderH };
+    Rectangle destRec = { m_x, m_y - 20.0f, renderW, renderH };
     Vector2 origin = { renderW / 2.0f, renderH / 2.0f };
 
     if (nutBodyTex.id != 0) {
@@ -214,11 +214,11 @@ void GiantBowlingNut::draw(Resources& res, bool showDebug) const {
             WHITE
         );
     } else {
-        DrawCircle((int)m_x, (int)m_y, 60.0f, BROWN);
+        DrawCircle((int)m_x, (int)(m_y - 20.0f), 60.0f, BROWN);
     }
 
     if (showDebug) {
-        DrawRectangleLinesEx({ m_x - 60.0f, m_y - 65.0f, 120.0f, 130.0f }, 2.0f, RED);
+        DrawRectangleLinesEx({ m_x - 60.0f, m_y - 20.0f - 65.0f, 120.0f, 130.0f }, 2.0f, RED);
         DrawCircle((int)m_x, (int)m_y, 4.0f, RED);
     }
 }
