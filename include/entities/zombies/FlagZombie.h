@@ -6,7 +6,7 @@ public:
     FlagZombie(Resources& res, float x, float y);
     ~FlagZombie() override;
 
-    void takeDamage(int damage) override;
+    void takeDamage(float damage) override;
     void update(float dt) override;
     void draw() override;
 

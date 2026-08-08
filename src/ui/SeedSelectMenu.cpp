@@ -58,15 +58,24 @@ void SeedSelectMenu::initCatalog(Resources& res) {
         { "SunFlower",   50,  "SUNFLOWER" },
         { "PeaShooter",  100, "PEASHOOTER" },
         { "Wallnut",     50,  "WALLNUT" },
+        { "PotatoMine",  25,  "POTATOMINE" },
         { "SnowPea",     175, "SNOWPEA" },
         { "Repeater",    200, "REPEATER" },
         { "CherryBomb",  150, "CHERRYBOMB" },
         { "Jalapeno",    125, "JALAPENO" },
+        { "Squash",      50,  "SQUASH" },
         { "GatlingPea",  250, "GATLINGPEA" },
         { "Cornpult",    100, "CORNPULT" },
+        { "Cabbagepult", 100, "CABBAGEPULT" },
         { "Melonpult",   300, "MELONPULT" },
         { "Torchwood",   175, "TORCHWOOD" },
-        { "Chomper",     150, "CHOMPER" }
+        { "Chomper",     150, "CHOMPER" },
+        { "FirePea",     175, "PEASHOOTER" },
+        { "IceShroom",   75,  "ICESHROOM" },
+        { "Gravebuster", 75,  "GRAVEBUSTER" },
+        { "Garlic",      50,  "GARLIC" },
+        { "Caltrop",     100, "CALTROP" },
+        { "SpikeRock",   125, "SPIKEROCK" }
     };
 
     float startX = 22.0f;

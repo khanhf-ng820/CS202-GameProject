@@ -14,6 +14,14 @@
 #include "Cornpult.h"
 #include "Melonpult.h"
 #include "Torchwood.h"
+#include "PotatoMine.h"
+#include "Squash.h"
+#include "Cabbagepult.h"
+#include "IceShroom.h"
+#include "Gravebuster.h"
+#include "Garlic.h"
+#include "Caltrop.h"
+#include "SpikeRock.h"
 #include "ZombieNormal.h"
 #include "FlagZombie.h"
 #include "ConeheadZombie.h"
@@ -92,8 +100,22 @@ void Level1::createPlant(const std::string& type, int row, int col, int pixelX, 
         m_grid[row][col] = std::make_unique<Melonpult>(res, pixelX, pixelY);
     } else if (type == "Torchwood") {
         m_grid[row][col] = std::make_unique<Torchwood>(res, pixelX, pixelY);
-    } else if (type == "Chomper") {
-        m_grid[row][col] = std::make_unique<Chomper>(res, pixelX, pixelY);
+    } else if (type == "PotatoMine") {
+        m_grid[row][col] = std::make_unique<PotatoMine>(res, pixelX, pixelY);
+    } else if (type == "Squash") {
+        m_grid[row][col] = std::make_unique<Squash>(res, pixelX, pixelY);
+    } else if (type == "Cabbagepult") {
+        m_grid[row][col] = std::make_unique<Cabbagepult>(res, pixelX, pixelY);
+    } else if (type == "IceShroom") {
+        m_grid[row][col] = std::make_unique<IceShroom>(res, pixelX, pixelY);
+    } else if (type == "Gravebuster") {
+        m_grid[row][col] = std::make_unique<Gravebuster>(res, pixelX, pixelY);
+    } else if (type == "Garlic") {
+        m_grid[row][col] = std::make_unique<Garlic>(res, pixelX, pixelY);
+    } else if (type == "Caltrop") {
+        m_grid[row][col] = std::make_unique<Caltrop>(res, pixelX, pixelY);
+    } else if (type == "SpikeRock") {
+        m_grid[row][col] = std::make_unique<SpikeRock>(res, pixelX, pixelY);
     }
 }
 
@@ -254,7 +276,7 @@ void Level1::updateCollisions(float dt) {
         }
     }
 
-    // 1.8. Explosive Plants vs Zombies (Jalapeno & CherryBomb)
+    // 1.8. Grid Plant Triggers vs Zombies
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             Plant* plant = m_grid[r][c].get();
@@ -264,10 +286,10 @@ void Level1::updateCollisions(float dt) {
                 Jalapeno* jal = dynamic_cast<Jalapeno*>(plant);
                 if (jal && jal->isExplodingFire() && !jal->hasDealtDamage()) {
                     jal->markDamageDealt();
-                    float plantY = (float)jal->getY();
                     for (auto& z : m_zombies) {
-                        if (z->isDead()) continue;
-                        if (std::abs(z->getY() - plantY) < 55.0f) {
+                        if (z->isDead() || z->isDevoured()) continue;
+                        int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                        if (zRow == r) {
                             z->takeExplosiveDamage(1800);
                         }
                     }
@@ -279,7 +301,7 @@ void Level1::updateCollisions(float dt) {
                     float cbCx = (float)cb->getX() + 40.0f;
                     float cbCy = (float)cb->getY() + 40.0f;
                     for (auto& z : m_zombies) {
-                        if (z->isDead()) continue;
+                        if (z->isDead() || z->isDevoured()) continue;
                         float zCx = z->getX() + 40.0f;
                         float zCy = z->getY() + 40.0f;
                         float dx = zCx - cbCx;
@@ -289,24 +311,156 @@ void Level1::updateCollisions(float dt) {
                         }
                     }
                 }
+            } else if (plant->getName() == "PotatoMine") {
+                PotatoMine* pm = dynamic_cast<PotatoMine*>(plant);
+                if (pm) {
+                    if (pm->isArmed()) {
+                        float pmCx = (float)pm->getX() + 40.0f;
+                        for (auto& z : m_zombies) {
+                            if (z->isDead() || z->isDevoured()) continue;
+                            int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                            if (zRow == r) {
+                                float zCx = z->getX() + 40.0f;
+                                if (std::abs(zCx - pmCx) < 45.0f) {
+                                    pm->triggerExplode();
+                                    break;
+                                }
+                            }
+                        }
+                    } else if (pm->isExploding() && !pm->hasDealtDamage()) {
+                        pm->markDamageDealt();
+                        float pmCx = (float)pm->getX() + 40.0f;
+                        for (auto& z : m_zombies) {
+                            if (z->isDead() || z->isDevoured()) continue;
+                            int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                            if (zRow == r) {
+                                float zCx = z->getX() + 40.0f;
+                                if (std::abs(zCx - pmCx) < 70.0f) {
+                                    z->takeExplosiveDamage(1800);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (plant->getName() == "Squash") {
+                Squash* sq = dynamic_cast<Squash*>(plant);
+                if (sq) {
+                    if (sq->isIdle()) {
+                        float sqCx = (float)sq->getX() + 40.0f;
+                        for (auto& z : m_zombies) {
+                            if (z->isDead() || z->isDevoured()) continue;
+                            int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                            if (zRow == r) {
+                                float zCx = z->getX() + 40.0f;
+                                if (zCx >= sqCx - 60.0f && zCx <= sqCx + 100.0f) {
+                                    sq->setTargetZombie(z->getX(), z->getY());
+                                    break;
+                                }
+                            }
+                        }
+                    } else if (sq->isSquashing() && !sq->hasDealtDamage()) {
+                        sq->markDamageDealt();
+                        float sqCx = sq->getTargetX() + 40.0f;
+                        for (auto& z : m_zombies) {
+                            if (z->isDead() || z->isDevoured()) continue;
+                            int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                            if (zRow == r) {
+                                float zCx = z->getX() + 40.0f;
+                                if (std::abs(zCx - sqCx) < 80.0f) {
+                                    z->takeSquashDamage(1800);
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (plant->getName() == "IceShroom") {
+                IceShroom* ice = dynamic_cast<IceShroom*>(plant);
+                if (ice && ice->isFreezing()) {
+                    for (auto& z : m_zombies) {
+                        if (!z->isDead() && !z->isDevoured()) {
+                            z->takeDamage(20);
+                        }
+                    }
+                }
+            } else if (plant->getName() == "Caltrop" || plant->getName() == "SpikeRock") {
+                float plantCx = (float)plant->getX() + 40.0f;
+                bool zombieOnTop = false;
+                for (auto& z : m_zombies) {
+                    if (z->isDead() || z->isDevoured()) continue;
+                    int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                    if (zRow == r) {
+                        float zCx = z->getX() + 40.0f;
+                        if (std::abs(zCx - plantCx) < 50.0f) {
+                            zombieOnTop = true;
+                            float spikeDmg = (plant->getName() == "SpikeRock") ? 50.0f : 25.0f;
+                            z->takeDamage(spikeDmg * dt);
+                        }
+                    }
+                }
+                if (plant->getName() == "Caltrop") {
+                    Caltrop* cal = dynamic_cast<Caltrop*>(plant);
+                    if (cal) cal->setAttacking(zombieOnTop);
+                } else if (plant->getName() == "SpikeRock") {
+                    SpikeRock* sr = dynamic_cast<SpikeRock*>(plant);
+                    if (sr) sr->setAttacking(zombieOnTop);
+                }
+            } else if (plant->getName() == "Chomper") {
+                Chomper* ch = dynamic_cast<Chomper*>(plant);
+                if (ch && ch->isIdle()) {
+                    float chCx = (float)ch->getX() + 40.0f;
+                    for (auto& z : m_zombies) {
+                        if (z->isDead() || z->isDevoured()) continue;
+                        int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                        if (zRow == r) {
+                            float zCx = z->getX() + 40.0f;
+                            if (zCx >= chCx - 20.0f && zCx <= chCx + 85.0f) {
+                                ch->devourZombie(z.get());
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     // 2. Zombies eating Plants
     for (auto& z : m_zombies) {
-        if (z->isDead()) continue;
+        if (z->isDead() || z->isSquashed()) continue;
 
         bool foundPlantToEat = false;
-        int zRow = (int)((z->getY() - 80.0f + 40.0f) / 100.0f);
+        int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
         if (zRow < 0) zRow = 0;
         if (zRow > 4) zRow = 4;
 
         for (int c = 0; c < 9; ++c) {
             Plant* p = m_grid[zRow][c].get();
             if (p && !p->isDead()) {
+                if (p->getName() == "Caltrop" || p->getName() == "SpikeRock") {
+                    continue; // Zombies cannot eat floor spike plants!
+                }
+
                 float plantX = (float)p->getX();
                 if (z->getX() >= plantX - 20.0f && z->getX() <= plantX + 45.0f) {
+                    if (p->getName() == "Garlic") {
+                        p->takeDamage(25.0f); // Garlic takes bite damage
+                        int nextRow = zRow;
+                        if (zRow == 0) nextRow = 1;
+                        else if (zRow == 4) nextRow = 3;
+                        else nextRow = (std::rand() % 2 == 0) ? (zRow - 1) : (zRow + 1);
+
+                        z->setY(45.0f + nextRow * 100.0f);
+                        z->setEating(false);
+                        z->resetEatTimer();
+                        z->getAnim().SetAnimation("anim_walk");
+                        foundPlantToEat = false;
+
+                        if (p->isDead()) {
+                            m_grid[zRow][c] = nullptr;
+                        }
+                        break;
+                    }
+
                     foundPlantToEat = true;
                     z->setEating(true);
                     if (z->getAnim().GetCurrentAnimName() != "anim_eat") {
@@ -388,13 +542,10 @@ void Level1::update(float dt) {
 
                 float min_distance = 800.0f; // Only consider zombies within 700 pixels in front of the plant
                 for (auto &zombie : m_zombies) {
-                    if (!zombie->isDead()) {
-                        float zombieX = zombie->getX();
-                        float zombieY = zombie->getY();
-                        bool isSameRow = ((zombieY - plantY) < 20.0f && (zombieY - plantY) > -55.0f);
-
-                        if (isSameRow) {
-                            float dist = zombieX - plantX;
+                    if (!zombie->isDead() && !zombie->isDevoured()) {
+                        int zRow = (int)((zombie->getY() - 45.0f + 50.0f) / 100.0f);
+                        if (zRow == r) {
+                            float dist = zombie->getX() - plantX;
                             if (dist >= 0.0f && dist <= 700.0f) {
                                 shoot = true;
                                 min_distance = std::min(min_distance, dist);
@@ -405,22 +556,26 @@ void Level1::update(float dt) {
                 }
 
                 std::string plantName = m_grid[r][c]->getName();
-                if (plantName == "CherryBomb" || plantName == "Jalapeno") {
-                    continue; // Let explosive plants manage their own swell/explode animations
+                if (plantName == "CherryBomb" || plantName == "Jalapeno" || plantName == "PotatoMine" || plantName == "Squash" || plantName == "IceShroom" || plantName == "Chomper" || plantName == "Caltrop" || plantName == "SpikeRock") {
+                    continue; // Let self-animated/trigger plants manage their own animations
                 }
 
                 std::string targetAnim;
                 if (shoot) {
                     targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||
-                                  plantName == "CherryBomb" || plantName == "Chomper") ? "anim_idle" : "anim_shooting";
+                                  plantName == "Garlic" || plantName == "Gravebuster" ||
+                                  plantName == "Caltrop" || plantName == "SpikeRock" ||
+                                  plantName == "Chomper") ? "anim_idle" : "anim_shooting";
                 } else {
                     targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||
-                                  plantName == "CherryBomb" || plantName == "Chomper" ||
-                                  plantName == "Melonpult" || plantName == "Cornpult") ? "anim_idle" : "anim_head_idle";
+                                  plantName == "Garlic" || plantName == "Gravebuster" ||
+                                  plantName == "Caltrop" || plantName == "SpikeRock" ||
+                                  plantName == "Chomper" || plantName == "Melonpult" ||
+                                  plantName == "Cornpult" || plantName == "Cabbagepult") ? "anim_idle" : "anim_head_idle";
                 }
 
-                if (shoot && plantName == "Melonpult") {
-                    m_grid[r][c]->set_distance(min_distance - 65.0f); // Adjust the distance for Melonpult based on the nearest zombie
+                if (shoot && (plantName == "Melonpult" || plantName == "Cornpult" || plantName == "Cabbagepult")) {
+                    m_grid[r][c]->set_distance(min_distance - 65.0f);
                 }
 
                 if (m_grid[r][c]->getAnim().GetCurrentAnimName() != targetAnim) {

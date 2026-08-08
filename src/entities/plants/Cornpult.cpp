@@ -1,5 +1,35 @@
 #include "Cornpult.h"
-#include <cstdlib> // For rand()
+#include <cstdlib>
+#include <cmath>
+#include <algorithm>
+
+namespace {
+float ComputeLobbedArcLength(float range, float maxHeight) {
+    if (range <= 0.0f) {
+        return 0.0f;
+    }
+
+    constexpr int kSegments = 64;
+    constexpr float kPi = 3.14159265f;
+    const float step = range / static_cast<float>(kSegments);
+    float length = 0.0f;
+
+    for (int i = 0; i < kSegments; ++i) {
+        const float x0 = step * static_cast<float>(i);
+        const float x1 = x0 + step;
+        const float xm = (x0 + x1) * 0.5f;
+
+        auto arcFactor = [range, maxHeight, kPi](float x) {
+            const float slope = -(maxHeight * kPi / range) * cosf(kPi * x / range);
+            return sqrtf(1.0f + slope * slope);
+        };
+
+        length += (arcFactor(x0) + 4.0f * arcFactor(xm) + arcFactor(x1)) * step / 6.0f;
+    }
+
+    return length;
+}
+}  // namespace
 
 Cornpult::Cornpult(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 100, "Cornpult") {
@@ -35,13 +65,15 @@ void Cornpult::update(float deltaTime, std::vector<Projectile>& outProjectiles, 
 
     // Shoot kernel or butter when shooting animation reaches the launch frame (frame 36)
     if (isShooting && currentFrame == 36 && did_shoot == false) {
-        // PVZ Cornpult stuns with butter (25% chance) or shoots normal kernel (75% chance)
         bool isButter = (rand() % 4 == 0); 
-        Texture2D tex;
-        tex = res.GetTexture("Cornpult_butter");
+        Texture2D tex = isButter ? res.GetTexture("Cornpult_butter") : res.GetTexture("Cornpult_kernal");
+        if (tex.id == 0) tex = res.GetTexture("Cornpult_butter");
 
-        // Adjust spawn position to the basket location of Cornpult (x + 90, y - 60)
-        outProjectiles.push_back(Projectile(m_x + 90, m_y - 60, 400.0f, tex, isButter, true));
+        const float travelDistance = std::max(0.0f, distance);
+        const float launchSpeed = std::max(300.0f, ComputeLobbedArcLength(travelDistance, 150.0f)) * 0.5f;
+        int dmg = isButter ? 40 : 20;
+
+        outProjectiles.push_back(Projectile(m_x + 90, m_y - 60, launchSpeed, tex, isButter, true, 1.0f, dmg, &res, travelDistance));
         did_shoot = true;
     }
 
@@ -51,6 +83,5 @@ void Cornpult::update(float deltaTime, std::vector<Projectile>& outProjectiles, 
 }
 
 void Cornpult::draw() {
-    // Draw animation with appropriate scale (1.0f matches PeaShooter)
     m_anim.Draw(m_x, m_y, 1.0f);
 }
