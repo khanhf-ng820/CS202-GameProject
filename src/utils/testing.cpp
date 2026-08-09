@@ -1,5 +1,6 @@
 #include "testing.h"
 #include "Reanimation.h"
+#include "AudioManager.h"
 #include "UIHelpers.h"
 #include "PeaShooter.h"
 #include "SnowPea.h"
@@ -33,6 +34,12 @@ Testing::Testing(Resources& res, RenderTexture2D targetScreen)
 
 void Testing::run() {
     while (!WindowShouldClose()) {
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            std::string sfxPath = res.GetAssetPath("assets/sounds/gravebutton.ogg");
+            AudioManager::GetInstance().PlaySoundEffect(sfxPath);
+            break;
+        }
+
         float scaleX = 800.0f / (float)GetScreenWidth();
         float scaleY = 600.0f / (float)GetScreenHeight();
         SetVirtualMouseScale(scaleX, scaleY);

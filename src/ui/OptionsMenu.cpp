@@ -47,13 +47,19 @@ OptionsMenu::OptionsMenu(Resources& res)
 }
 
 void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& currentHeight) {
+    std::string sfxPath = m_res.GetAssetPath("assets/sounds/gravebutton.ogg");
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        AudioManager::GetInstance().PlaySoundEffect(sfxPath);
+        showOptions = false;
+        return;
+    }
+
     Vector2 mousePos = GetVirtualMousePosition();
 
     // Dialog layout coordinates in virtual space (800x600)
     float dialogX = (800.0f - 423.0f) / 2.0f;
     float dialogY = (600.0f - 498.0f) / 2.0f;
-
-    std::string sfxPath = m_res.GetAssetPath("assets/sounds/gravebutton.ogg");
 
     // Slider dimensions
     float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;

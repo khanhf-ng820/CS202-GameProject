@@ -159,6 +159,13 @@ bool ShopMenu::isButtonHovered(Vector2 mousePos, Rectangle bounds, const std::st
 void ShopMenu::update(float dt, bool& showShop) {
     AudioManager::GetInstance().PlayMusic(MusicTrack::ShopMenu);
 
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        std::string sfxPath = m_res.GetAssetPath("assets/sounds/gravebutton.ogg");
+        AudioManager::GetInstance().PlaySoundEffect(sfxPath);
+        showShop = false;
+        return;
+    }
+
     Vector2 mousePos = GetVirtualMousePosition();
 
     // Update Crazy Dave animation

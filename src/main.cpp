@@ -28,6 +28,7 @@ int main() {
     int windowWidth = 800;
     int windowHeight = 600;
     InitWindow(windowWidth, windowHeight, "Plants vs. Zombies - Level 1 (C++ & Raylib)");
+    SetExitKey(KEY_NULL); // Disable Raylib default KEY_ESCAPE exit so ESC key navigates menus instead of closing app
     AudioManager::GetInstance().Init();
     SetTargetFPS(60);
     SetTraceLogLevel(LOG_WARNING);
@@ -112,7 +113,7 @@ int main() {
             } else if (menu->getAction() == MenuAction::Shop) {
                 showShop = true;
                 menu->resetAction();
-            } else if (menu->getAction() == MenuAction::Quit) {
+            } else if (menu->getAction() == MenuAction::Quit || IsKeyPressed(KEY_ESCAPE)) {
                 exitGame = true;
             }
         }

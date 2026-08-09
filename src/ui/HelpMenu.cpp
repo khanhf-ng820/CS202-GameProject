@@ -10,7 +10,7 @@ HelpMenu::HelpMenu(Resources& res)
 }
 
 void HelpMenu::update(float dt, bool& showHelp) {
-    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+    if (IsKeyPressed(KEY_ESCAPE) || IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         std::string sfxPath = m_res.GetAssetPath("assets/sounds/gravebutton.ogg");
         AudioManager::GetInstance().PlaySoundEffect(sfxPath);
         showHelp = false;
