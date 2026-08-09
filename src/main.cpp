@@ -5,6 +5,7 @@
 #include "MainMenu.h"
 #include "OptionsMenu.h"
 #include "ShopMenu.h"
+#include "HelpMenu.h"
 #include "UIHelpers.h"
 #include "testing.h"
 #include "Level1.h"
@@ -53,10 +54,12 @@ int main() {
     std::unique_ptr<MainMenu> menu;
     std::unique_ptr<OptionsMenu> optionsMenu;
     std::unique_ptr<ShopMenu> shopMenu;
+    std::unique_ptr<HelpMenu> helpMenu;
 
     AppState currentState = AppState::Loading;
     bool showOptions = false;
     bool showShop = false;
+    bool showHelp = false;
     bool exitGame = false;
 
     while (!WindowShouldClose() && !exitGame) {
@@ -77,11 +80,14 @@ int main() {
                 menu = std::make_unique<MainMenu>(res);
                 optionsMenu = std::make_unique<OptionsMenu>(res);
                 shopMenu = std::make_unique<ShopMenu>(res);
+                helpMenu = std::make_unique<HelpMenu>(res);
                 currentState = AppState::MainMenu;
             }
-        } else if (showOptions) {
+        } else if (showOptions && optionsMenu) {
             optionsMenu->update(dt, showOptions, windowWidth, windowHeight);
-        } else if (showShop) {
+        } else if (showHelp && helpMenu) {
+            helpMenu->update(dt, showHelp);
+        } else if (showShop && shopMenu) {
             shopMenu->update(dt, showShop);
         } else if (menu) {
             menu->update(dt);
@@ -100,6 +106,9 @@ int main() {
             } else if (menu->getAction() == MenuAction::Options) {
                 showOptions = true;
                 menu->resetAction();
+            } else if (menu->getAction() == MenuAction::Help) {
+                showHelp = true;
+                menu->resetAction();
             } else if (menu->getAction() == MenuAction::Shop) {
                 showShop = true;
                 menu->resetAction();
@@ -108,8 +117,8 @@ int main() {
             }
         }
 
-        // Update UI interaction availability based on options menu visibility
-        SetUIInteractionEnabled(currentState == AppState::MainMenu && !showOptions && !showShop);
+        // Update UI interaction availability based on overlay menu visibility
+        SetUIInteractionEnabled(currentState == AppState::MainMenu && !showOptions && !showShop && !showHelp);
 
         // --- Draw to Virtual Canvas ---
         BeginTextureMode(targetScreen);
@@ -123,6 +132,9 @@ int main() {
             menu->draw();
             if (showOptions && optionsMenu) {
                 optionsMenu->draw();
+            }
+            if (showHelp && helpMenu) {
+                helpMenu->draw();
             }
         }
 

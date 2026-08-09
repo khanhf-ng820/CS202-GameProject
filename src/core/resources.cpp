@@ -56,6 +56,9 @@ void Resources::LoadFile(const std::string& path) {
         if (!stem.empty() && stem.back() == '_') {
             return;
         }
+        if (stem == "ZombieNoteHelp") {
+            return; // Skip loading as standalone texture since it serves as the alpha mask for ZombieNoteHelpBlack
+        }
 
         std::string key = ToUpper(stem);
         if (textures.find(key) != textures.end()) {
@@ -73,6 +76,13 @@ void Resources::LoadFile(const std::string& path) {
                 maskPath = maskPng;
             } else if (FileExists(maskJpg.c_str())) {
                 maskPath = maskJpg;
+            } else if (key == "ZOMBIENOTEHELPBLACK") {
+                size_t lastSlash = path.find_last_of("/\\");
+                std::string dir = (lastSlash != std::string::npos) ? path.substr(0, lastSlash) : ".";
+                std::string customMask = dir + "/ZombieNoteHelp.png";
+                if (FileExists(customMask.c_str())) {
+                    maskPath = customMask;
+                }
             }
 
             if (!maskPath.empty()) {

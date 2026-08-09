@@ -97,3 +97,26 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 *   **Backdrop Slot Geometry:** In the Wall-nut Bowling level, `ConveyorBelt_backdrop.png` spans 516px width with an inner conveyor slot running from `x = 8.0f` to `x = 507.0f`. Unlike `SeedBank.png`, it contains no sun counter box on the left. Set `leftMinX = 9.0f` for Card 0 alignment.
 *   **Capacity-Gated Spawning:** Always gate conveyor belt card spawning in Wall-nut Bowling by `m_cards.empty() || m_cards.back().x < spawnX`. Pause the spawn timer when full (10 cards max) to prevent stationary card pile-up and overlap at the right spawn position (`spawnX = 459.0f`).
 
+---
+
+## 🧟 Zombie Death Animations & Armor Detachment Rules
+
+*   **Zombie Render Loop Condition:** In level draw loops (`BowlingLevel::draw`, `Level1::draw`), ALWAYS gate zombie drawing using `if (!z->isFinished())` rather than `if (!z->isDead())`. Using `!z->isDead()` instantly stops rendering the zombie on frame 0 of fatal hit, hiding its 2.2-second PopCap death animation (`anim_death`/`anim_death2`) and falling limb physics.
+*   **Pre-Damage Armor Detachment:** In `takeDamage(damage)` for armored zombies (`ConeheadZombie`, `BucketheadZombie`), check armor removal `if (!m_hasLostArmor && (m_hp - damage <= 200))` BEFORE calling `Zombie::takeDamage(damage)`. If checked after `Zombie::takeDamage`, instant-kill damage (e.g. 1000 from Giant Wall-nut or 1800 from CherryBomb) drops `m_hp` directly to `<= 0`, skipping the `else if` armor check and preventing falling cone/bucket parts (`ZOMBIE_CONE3`, `ZOMBIE_BUCKET3`) from spawning.
+*   **Explosive Entity Animation Lifecycle:** Explosive entities (such as `ExplodeBowlingNut` or `CherryBomb`) must maintain active rendering state for `0.5s` (`isExplodingEffect = true`) to render `Pow` and `ExplosionPowie` textures with cubic ease-out scaling, rotation, and alpha fadeout. Do NOT set despawn flags (`m_hasExploded = true`) on frame 0 of impact, or the explosion animation will be skipped.
+
+---
+
+## 📋 Implementation Planning Invariants
+
+*   **Mandatory User Review Section:** Every implementation plan created by the agent MUST include a `## User Review Required` section outlining design decisions, breaking changes, or items needing user feedback before execution.
+
+---
+
+## 🖼️ UI Component Lifecycle & Asset Masking Rules
+
+*   **UI Class Instantiation Timing:** UI classes that query `Resources::GetTexture` during construction (such as `HelpMenu`, `OptionsMenu`, `ShopMenu`, or `MainMenu`) MUST be instantiated **after** asset loading completes (inside `if (doneLoading)`), or be managed via `std::unique_ptr` created lazily. Instantiating UI components before `AppState::Loading` completes caches uninitialized texture IDs (`0`), triggering placeholder fallback rectangles.
+*   **Non-Standard Image Alpha Masks:** Standard image masks in `assets/images` follow the `[stem]_.png` or `[stem]_.jpg` naming convention. For non-standard mask pairs (such as `ZombieNoteHelpBlack.png` requiring `ZombieNoteHelp.png`), add explicit mask mappings in `Resources::LoadFile` to invoke Raylib's native `ImageAlphaMask(&img, alphaMask)`.
+
+
+
