@@ -65,7 +65,7 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
         did_shoot = false; // Reset debounce
     }
     ```
-*   **Standard Scale:** Always draw plants and zombies at scale **`1.6f`** (except `Chomper` which uses `1.4f`).
+*   **Standard Scale:** Always draw plants and zombies at scale **`1.0f`** (`m_anim.Draw(m_x, m_y, 1.0f)`).
 
 ---
 
