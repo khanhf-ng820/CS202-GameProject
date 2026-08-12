@@ -50,7 +50,7 @@ void Testing::run() {
         if (!currentPlant->isDead()) {
             currentPlant->update(dt, projectiles, suns);
         }
-        if (currentZombie && !currentZombie->isDead()) {
+        if (currentZombie && !currentZombie->isFinished()) {
             currentZombie->update(dt);
         }
 
@@ -113,8 +113,11 @@ void Testing::run() {
         }
 
         if (currentZombie) {
-            if (!currentZombie->isDead()) {
+            if (!currentZombie->isFinished()) {
                 currentZombie->draw();
+                if (DrawButton({ 600, 220, 180, 40 }, "TAKE DAMAGE (-100)", ORANGE, RED, WHITE)) {
+                    currentZombie->takeDamage(100.0f);
+                }
             } else {
                 if (DrawButton({ 600, 280, 180, 40 }, "RESPAWN ZOMBIE", RED, MAROON, WHITE)) {
                     if (currentZombieType == 0) currentZombie = std::make_unique<FlagZombie>(res, 680, 360);
