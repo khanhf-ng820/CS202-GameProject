@@ -20,6 +20,7 @@
 #include "ConeheadZombie.h"
 #include "BucketheadZombie.h"
 #include "FootballZombie.h"
+#include "NewspaperZombie.h"
 #include <algorithm>
 #include <string>
 #include <iostream>
@@ -93,7 +94,7 @@ void Testing::run() {
         if (!currentPlant->isDead()) {
             currentPlant->draw();
         } else {
-            if (DrawButton({ 430, 280, 200, 50 }, "RESPAWN PLANT", RED, MAROON, WHITE)) {
+            if (DrawButton({ 430, 280, 180, 40 }, "RESPAWN PLANT", RED, MAROON, WHITE)) {
                 if (currentPlantType == 0) currentPlant = std::make_unique<PeaShooter>(res, 480, 360);
                 else if (currentPlantType == 1) currentPlant = std::make_unique<SnowPea>(res, 480, 360);
                 else if (currentPlantType == 2) currentPlant = std::make_unique<Cornpult>(res, 480, 360);
@@ -125,6 +126,7 @@ void Testing::run() {
                     else if (currentZombieType == 2) currentZombie = std::make_unique<ConeheadZombie>(res, 680, 360);
                     else if (currentZombieType == 3) currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360);
                     else if (currentZombieType == 4) currentZombie = std::make_unique<FootballZombie>(res, 680, 360);
+                    else if (currentZombieType == 5) currentZombie = std::make_unique<NewspaperZombie>(res, 680, 360);
                 }
             }
         }
@@ -203,12 +205,15 @@ void Testing::run() {
         if (DrawButton({ 20, 346, 135, 22 }, "Football Zombie", currentZombieType == 4 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 4 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentZombieType != 4) { currentZombieType = 4; currentZombie = std::make_unique<FootballZombie>(res, 680, 360); }
         }
-        if (DrawButton({ 165, 346, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 165, 346, 135, 22 }, "Newspaper Zombie", currentZombieType == 5 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 5 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentZombieType != 5) { currentZombieType = 5; currentZombie = std::make_unique<NewspaperZombie>(res, 680, 360); }
+        }
+        if (DrawButton({ 20, 371, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             currentZombieType = -1; currentZombie.reset();
         }
 
-        DrawLine(20, 373, 300, 373, ColorAlpha(WHITE, 0.2f));
-        DrawText("Select Animation:", 20, 378, 15, SKYBLUE);
+        DrawLine(20, 398, 300, 398, ColorAlpha(WHITE, 0.2f));
+        DrawText("Select Animation:", 20, 403, 15, SKYBLUE);
 
         Reanimation& activeAnim = (currentZombieType != -1 && currentZombie) ? currentZombie->getAnim() : currentPlant->getAnim();
         const auto& anims = activeAnim.GetAnimations();
@@ -221,7 +226,7 @@ void Testing::run() {
             int r = (int)(i / 2);
             int c = (int)(i % 2);
             float btnX = (c == 0) ? 20.0f : 165.0f;
-            float btnY = 398.0f + r * 26.0f;
+            float btnY = 423.0f + r * 26.0f;
 
             if (btnY + 22.0f > 600.0f - 10.0f) {
                 DrawText("...", 20, btnY, 14, GRAY);
