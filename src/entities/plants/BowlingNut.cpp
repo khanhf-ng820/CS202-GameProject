@@ -267,15 +267,15 @@ void ExplodeBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& z
                         m_explosionTimer = 0.0f;
                         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/cherrybomb.ogg"));
 
-                        // Explode in 180px radius (3x3 area), instantly incinerating all zombies in range
+                        // Explode in 150px circle radius, instantly incinerating all zombies in range
                         for (auto& targetZ : zombies) {
                             if (!targetZ->isDead()) {
                                 float targetZcx = targetZ->getX() + 40.0f;
-                                float targetZcy = targetZ->getY() + 40.0f;
+                                float targetZcy = targetZ->getY() + 80.0f;
                                 float exDx = targetZcx - m_x;
                                 float exDy = targetZcy - m_y;
-                                if (exDx * exDx + exDy * exDy <= 180.0f * 180.0f) {
-                                    targetZ->takeExplosiveDamage(1800);
+                                if (exDx * exDx + exDy * exDy <= 150.0f * 150.0f) {
+                                    targetZ->takeExplosiveDamage(1800.0f);
 
                                     bool foundDebug = false;
                                     for (auto& item : hitDebugTimers) {
