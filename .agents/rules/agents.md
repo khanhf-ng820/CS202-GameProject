@@ -78,6 +78,16 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 
 ---
 
+## 🖼️ Original Assets & Visual Bug Fixes
+
+*   **Never modify original `.reanim` or `.png` files:** Do not edit raw asset files to fix visual state bugs, add missing bones, change facial expressions (e.g., enraged states), or remove stray artifacts (like dotted black lines) from sprite boundaries. Original PopCap assets contain known artifacts that should be ignored.
+*   **Use Programmatic Overrides:** Resolve visual state bugs entirely in C++ using runtime tools:
+    *   Use `m_anim.OverrideTrackImage("track_name", "NEW_TEXTURE")` to swap textures dynamically (e.g., swapping a normal arm for a severed bone).
+    *   Use `m_anim.SetTrackVisible("track_name", false)` to hide lost limbs or shields. **Verify track names carefully** (e.g., `Zombie_paper_hands` for the left hand vs. `Zombie_paper_hands2` for the right hand).
+    *   Instantiate `FallingPart` objects manually in `takeDamage` to simulate dropping items (like torn newspaper pieces or glasses).
+
+---
+
 ## 🔊 Raylib Audio
 
 *   **Centralized AudioManager:** Do not manage raw raylib music streams directly or call `UpdateMusicStream` in isolated components. Use the centralized singleton **`AudioManager::GetInstance()`** (in `include/core/AudioManager.h`) to play tracks (`PlayMusic(MusicTrack::...)`), stop music, and adjust volume. Its streaming update loop is already invoked every frame inside `main.cpp`.
