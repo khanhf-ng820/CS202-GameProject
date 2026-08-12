@@ -94,7 +94,7 @@ void Testing::run() {
         if (!currentPlant->isDead()) {
             currentPlant->draw();
         } else {
-            if (DrawButton({ 430, 280, 180, 40 }, "RESPAWN PLANT", RED, MAROON, WHITE)) {
+            if (DrawButton({ 400, 280, 180, 40 }, "RESPAWN PLANT", RED, MAROON, WHITE)) {
                 if (currentPlantType == 0) currentPlant = std::make_unique<PeaShooter>(res, 480, 360);
                 else if (currentPlantType == 1) currentPlant = std::make_unique<SnowPea>(res, 480, 360);
                 else if (currentPlantType == 2) currentPlant = std::make_unique<Cornpult>(res, 480, 360);

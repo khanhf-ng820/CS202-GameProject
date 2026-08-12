@@ -43,6 +43,64 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen)
             m_grid[r][c] = nullptr;
         }
     }
+
+    // Generate preview zombies for seed selection phase
+    initPreviewZombies();
+}
+
+std::vector<std::string> Level1::getUniqueLevelZombieTypes() const {
+    std::vector<std::string> uniqueTypes;
+    auto addType = [&](const std::string& typeName) {
+        if (std::find(uniqueTypes.begin(), uniqueTypes.end(), typeName) == uniqueTypes.end()) {
+            uniqueTypes.push_back(typeName);
+        }
+    };
+
+    // Inspect wave configuration data across all waves
+    addType("ZombieNormal");
+    addType("ConeheadZombie");
+    addType("BucketheadZombie");
+    addType("FlagZombie");
+
+    return uniqueTypes;
+}
+
+void Level1::initPreviewZombies() {
+    m_previewZombies.clear();
+    std::vector<std::string> uniqueTypes = getUniqueLevelZombieTypes();
+
+    auto laneY = [](int row) -> float {
+        return 45.0f + row * 100.0f;
+    };
+
+    std::vector<int> availableRows = { 0, 1, 2, 3, 4 };
+    for (size_t i = 0; i < uniqueTypes.size(); ++i) {
+        std::string typeName = uniqueTypes[i];
+        int row = availableRows[i % availableRows.size()];
+
+        // Street world X range on background1.png (1400px wide): 1130.0f..1350.0f
+        float worldX = 1130.0f + (float)(GetRandomValue(0, 180));
+        float worldY = laneY(row) + (float)(GetRandomValue(-10, 10));
+
+        std::unique_ptr<Zombie> previewZ;
+        if (typeName == "ZombieNormal") {
+            previewZ = std::make_unique<ZombieNormal>(res, worldX, worldY);
+        } else if (typeName == "ConeheadZombie") {
+            previewZ = std::make_unique<ConeheadZombie>(res, worldX, worldY);
+        } else if (typeName == "BucketheadZombie") {
+            previewZ = std::make_unique<BucketheadZombie>(res, worldX, worldY);
+        } else if (typeName == "FlagZombie") {
+            previewZ = std::make_unique<FlagZombie>(res, worldX, worldY);
+        } else {
+            previewZ = std::make_unique<ZombieNormal>(res, worldX, worldY);
+        }
+
+        if (previewZ) {
+            previewZ->getAnim().SetBaseAnimation("anim_idle");
+            previewZ->getAnim().SetAnimation("anim_idle");
+            m_previewZombies.push_back({ std::move(previewZ), worldX, worldY });
+        }
+    }
 }
 
 bool Level1::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
@@ -507,9 +565,31 @@ void Level1::update(float dt) {
     bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
     if (m_phase == LevelPhase::SeedSelection) {
+        m_cameraCropX = 500.0f;
+        for (auto& item : m_previewZombies) {
+            item.zombie->getAnim().Update(dt);
+        }
         if (m_seedSelectMenu.update(dt, mousePos, mouseClicked)) {
             m_seedBank.initFromDeck(m_seedSelectMenu.getChosenDeck());
+            m_phase = LevelPhase::PanToLawn;
+            m_panTimer = 0.0f;
+        }
+        return;
+    }
+
+    if (m_phase == LevelPhase::PanToLawn) {
+        for (auto& item : m_previewZombies) {
+            item.zombie->getAnim().Update(dt);
+        }
+        m_panTimer += dt;
+        float t = std::min(1.0f, m_panTimer / m_panDuration);
+        float easeT = t * t * (3.0f - 2.0f * t); // Smooth-step cubic lerp
+        m_cameraCropX = 500.0f + (90.0f - 500.0f) * easeT;
+
+        if (t >= 1.0f) {
+            m_cameraCropX = 90.0f;
             m_phase = LevelPhase::ActiveWave;
+            m_previewZombies.clear(); // Clear preview zombies upon reaching active gameplay
         }
         return;
     }
@@ -702,12 +782,12 @@ void Level1::draw() {
     BeginTextureMode(targetScreen);
     ClearBackground(RAYWHITE);
 
-    // 1. Draw Background cropped at {90, 0, 900, 600}
+    // 1. Draw Background cropped at {m_cameraCropX, 0, 900, 600}
     Texture2D bgTex = res.GetBackground();
     if (bgTex.id != 0) {
         DrawTexturePro(
             bgTex,
-            { 90.0f, 0.0f, 900.0f, 600.0f },
+            { m_cameraCropX, 0.0f, 900.0f, 600.0f },
             { 0.0f, 0.0f, 800.0f, 600.0f },
             { 0.0f, 0.0f },
             0.0f,
@@ -725,7 +805,21 @@ void Level1::draw() {
     Vector2 mousePos = GetVirtualMousePosition();
 
     if (m_phase == LevelPhase::SeedSelection) {
+        for (auto& item : m_previewZombies) {
+            float screenX = (item.worldX - m_cameraCropX) * (800.0f / 900.0f);
+            item.zombie->setX(screenX);
+            item.zombie->setY(item.worldY);
+            item.zombie->draw();
+        }
         m_seedSelectMenu.draw(res, mousePos);
+    } else if (m_phase == LevelPhase::PanToLawn) {
+        for (auto& item : m_previewZombies) {
+            float screenX = (item.worldX - m_cameraCropX) * (800.0f / 900.0f);
+            item.zombie->setX(screenX);
+            item.zombie->setY(item.worldY);
+            item.zombie->draw();
+        }
+        m_seedBank.draw(res, mousePos);
     } else {
         // 2. Draw hover highlight cell on lawn grid
         int hoverRow, hoverCol;
