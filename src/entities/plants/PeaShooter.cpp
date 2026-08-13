@@ -14,6 +14,10 @@ PeaShooter::PeaShooter(Resources& res, int x, int y)
     m_anim.SetTrackVisible("idle_headleaf_nearest", false);
     //m_anim.SetTrackVisible("idle_headleaf_tip_bottom", false);
     m_anim.SetTrackVisible("idle_headleaf_tip_top", false);
+
+    // Ẩn phần lông mày cho PeaShooter (các entity khác như Repeater, FirePea sẽ không bị ảnh hưởng)
+    m_anim.SetTrackVisible("PeaShooter_eyebrow", false);
+
     m_fireRate = 2.08f;
     m_fireTimer = 0.0f;
     m_hp = 560; 
