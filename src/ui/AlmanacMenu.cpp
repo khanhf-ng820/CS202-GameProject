@@ -296,17 +296,17 @@ void AlmanacMenu::update(float dt, bool& showAlmanac) {
             return;
         }
 
-        // Check grid clicks (6 cols x 8 rows)
-        float startX = 35.0f;
-        float startY = 70.0f;
+        // Check grid clicks (8 cols x 6 rows)
+        float startX = 26.0f;
+        float startY = 93.0f;
         float cardW  = 50.0f;
         float cardH  = 70.0f;
-        int cols     = 6;
+        int cols     = 8;
 
         for (int i = 0; i < (int)m_plants.size(); ++i) {
             int row = i / cols;
             int col = i % cols;
-            Rectangle cardRect = { startX + col * 55.0f, startY + row * 75.0f, cardW, cardH };
+            Rectangle cardRect = { startX + col * 52.0f, startY + row * 78.0f, cardW, cardH };
 
             if (CheckCollisionPointRec(mousePos, cardRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 if (m_selectedPlant != i) {
@@ -436,18 +436,18 @@ void AlmanacMenu::draw() {
         // Title
         m_titleFont.DrawTextCentered("PLANTS", { 35.0f, 20.0f, 340.0f, 40.0f }, 1.2f, Color{ 230, 200, 80, 255 });
 
-        // Left Grid of Seed Packets (6 cols x 6 rows = 36 slots)
-        float startX = 35.0f;
-        float startY = 70.0f;
+        // Left Grid of Seed Packets (8 cols x 6 rows = 48 slots matching dashed borders)
+        float startX = 26.0f;
+        float startY = 93.0f;
         float cardW  = 50.0f;
         float cardH  = 70.0f;
-        int cols     = 6;
-        int totalSlots = 36;
+        int cols     = 8;
+        int totalSlots = 48;
 
         for (int i = 0; i < totalSlots; ++i) {
             int row = i / cols;
             int col = i % cols;
-            Rectangle cardRect = { startX + col * 55.0f, startY + row * 75.0f, cardW, cardH };
+            Rectangle cardRect = { startX + col * 52.0f, startY + row * 78.0f, cardW, cardH };
 
             if (i < (int)m_plants.size()) {
                 Texture2D tex = m_res.GetTexture(m_plants[i].packetKey);
@@ -470,10 +470,6 @@ void AlmanacMenu::draw() {
                 } else if (CheckCollisionPointRec(mousePos, cardRect)) {
                     DrawRectangleLinesEx(cardRect, 2.0f, WHITE);
                 }
-            } else {
-                // Empty packet slot
-                DrawRectangleRec(cardRect, ColorAlpha(BLACK, 0.25f));
-                DrawRectangleLinesEx(cardRect, 1.0f, ColorAlpha(BLACK, 0.4f));
             }
         }
 
