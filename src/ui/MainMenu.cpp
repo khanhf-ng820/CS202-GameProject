@@ -58,6 +58,9 @@ MainMenu::MainMenu(Resources& res)
     m_quitBtnHl    = res.GetTexture("SELECTORSCREEN_QUIT2");
     m_storeBtn     = res.GetTexture("SELECTORSCREEN_STORE");
     m_storeBtnHl   = res.GetTexture("SELECTORSCREEN_STOREHIGHLIGHT");
+    m_almanacBtn   = res.GetTexture("SELECTORSCREEN_ALMANAC");
+    m_almanacBtnHl = res.GetTexture("SELECTORSCREEN_ALMANACHIGHLIGHT");
+    m_almanacShadow = res.GetTexture("SELECTORSCREEN_ALMANAC_SHADOW");
     m_zenGardenBtn   = res.GetTexture("SELECTORSCREEN_ZENGARDEN");
     m_zenGardenBtnHl = res.GetTexture("SELECTORSCREEN_ZENGARDENHIGHLIGHT");
 
@@ -157,6 +160,17 @@ void MainMenu::update(float dt) {
     if (isGraveButtonHovered(mousePos, storeRect, "SELECTORSCREEN_STORE")) {
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             m_action = MenuAction::Shop;
+        }
+    }
+
+    // Almanac button (green book on lawn)
+    float almanacW = (m_almanacBtn.id != 0) ? (float)m_almanacBtn.width : 99.0f;
+    float almanacH = (m_almanacBtn.id != 0) ? (float)m_almanacBtn.height : 99.0f;
+    Rectangle almanacRect = { 325.0f, 425.0f, almanacW, almanacH };
+    if (isGraveButtonHovered(mousePos, almanacRect, "SELECTORSCREEN_ALMANAC")) {
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            m_action = MenuAction::Almanac;
+            AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/paper.ogg"));
         }
     }
 
@@ -261,6 +275,19 @@ void MainMenu::draw() {
         bool hovered = isGraveButtonHovered(mousePos, storeRect, "SELECTORSCREEN_STORE");
         Texture2D tex = hovered ? (m_storeBtnHl.id != 0 ? m_storeBtnHl : m_storeBtn) : m_storeBtn;
         DrawTexture(tex, (int)storeRect.x, (int)storeRect.y, WHITE);
+    }
+
+    // Draw Almanac button & shadow
+    float almanacW = (m_almanacBtn.id != 0) ? (float)m_almanacBtn.width : 99.0f;
+    float almanacH = (m_almanacBtn.id != 0) ? (float)m_almanacBtn.height : 99.0f;
+    Rectangle almanacRect = { 325.0f, 425.0f, almanacW, almanacH };
+    if (m_almanacShadow.id != 0) {
+        DrawTexture(m_almanacShadow, (int)almanacRect.x - 30, (int)almanacRect.y + 40, WHITE);
+    }
+    if (m_almanacBtn.id != 0) {
+        bool hovered = isGraveButtonHovered(mousePos, almanacRect, "SELECTORSCREEN_ALMANAC");
+        Texture2D tex = hovered ? (m_almanacBtnHl.id != 0 ? m_almanacBtnHl : m_almanacBtn) : m_almanacBtn;
+        DrawTexture(tex, (int)almanacRect.x, (int)almanacRect.y, WHITE);
     }
 
     // Draw Zen Garden button
