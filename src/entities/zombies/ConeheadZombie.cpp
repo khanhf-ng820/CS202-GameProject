@@ -31,13 +31,13 @@ void ConeheadZombie::takeDamage(float damage) {
 
         Resources& res = Resources::GetInstance();
         FallingPart cone;
-        cone.texture = res.GetTexture("ZOMBIE_CONE");
-        cone.x = m_x + 50.0f;
-        cone.y = m_y - 20.0f;
-        cone.vx = (float)GetRandomValue(20, 80);
+        cone.texture = res.GetTexture("ZOMBIE_CONE3");
+        cone.x = m_x + 30.0f;
+        cone.y = m_y + 10.0f;
+        cone.vx = (float)GetRandomValue(-30, 30);
         cone.vy = (float)GetRandomValue(-150, -50);
         cone.rotation = 0;
-        cone.rotSpeed = (float)GetRandomValue(-200, 200);
+        cone.rotSpeed = (float)GetRandomValue(-150, 150);
         cone.timer = 1.0f;
         cone.active = true;
         m_fallingParts.push_back(cone);
