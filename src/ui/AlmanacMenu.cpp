@@ -57,9 +57,16 @@ AlmanacMenu::AlmanacMenu(Resources& res)
         ReanimDefinition zDef = res.LoadReanim(zPath);
         m_indexZombieAnim.SetResources(zDef, res);
         m_indexZombieAnim.SetAnimation("anim_walk");
-        m_indexZombieAnim.SetTrackVisible("Zombie_cone", false);
-        m_indexZombieAnim.SetTrackVisible("Zombie_bucket", false);
-        m_indexZombieAnim.SetTrackVisible("Zombie_flag", false);
+        m_indexZombieAnim.SetTrackVisible("anim_bucket", false);
+        m_indexZombieAnim.SetTrackVisible("anim_cone", false);
+        m_indexZombieAnim.SetTrackVisible("anim_screendoor", false);
+        m_indexZombieAnim.SetTrackVisible("Zombie_duckytube", false);
+        m_indexZombieAnim.SetTrackVisible("Zombie_mustache", false);
+        m_indexZombieAnim.SetTrackVisible("Zombie_innerarm_screendoor", false);
+        m_indexZombieAnim.SetTrackVisible("Zombie_innerarm_screendoor_hand", false);
+        m_indexZombieAnim.SetTrackVisible("Zombie_outerarm_screendoor", false);
+        m_indexZombieAnim.SetTrackVisible("Zombie_flaghand", false);
+        m_indexZombieAnim.SetTrackVisible("Zombie_outerarm_hand", true);
     }
 
     loadSelectedPlantPreview();
@@ -69,29 +76,29 @@ AlmanacMenu::AlmanacMenu(Resources& res)
 void AlmanacMenu::initData() {
     // 13 Implemented Plants
     m_plants = {
-        { "Peashooter",   "PEASHOOTER",   "assets/reanim/PeaShooter.reanim",  "anim_head_idle", AlmanacGroundType::Day,  100, "Fast",      "Normal",         "Shoots peas at attacking zombies.",                                                               "How can a single plant grow and shoot so many peas so quickly?", 1.30f, 550.0f, 88.0f, WHITE },
-        { "Sunflower",    "SUNFLOWER",    "assets/reanim/SunFlower.reanim",   "anim_idle",      AlmanacGroundType::Day,  50,  "Fast",      "None",           "Gives you additional sun to plant more plants.",                                                  "Sunflower can't help but dance to the beat of the music.", 1.30f, 552.0f, 90.0f, WHITE },
-        { "Cherry Bomb",  "CHERRYBOMB",   "assets/reanim/CherryBomb.reanim",  "anim_idle",      AlmanacGroundType::Day,  150, "Very Slow", "Massive",        "Blows up all zombies in an area.",                                                                "'We want to blow up!' say the Cherry Bomb brothers.", 1.30f, 546.0f, 103.0f, WHITE },
-        { "Wall-nut",     "WALLNUT",      "assets/reanim/Wallnut.reanim",     "anim_idle",      AlmanacGroundType::Day,  50,  "Slow",      "None",           "Blocks zombies and protects your other plants.",                                                  "Wall-nut has a hard shell and a kind smile.", 1.30f, 545.0f, 99.0f, WHITE },
-        { "Snow Pea",     "SNOWPEA",      "assets/reanim/SnowPea.reanim",     "anim_head_idle", AlmanacGroundType::Day,  175, "Fast",      "Normal (slows)", "Shoots frozen peas that damage and slow down zombies.",                                          "Folks tell Snow Pea how cool he is, and he just blushes.", 1.30f, 549.0f, 90.0f, WHITE },
-        { "Chomper",      "CHOMPER",      "assets/reanim/Chomper.reanim",     "anim_idle",      AlmanacGroundType::Day,  150, "Fast",      "Massive",        "Devours a zombie whole, but is vulnerable while chewing.",                                        "Chomper almost got a gig in Hollywood once, but his agent dropped him.", 1.15f, 560.0f, 105.0f, WHITE },
-        { "Repeater",     "REPEATER",     "assets/reanim/PeaShooter.reanim",  "anim_head_idle", AlmanacGroundType::Day,  200, "Fast",      "2x Normal",      "Fires two peas at a time.",                                                                       "Repeater is fiercely motivated to defend your lawn.", 1.30f, 550.0f, 88.0f, WHITE },
-        { "Jalapeno",     "JALAPENO",     "assets/reanim/Jalapeno.reanim",    "anim_idle",      AlmanacGroundType::Day,  125, "Very Slow", "Massive",        "Destroys an entire lane of zombies in a searing fiery blast.",                                    "'NNNNGGG!' says Jalapeno. He's not going to explode yet, but soon.", 1.30f, 548.0f, 97.0f, WHITE },
-        { "Torchwood",    "TORCHWOOD",    "assets/reanim/Torchwood.reanim",   "anim_idle",      AlmanacGroundType::Day,  175, "Fast",      "None",           "Turns peas that pass through it into flaming fireballs.",                                         "Everybody likes Torchwood for his radiant personality.", 1.25f, 549.0f, 107.0f, WHITE },
-        { "Cornpult",     "CORNPULT",     "assets/reanim/Cornpult.reanim",    "anim_idle",      AlmanacGroundType::Roof, 100, "Fast",      "Normal / Stun",  "Lobs kernels and butter that temporarily immobilizes zombies.",                                   "Cornpult is the oldest of the Pult siblings.", 1.20f, 565.0f, 116.0f, WHITE },
-        { "Melonpult",    "MELONPULT",    "assets/reanim/Melonpult.reanim",   "anim_idle",      AlmanacGroundType::Roof, 300, "Fast",      "Heavy",          "Lobs heavy melons that do massive splash damage across multiple lanes.",                          "Melonpult does not mess around when it comes to defending the roof.", 1.20f, 581.0f, 114.0f, WHITE },
-        { "Gatling Pea",  "GATLINGPEA",   "assets/reanim/GatlingPea.reanim",  "anim_head_idle", AlmanacGroundType::Day,  250, "Very Slow", "4x Normal",      "Shoots four peas at a rapid firing rate.",                                                        "Gatling Pea's parents were worried when he decided to join the army.", 1.30f, 542.0f, 96.0f, WHITE },
-        { "Fire Pea",     "FIREPEA",      "assets/reanim/PeaShooter.reanim",  "anim_head_idle", AlmanacGroundType::Day,  175, "Fast",      "2x Normal",      "Shoots blazing fireballs that ignite oncoming targets.",                                          "Fire Pea is always ready to bring the heat to the front lines.", 1.30f, 550.0f, 88.0f, Color{ 255, 140, 60, 255 } }
+        { "Peashooter",   "PEASHOOTER",   "assets/reanim/PeaShooter.reanim",  "anim_head_idle", AlmanacGroundType::Day,  100, "Fast",      "Normal",         "Shoots peas at attacking zombies.",                                                               "How can a single plant grow and shoot so many peas so quickly?", 1.30f, 566.0f, 117.0f, WHITE },
+        { "Sunflower",    "SUNFLOWER",    "assets/reanim/SunFlower.reanim",   "anim_idle",      AlmanacGroundType::Day,  50,  "Fast",      "None",           "Gives you additional sun to plant more plants.",                                                  "Sunflower can't help but dance to the beat of the music.", 1.30f, 568.0f, 119.0f, WHITE },
+        { "Cherry Bomb",  "CHERRYBOMB",   "assets/reanim/CherryBomb.reanim",  "anim_idle",      AlmanacGroundType::Day,  150, "Very Slow", "Massive",        "Blows up all zombies in an area.",                                                                "'We want to blow up!' say the Cherry Bomb brothers.", 1.30f, 562.0f, 132.0f, WHITE },
+        { "Wall-nut",     "WALLNUT",      "assets/reanim/Wallnut.reanim",     "anim_idle",      AlmanacGroundType::Day,  50,  "Slow",      "None",           "Blocks zombies and protects your other plants.",                                                  "Wall-nut has a hard shell and a kind smile.", 1.30f, 561.0f, 128.0f, WHITE },
+        { "Snow Pea",     "SNOWPEA",      "assets/reanim/SnowPea.reanim",     "anim_head_idle", AlmanacGroundType::Day,  175, "Fast",      "Normal (slows)", "Shoots frozen peas that damage and slow down zombies.",                                          "Folks tell Snow Pea how cool he is, and he just blushes.", 1.30f, 565.0f, 119.0f, WHITE },
+        { "Chomper",      "CHOMPER",      "assets/reanim/Chomper.reanim",     "anim_idle",      AlmanacGroundType::Day,  150, "Fast",      "Massive",        "Devours a zombie whole, but is vulnerable while chewing.",                                        "Chomper almost got a gig in Hollywood once, but his agent dropped him.", 1.15f, 576.0f, 134.0f, WHITE },
+        { "Repeater",     "REPEATER",     "assets/reanim/PeaShooter.reanim",  "anim_head_idle", AlmanacGroundType::Day,  200, "Fast",      "2x Normal",      "Fires two peas at a time.",                                                                       "Repeater is fiercely motivated to defend your lawn.", 1.30f, 566.0f, 117.0f, WHITE },
+        { "Jalapeno",     "JALAPENO",     "assets/reanim/Jalapeno.reanim",    "anim_idle",      AlmanacGroundType::Day,  125, "Very Slow", "Massive",        "Destroys an entire lane of zombies in a searing fiery blast.",                                    "'NNNNGGG!' says Jalapeno. He's not going to explode yet, but soon.", 1.30f, 564.0f, 126.0f, WHITE },
+        { "Torchwood",    "TORCHWOOD",    "assets/reanim/Torchwood.reanim",   "anim_idle",      AlmanacGroundType::Day,  175, "Fast",      "None",           "Turns peas that pass through it into flaming fireballs.",                                         "Everybody likes Torchwood for his radiant personality.", 1.25f, 565.0f, 136.0f, WHITE },
+        { "Cornpult",     "CORNPULT",     "assets/reanim/Cornpult.reanim",    "anim_idle",      AlmanacGroundType::Roof, 100, "Fast",      "Normal / Stun",  "Lobs kernels and butter that temporarily immobilizes zombies.",                                   "Cornpult is the oldest of the Pult siblings.", 1.20f, 581.0f, 145.0f, WHITE },
+        { "Melonpult",    "MELONPULT",    "assets/reanim/Melonpult.reanim",   "anim_idle",      AlmanacGroundType::Roof, 300, "Fast",      "Heavy",          "Lobs heavy melons that do massive splash damage across multiple lanes.",                          "Melonpult does not mess around when it comes to defending the roof.", 1.20f, 597.0f, 143.0f, WHITE },
+        { "Gatling Pea",  "GATLINGPEA",   "assets/reanim/GatlingPea.reanim",  "anim_head_idle", AlmanacGroundType::Day,  250, "Very Slow", "4x Normal",      "Shoots four peas at a rapid firing rate.",                                                        "Gatling Pea's parents were worried when he decided to join the army.", 1.30f, 558.0f, 125.0f, WHITE },
+        { "Fire Pea",     "FIREPEA",      "assets/reanim/PeaShooter.reanim",  "anim_head_idle", AlmanacGroundType::Day,  175, "Fast",      "2x Normal",      "Shoots blazing fireballs that ignite oncoming targets.",                                          "Fire Pea is always ready to bring the heat to the front lines.", 1.30f, 566.0f, 117.0f, Color{ 255, 140, 60, 255 } }
     };
 
     // 6 Implemented Zombies
     m_zombies = {
-        { "Regular Zombie",   "assets/reanim/Zombie.reanim",          "anim_walk", "Low",       "Basic",                    "Regular garden-variety zombie.",                                                                   "This zombie loves brains. Can't get enough of them.", 1.00f, 561.0f, 127.0f },
-        { "Flag Zombie",      "assets/reanim/Zombie.reanim",          "anim_walk", "Low",       "Basic",                    "Marks the arrival of a huge wave of zombies.",                                                     "Make no mistake, Flag Zombie loves brains just as much as the next guy.", 1.00f, 567.0f, 127.0f },
-        { "Conehead Zombie",  "assets/reanim/Zombie.reanim",          "anim_walk", "Medium",    "Basic",                    "His traffic cone makes him twice as tough as a regular zombie.",                                   "Conehead Zombie was minding his own business when an emergency traffic cone landed on him.", 1.00f, 561.0f, 138.0f },
-        { "Buckethead Zombie","assets/reanim/Zombie.reanim",          "anim_walk", "High",      "Basic",                    "His bucket head makes him extremely durable and resistant to damage.",                             "Buckethead Zombie always wore a bucket. In a world of zombies, it made him feel unique.", 1.00f, 563.0f, 134.0f },
-        { "Football Zombie",  "assets/reanim/Zombie_football.reanim", "anim_walk", "Very High", "Fast",                     "Heavy helmet and rapid sprint make him a devastating threat on the lawn.",                         "Football Zombie gives 110 percent on the field, though he doesn't know what a football is.", 0.90f, 560.0f, 130.0f },
-        { "Newspaper Zombie", "assets/reanim/Zombie_paper.reanim",    "anim_walk", "Medium",    "Basic (Fast when angry)",  "His newspaper protects him until it's destroyed, sending him into an angry sprint.",               "Newspaper Zombie was this close to finishing his Sudoku puzzle.", 0.95f, 563.0f, 125.0f }
+        { "Regular Zombie",   "assets/reanim/Zombie.reanim",          "anim_walk", "Low",       "Basic",                    "Regular garden-variety zombie.",                                                                   "This zombie loves brains. Can't get enough of them.", 1.00f, 577.0f, 155.0f },
+        { "Flag Zombie",      "assets/reanim/Zombie.reanim",          "anim_walk", "Low",       "Basic",                    "Marks the arrival of a huge wave of zombies.",                                                     "Make no mistake, Flag Zombie loves brains just as much as the next guy.", 1.00f, 583.0f, 155.0f },
+        { "Conehead Zombie",  "assets/reanim/Zombie.reanim",          "anim_walk", "Medium",    "Basic",                    "His traffic cone makes him twice as tough as a regular zombie.",                                   "Conehead Zombie was minding his own business when an emergency traffic cone landed on him.", 1.00f, 577.0f, 166.0f },
+        { "Buckethead Zombie","assets/reanim/Zombie.reanim",          "anim_walk", "High",      "Basic",                    "His bucket head makes him extremely durable and resistant to damage.",                             "Buckethead Zombie always wore a bucket. In a world of zombies, it made him feel unique.", 1.00f, 579.0f, 162.0f },
+        { "Football Zombie",  "assets/reanim/Zombie_football.reanim", "anim_walk", "Very High", "Fast",                     "Heavy helmet and rapid sprint make him a devastating threat on the lawn.",                         "Football Zombie gives 110 percent on the field, though he doesn't know what a football is.", 0.90f, 576.0f, 158.0f },
+        { "Newspaper Zombie", "assets/reanim/Zombie_paper.reanim",    "anim_walk", "Medium",    "Basic (Fast when angry)",  "His newspaper protects him until it's destroyed, sending him into an angry sprint.",               "Newspaper Zombie was this close to finishing his Sudoku puzzle.", 0.95f, 579.0f, 153.0f }
     };
 }
 
@@ -318,14 +325,14 @@ void AlmanacMenu::update(float dt, bool& showAlmanac) {
         }
 
         // Bottom Navigation Buttons
-        Rectangle indexBtnRect = { 180.0f, 538.0f, 120.0f, 26.0f };
+        Rectangle indexBtnRect = { 180.0f, 569.0f, 120.0f, 26.0f };
         if (isButtonHovered(mousePos, indexBtnRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             AudioManager::GetInstance().PlaySoundEffect(sfxPaper);
             m_currentPage = AlmanacPage::Index;
             return;
         }
 
-        Rectangle switchBtnRect = { 350.0f, 538.0f, 164.0f, 26.0f };
+        Rectangle switchBtnRect = { 350.0f, 569.0f, 164.0f, 26.0f };
         if (isButtonHovered(mousePos, switchBtnRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             AudioManager::GetInstance().PlaySoundEffect(sfxPaper);
             m_currentPage = AlmanacPage::Zombies;
@@ -333,7 +340,7 @@ void AlmanacMenu::update(float dt, bool& showAlmanac) {
             return;
         }
 
-        Rectangle closeBtnRect = { 660.0f, 538.0f, 89.0f, 26.0f };
+        Rectangle closeBtnRect = { 660.0f, 569.0f, 89.0f, 26.0f };
         if (isButtonHovered(mousePos, closeBtnRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             AudioManager::GetInstance().PlaySoundEffect(sfxClick);
             showAlmanac = false;
@@ -370,14 +377,14 @@ void AlmanacMenu::update(float dt, bool& showAlmanac) {
         }
 
         // Bottom Navigation Buttons
-        Rectangle indexBtnRect = { 180.0f, 538.0f, 120.0f, 26.0f };
+        Rectangle indexBtnRect = { 180.0f, 569.0f, 120.0f, 26.0f };
         if (isButtonHovered(mousePos, indexBtnRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             AudioManager::GetInstance().PlaySoundEffect(sfxPaper);
             m_currentPage = AlmanacPage::Index;
             return;
         }
 
-        Rectangle switchBtnRect = { 350.0f, 538.0f, 164.0f, 26.0f };
+        Rectangle switchBtnRect = { 350.0f, 569.0f, 164.0f, 26.0f };
         if (isButtonHovered(mousePos, switchBtnRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             AudioManager::GetInstance().PlaySoundEffect(sfxPaper);
             m_currentPage = AlmanacPage::Plants;
@@ -385,7 +392,7 @@ void AlmanacMenu::update(float dt, bool& showAlmanac) {
             return;
         }
 
-        Rectangle closeBtnRect = { 660.0f, 538.0f, 89.0f, 26.0f };
+        Rectangle closeBtnRect = { 660.0f, 569.0f, 89.0f, 26.0f };
         if (isButtonHovered(mousePos, closeBtnRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             AudioManager::GetInstance().PlaySoundEffect(sfxClick);
             showAlmanac = false;
@@ -405,12 +412,12 @@ void AlmanacMenu::draw() {
             DrawRectangle(0, 0, 800, 600, DARKBLUE);
         }
 
-        // Animated Mini Models
-        m_indexPlantAnim.Draw(200, 260, 1.15f);
-        m_indexZombieAnim.Draw(570, 270, 0.85f);
+        // Animated Mini Models centered in their respective rectangular stone windows
+        m_indexPlantAnim.Draw(158.0f, 230.0f, 1.40f);
+        m_indexZombieAnim.Draw(542.0f, 218.0f, 1.10f);
 
         // Title
-        m_titleFont.DrawTextCentered("SUBURBAN ALMANAC", { 0.0f, 32.0f, 800.0f, 40.0f }, 1.3f, Color{ 240, 200, 80, 255 });
+        m_titleFont.DrawTextCentered("Suburban Almanac - Index", { 0.0f, 22.0f, 800.0f, 50.0f }, 1.1f, Color{ 240, 200, 80, 255 });
 
         // Buttons
         Rectangle plantsBtnRect = { 130.0f, 365.0f, 164.0f, 26.0f };
@@ -434,7 +441,7 @@ void AlmanacMenu::draw() {
         }
 
         // Title
-        m_titleFont.DrawTextCentered("PLANTS", { 35.0f, 20.0f, 340.0f, 40.0f }, 1.2f, Color{ 230, 200, 80, 255 });
+        m_titleFont.DrawTextCentered("Suburban Almanac - Plants", { 0.0f, 16.0f, 800.0f, 42.0f }, 0.95f, Color{ 230, 200, 80, 255 });
 
         // Left Grid of Seed Packets (8 cols x 6 rows = 48 slots matching dashed borders)
         float startX = 26.0f;
@@ -483,7 +490,7 @@ void AlmanacMenu::draw() {
                 DrawTexturePro(
                     groundTex,
                     { 0.0f, 0.0f, (float)groundTex.width, (float)groundTex.height },
-                    { 500.0f, 65.0f, 200.0f, 160.0f },
+                    { 516.0f, 94.0f, 200.0f, 160.0f },
                     { 0.0f, 0.0f },
                     0.0f,
                     WHITE
@@ -495,36 +502,40 @@ void AlmanacMenu::draw() {
 
             // 3. Parchment Card Frame overlay
             if (m_plantCard.id != 0) {
-                DrawTexture(m_plantCard, 442, 56, WHITE);
+                DrawTexture(m_plantCard, 458, 85, WHITE);
             }
 
-            // 4. Plant Name
-            m_headerFont.DrawTextCentered(plant.name.c_str(), { 450.0f, 235.0f, 305.0f, 28.0f }, 0.95f, Color{ 60, 40, 20, 255 });
+            // 4. Plant Name (Yellow)
+            m_headerFont.DrawTextCentered(plant.name.c_str(), { 466.0f, 264.0f, 305.0f, 28.0f }, 0.95f, Color{ 255, 220, 50, 255 });
+
+            // Helper lambda for two-tone stat lines (Brown label + Red value)
+            auto drawStatLine = [&](const std::string& label, const std::string& val, float x, float y, float scale) {
+                std::string fullLabel = label + ": ";
+                m_bodyFont.DrawText(fullLabel.c_str(), x, y, scale, Color{ 40, 30, 20, 255 });
+                int labelW = m_bodyFont.MeasureText(fullLabel.c_str(), scale);
+                m_bodyFont.DrawText(val.c_str(), x + (float)labelW, y, scale, Color{ 220, 30, 30, 255 });
+            };
 
             // 5. Stats
-            std::string costStr = "Cost: "     + std::to_string(plant.sunCost);
-            std::string rchgStr = "Recharge: " + plant.recharge;
-            std::string dmgStr  = "Damage: "   + plant.damage;
-
-            m_subFont.DrawText(costStr.c_str(), 465.0f, 270.0f, 0.70f, Color{ 70, 45, 15, 255 });
-            m_subFont.DrawText(rchgStr.c_str(), 465.0f, 290.0f, 0.70f, Color{ 70, 45, 15, 255 });
-            m_subFont.DrawText(dmgStr.c_str(),  465.0f, 310.0f, 0.70f, Color{ 70, 45, 15, 255 });
+            drawStatLine("Cost", std::to_string(plant.sunCost), 492.0f, 318.0f, 0.75f);
+            drawStatLine("Recharge", plant.recharge, 492.0f, 338.0f, 0.75f);
+            drawStatLine("Damage", plant.damage, 492.0f, 358.0f, 0.75f);
 
             // 6. Description & Flavor Story (Multiline Wrapped)
-            drawWrappedText(m_bodyFont, plant.description, 465.0f, 340.0f, 260.0f, 18.0f, 0.75f, Color{ 40, 30, 20, 255 });
-            drawWrappedText(m_bodyFont, plant.flavor,      465.0f, 410.0f, 260.0f, 17.0f, 0.68f, Color{ 110, 85, 60, 255 });
+            drawWrappedText(m_bodyFont, plant.description, 492.0f, 385.0f, 240.0f, 16.0f, 0.72f, Color{ 40, 30, 20, 255 });
+            drawWrappedText(m_bodyFont, plant.flavor,      492.0f, 450.0f, 240.0f, 15.0f, 0.65f, Color{ 110, 85, 60, 255 });
         }
 
         // Bottom Navigation Buttons
-        Rectangle indexBtnRect = { 180.0f, 538.0f, 120.0f, 26.0f };
+        Rectangle indexBtnRect = { 180.0f, 569.0f, 120.0f, 26.0f };
         bool indexHover = isButtonHovered(mousePos, indexBtnRect);
         drawButton(indexBtnRect, "INDEX", m_indexBtn, m_indexBtnHl, indexHover);
 
-        Rectangle switchBtnRect = { 350.0f, 538.0f, 164.0f, 26.0f };
+        Rectangle switchBtnRect = { 350.0f, 569.0f, 164.0f, 26.0f };
         bool switchHover = isButtonHovered(mousePos, switchBtnRect);
         drawButton(switchBtnRect, "VIEW ZOMBIES", m_indexBtn, m_indexBtnHl, switchHover);
 
-        Rectangle closeBtnRect = { 660.0f, 538.0f, 89.0f, 26.0f };
+        Rectangle closeBtnRect = { 660.0f, 569.0f, 89.0f, 26.0f };
         bool closeHover = isButtonHovered(mousePos, closeBtnRect);
         drawButton(closeBtnRect, "CLOSE", m_closeBtn, m_closeBtnHl, closeHover);
 
@@ -537,7 +548,7 @@ void AlmanacMenu::draw() {
         }
 
         // Title
-        m_titleFont.DrawTextCentered("ZOMBIES", { 35.0f, 20.0f, 340.0f, 40.0f }, 1.2f, Color{ 230, 200, 80, 255 });
+        m_headerFont.DrawTextCentered("Suburban Almanac - Zombies", { 0.0f, 25.0f, 800.0f, 40.0f }, 0.95f, Color{ 230, 200, 80, 255 });
 
         // Left Grid of Zombie Windows (5 cols x 6 rows = 30 slots)
         float startX = 35.0f;
@@ -617,34 +628,39 @@ void AlmanacMenu::draw() {
 
             // 2. Parchment Card Frame overlay
             if (m_zombieCard.id != 0) {
-                DrawTexture(m_zombieCard, 442, 50, WHITE);
+                DrawTexture(m_zombieCard, 458, 78, WHITE);
             }
 
-            // 3. Zombie Name
-            m_headerFont.DrawTextCentered(zombie.name.c_str(), { 450.0f, 245.0f, 305.0f, 28.0f }, 0.95f, Color{ 60, 40, 20, 255 });
+            // 3. Zombie Name (Centered in the stone space between the shiny slanted border of the upper window and lavender parchment)
+            m_headerFont.DrawTextCentered(zombie.name.c_str(), { 466.0f, 343.0f, 305.0f, 24.0f }, 0.95f, Color{ 255, 220, 50, 255 });
 
-            // 4. Stats
-            std::string tghStr = "Toughness: " + zombie.toughness;
-            std::string spdStr = "Speed: "     + zombie.speed;
+            // Helper lambda for two-tone stat lines (Brown label + Red value)
+            auto drawStatLine = [&](const std::string& label, const std::string& val, float x, float y, float scale) {
+                std::string fullLabel = label + ": ";
+                m_bodyFont.DrawText(fullLabel.c_str(), x, y, scale, Color{ 40, 30, 20, 255 });
+                int labelW = m_bodyFont.MeasureText(fullLabel.c_str(), scale);
+                m_bodyFont.DrawText(val.c_str(), x + (float)labelW, y, scale, Color{ 220, 30, 30, 255 });
+            };
 
-            m_subFont.DrawText(tghStr.c_str(), 465.0f, 285.0f, 0.70f, Color{ 70, 45, 15, 255 });
-            m_subFont.DrawText(spdStr.c_str(), 465.0f, 310.0f, 0.70f, Color{ 70, 45, 15, 255 });
+            // 4. Stats (Inside lavender parchment with large padding)
+            drawStatLine("Toughness", zombie.toughness, 494.0f, 392.0f, 0.72f);
+            drawStatLine("Speed", zombie.speed, 494.0f, 410.0f, 0.72f);
 
             // 5. Description & Flavor Story (Multiline Wrapped)
-            drawWrappedText(m_bodyFont, zombie.description, 465.0f, 345.0f, 260.0f, 18.0f, 0.75f, Color{ 40, 30, 20, 255 });
-            drawWrappedText(m_bodyFont, zombie.flavor,      465.0f, 410.0f, 260.0f, 17.0f, 0.68f, Color{ 110, 85, 60, 255 });
+            drawWrappedText(m_bodyFont, zombie.description, 494.0f, 435.0f, 240.0f, 15.0f, 0.70f, Color{ 40, 30, 20, 255 });
+            drawWrappedText(m_bodyFont, zombie.flavor,      494.0f, 485.0f, 240.0f, 14.0f, 0.65f, Color{ 110, 85, 60, 255 });
         }
 
         // Bottom Navigation Buttons
-        Rectangle indexBtnRect = { 180.0f, 538.0f, 120.0f, 26.0f };
+        Rectangle indexBtnRect = { 180.0f, 569.0f, 120.0f, 26.0f };
         bool indexHover = isButtonHovered(mousePos, indexBtnRect);
         drawButton(indexBtnRect, "INDEX", m_indexBtn, m_indexBtnHl, indexHover);
 
-        Rectangle switchBtnRect = { 350.0f, 538.0f, 164.0f, 26.0f };
+        Rectangle switchBtnRect = { 350.0f, 569.0f, 164.0f, 26.0f };
         bool switchHover = isButtonHovered(mousePos, switchBtnRect);
         drawButton(switchBtnRect, "VIEW PLANTS", m_indexBtn, m_indexBtnHl, switchHover);
 
-        Rectangle closeBtnRect = { 660.0f, 538.0f, 89.0f, 26.0f };
+        Rectangle closeBtnRect = { 660.0f, 569.0f, 89.0f, 26.0f };
         bool closeHover = isButtonHovered(mousePos, closeBtnRect);
         drawButton(closeBtnRect, "CLOSE", m_closeBtn, m_closeBtnHl, closeHover);
     }

@@ -46,6 +46,7 @@ private:
     Texture2D m_almanacBtn;
     Texture2D m_almanacBtnHl;
     Texture2D m_almanacShadow;
+    Texture2D m_keyShadow;
     Texture2D m_zenGardenBtn;
     Texture2D m_zenGardenBtnHl;
 

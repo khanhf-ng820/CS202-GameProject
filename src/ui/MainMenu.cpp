@@ -48,6 +48,7 @@ MainMenu::MainMenu(Resources& res)
     // Hide duplicate adventure button & shadow tracks to prevent overdrawing and darkening
     m_anim.SetTrackVisible("SelectorScreen_Adventure_button", false);
     m_anim.SetTrackVisible("SelectorScreen_Adventure_shadow", false);
+    m_anim.SetTrackVisible("almanac_key_shadow", false);
 
     // Load bottom-bar button textures from the already-loaded resource map
     m_optionsBtn   = res.GetTexture("SELECTORSCREEN_OPTIONS1");
@@ -61,6 +62,7 @@ MainMenu::MainMenu(Resources& res)
     m_almanacBtn   = res.GetTexture("SELECTORSCREEN_ALMANAC");
     m_almanacBtnHl = res.GetTexture("SELECTORSCREEN_ALMANACHIGHLIGHT");
     m_almanacShadow = res.GetTexture("SELECTORSCREEN_ALMANAC_SHADOW");
+    m_keyShadow     = res.GetTexture("SELECTORSCREEN_KEY_SHADOW");
     m_zenGardenBtn   = res.GetTexture("SELECTORSCREEN_ZENGARDEN");
     m_zenGardenBtnHl = res.GetTexture("SELECTORSCREEN_ZENGARDENHIGHLIGHT");
 
@@ -143,6 +145,7 @@ void MainMenu::update(float dt) {
     Rectangle helpRect = { 647.0f, 499.0f, helpW, helpH };
     if (CheckCollisionPointRec(mousePos, helpRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         m_action = MenuAction::Help;
+        AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/paper.ogg"));
     }
 
     // Quit button (right flower pot)
@@ -153,20 +156,20 @@ void MainMenu::update(float dt) {
         m_action = MenuAction::Quit;
     }
 
-    // Shop button (car keys hanging near Zen Garden / bottom-right)
-    float storeW = (m_storeBtn.id != 0) ? (float)m_storeBtn.width : 100.0f;
-    float storeH = (m_storeBtn.id != 0) ? (float)m_storeBtn.height : 100.0f;
-    Rectangle storeRect = { 390.0f, 430.0f, storeW, storeH };
+    // Shop button (car keys hanging near right lawn)
+    float storeW = (m_storeBtn.id != 0) ? (float)m_storeBtn.width : 130.0f;
+    float storeH = (m_storeBtn.id != 0) ? (float)m_storeBtn.height : 89.0f;
+    Rectangle storeRect = { 415.0f, 435.0f, storeW, storeH };
     if (isGraveButtonHovered(mousePos, storeRect, "SELECTORSCREEN_STORE")) {
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             m_action = MenuAction::Shop;
         }
     }
 
-    // Almanac button (green book on lawn)
+    // Almanac button (green book in middle lawn)
     float almanacW = (m_almanacBtn.id != 0) ? (float)m_almanacBtn.width : 99.0f;
     float almanacH = (m_almanacBtn.id != 0) ? (float)m_almanacBtn.height : 99.0f;
-    Rectangle almanacRect = { 325.0f, 425.0f, almanacW, almanacH };
+    Rectangle almanacRect = { 295.0f, 430.0f, almanacW, almanacH };
     if (isGraveButtonHovered(mousePos, almanacRect, "SELECTORSCREEN_ALMANAC")) {
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             m_action = MenuAction::Almanac;
@@ -174,10 +177,10 @@ void MainMenu::update(float dt) {
         }
     }
 
-    // Zen Garden button (potted sprout asset on lawn)
+    // Zen Garden button (potted sprout on left lawn)
     float zenW = (m_zenGardenBtn.id != 0) ? (float)m_zenGardenBtn.width : 191.0f;
     float zenH = (m_zenGardenBtn.id != 0) ? (float)m_zenGardenBtn.height : 163.0f;
-    Rectangle zenRect = { 250.0f, 425.0f, zenW, zenH };
+    Rectangle zenRect = { 165.0f, 415.0f, zenW, zenH };
     if (isGraveButtonHovered(mousePos, zenRect, "SELECTORSCREEN_ZENGARDEN")) {
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
             m_action = MenuAction::ZenGarden;
@@ -267,22 +270,12 @@ void MainMenu::draw() {
         DrawButton(quitRect, "Quit", ColorAlpha(DARKGRAY, 0.7f), ColorAlpha(GRAY, 0.8f), WHITE);
     }
 
-    // Draw Shop button
-    float storeW = (m_storeBtn.id != 0) ? (float)m_storeBtn.width : 100.0f;
-    float storeH = (m_storeBtn.id != 0) ? (float)m_storeBtn.height : 100.0f;
-    Rectangle storeRect = { 390.0f, 430.0f, storeW, storeH };
-    if (m_storeBtn.id != 0) {
-        bool hovered = isGraveButtonHovered(mousePos, storeRect, "SELECTORSCREEN_STORE");
-        Texture2D tex = hovered ? (m_storeBtnHl.id != 0 ? m_storeBtnHl : m_storeBtn) : m_storeBtn;
-        DrawTexture(tex, (int)storeRect.x, (int)storeRect.y, WHITE);
-    }
-
     // Draw Almanac button & shadow
     float almanacW = (m_almanacBtn.id != 0) ? (float)m_almanacBtn.width : 99.0f;
     float almanacH = (m_almanacBtn.id != 0) ? (float)m_almanacBtn.height : 99.0f;
-    Rectangle almanacRect = { 325.0f, 425.0f, almanacW, almanacH };
+    Rectangle almanacRect = { 295.0f, 430.0f, almanacW, almanacH };
     if (m_almanacShadow.id != 0) {
-        DrawTexture(m_almanacShadow, (int)almanacRect.x - 30, (int)almanacRect.y + 40, WHITE);
+        DrawTexture(m_almanacShadow, (int)almanacRect.x - 5, (int)almanacRect.y + 20, WHITE);
     }
     if (m_almanacBtn.id != 0) {
         bool hovered = isGraveButtonHovered(mousePos, almanacRect, "SELECTORSCREEN_ALMANAC");
@@ -290,10 +283,23 @@ void MainMenu::draw() {
         DrawTexture(tex, (int)almanacRect.x, (int)almanacRect.y, WHITE);
     }
 
+    // Draw Shop button & shadow
+    float storeW = (m_storeBtn.id != 0) ? (float)m_storeBtn.width : 130.0f;
+    float storeH = (m_storeBtn.id != 0) ? (float)m_storeBtn.height : 89.0f;
+    Rectangle storeRect = { 415.0f, 435.0f, storeW, storeH };
+    if (m_keyShadow.id != 0) {
+        DrawTexture(m_keyShadow, (int)storeRect.x - 2, (int)storeRect.y - 28, WHITE);
+    }
+    if (m_storeBtn.id != 0) {
+        bool hovered = isGraveButtonHovered(mousePos, storeRect, "SELECTORSCREEN_STORE");
+        Texture2D tex = hovered ? (m_storeBtnHl.id != 0 ? m_storeBtnHl : m_storeBtn) : m_storeBtn;
+        DrawTexture(tex, (int)storeRect.x, (int)storeRect.y, WHITE);
+    }
+
     // Draw Zen Garden button
     float zenW = (m_zenGardenBtn.id != 0) ? (float)m_zenGardenBtn.width : 191.0f;
     float zenH = (m_zenGardenBtn.id != 0) ? (float)m_zenGardenBtn.height : 163.0f;
-    Rectangle zenRect = { 250.0f, 425.0f, zenW, zenH };
+    Rectangle zenRect = { 165.0f, 415.0f, zenW, zenH };
     if (m_zenGardenBtn.id != 0) {
         bool hovered = isGraveButtonHovered(mousePos, zenRect, "SELECTORSCREEN_ZENGARDEN");
         Texture2D tex = hovered ? (m_zenGardenBtnHl.id != 0 ? m_zenGardenBtnHl : m_zenGardenBtn) : m_zenGardenBtn;
