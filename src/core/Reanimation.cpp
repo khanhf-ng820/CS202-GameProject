@@ -446,6 +446,10 @@ void Reanimation::AddCustomAnimation(const std::string& newAnimName, const std::
     }
 }
 
+void Reanimation::AddCustomAnimation(const std::string& newAnimName, int startFrame, int endFrame) {
+    m_anims.push_back({newAnimName, startFrame, endFrame});
+}
+
 float Reanimation::GetLoopStartTime(int animIndex) const {
     if (animIndex < 0 || animIndex >= (int)m_anims.size()) return 0.0f;
     
