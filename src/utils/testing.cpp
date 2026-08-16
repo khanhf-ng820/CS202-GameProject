@@ -19,6 +19,7 @@
 #include "ZombieNormal.h"
 #include "ConeheadZombie.h"
 #include "BucketheadZombie.h"
+#include "PoleVaultingZombie.h"
 #include <algorithm>
 #include <string>
 #include <iostream>
@@ -120,6 +121,7 @@ void Testing::run() {
                     else if (currentZombieType == 1) currentZombie = std::make_unique<ZombieNormal>(res, 680, 360);
                     else if (currentZombieType == 2) currentZombie = std::make_unique<ConeheadZombie>(res, 680, 360);
                     else if (currentZombieType == 3) currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360);
+                    else if (currentZombieType == 4) currentZombie = std::make_unique<PoleVaultingZombie>(res, 680, 360);
                 }
             }
         }
@@ -195,7 +197,10 @@ void Testing::run() {
         if (DrawButton({ 165, 321, 135, 22 }, "Buckethead", currentZombieType == 3 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 3 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentZombieType != 3) { currentZombieType = 3; currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360); }
         }
-        if (DrawButton({ 20, 346, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 346, 135, 22 }, "Pole Vaulter", currentZombieType == 4 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 4 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+            if (currentZombieType != 4) { currentZombieType = 4; currentZombie = std::make_unique<PoleVaultingZombie>(res, 680, 360); }
+        }
+        if (DrawButton({ 165, 346, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             currentZombieType = -1; currentZombie.reset();
         }
 

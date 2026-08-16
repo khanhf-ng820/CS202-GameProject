@@ -66,6 +66,8 @@ void NormalBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zo
                         } else {
                             damage = 200; // Hit 2: 200 -> 0 (dies)
                         }
+                    } else if (zName == "PoleVaultingZombie") {
+                        damage = 250; // 2 hits to defeat (500 HP)
                     } else {
                         damage = 200; // NormalZombie, FlagZombie: 1 hit death
                     }

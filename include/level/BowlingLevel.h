@@ -8,6 +8,7 @@
 #include "ConeheadZombie.h"
 #include "BucketheadZombie.h"
 #include "FlagZombie.h"
+#include "PoleVaultingZombie.h"
 #include <vector>
 #include <string>
 #include <algorithm>
