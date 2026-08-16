@@ -21,6 +21,7 @@
 #include "BucketheadZombie.h"
 #include "FootballZombie.h"
 #include "NewspaperZombie.h"
+#include "PoleVaultingZombie.h"
 #include <algorithm>
 #include <string>
 #include <iostream>
@@ -125,8 +126,6 @@ void Testing::run() {
                     else if (currentZombieType == 1) currentZombie = std::make_unique<ZombieNormal>(res, 680, 360);
                     else if (currentZombieType == 2) currentZombie = std::make_unique<ConeheadZombie>(res, 680, 360);
                     else if (currentZombieType == 3) currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360);
-                    else if (currentZombieType == 4) currentZombie = std::make_unique<FootballZombie>(res, 680, 360);
-                    else if (currentZombieType == 5) currentZombie = std::make_unique<NewspaperZombie>(res, 680, 360);
                 }
             }
         }
@@ -202,13 +201,7 @@ void Testing::run() {
         if (DrawButton({ 165, 321, 135, 22 }, "Buckethead", currentZombieType == 3 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 3 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentZombieType != 3) { currentZombieType = 3; currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360); }
         }
-        if (DrawButton({ 20, 346, 135, 22 }, "Football Zombie", currentZombieType == 4 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 4 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
-            if (currentZombieType != 4) { currentZombieType = 4; currentZombie = std::make_unique<FootballZombie>(res, 680, 360); }
-        }
-        if (DrawButton({ 165, 346, 135, 22 }, "Newspaper Zombie", currentZombieType == 5 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 5 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
-            if (currentZombieType != 5) { currentZombieType = 5; currentZombie = std::make_unique<NewspaperZombie>(res, 680, 360); }
-        }
-        if (DrawButton({ 20, 371, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 346, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             currentZombieType = -1; currentZombie.reset();
         }
 

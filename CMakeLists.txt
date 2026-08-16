@@ -1,13 +1,20 @@
+set(ENV{CMAKE_POLICY_VERSION_MINIMUM} "3.5")
+set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Force minimum policy version" FORCE)
+if(POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
 cmake_minimum_required(VERSION 3.20)
 project(PvZGame LANGUAGES CXX)
-
-# Force CMake 4.0+ to treat legacy third-party configurations as CMake 3.5+
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 # Force the modern C++20 Standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Ensure executable is placed directly in build/ (build/PvZGame.exe) across all generators
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}")
 
 # Include CMake's FetchContent module to automate dependency retrieval
 include(FetchContent)
@@ -22,9 +29,8 @@ set(SUPPORT_FILEFORMAT_JPG ON CACHE BOOL "Enable JPEG loading support" FORCE)
 
 FetchContent_Declare(
     raylib
-    GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG        5.0 # Stable milestone matching raygui 4.0
-	GIT_SHALLOW    TRUE
+    URL https://github.com/raysan5/raylib/archive/refs/tags/5.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
 # ---------------------------------------------------------
@@ -32,9 +38,8 @@ FetchContent_Declare(
 # ---------------------------------------------------------
 FetchContent_Declare(
     raygui
-    GIT_REPOSITORY https://github.com/raysan5/raygui.git
-    GIT_TAG        4.0 # Pin to stable v4.0 to match raylib 5.0
-	GIT_SHALLOW    TRUE
+    URL https://github.com/raysan5/raygui/archive/refs/tags/4.0.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
 # ---------------------------------------------------------
@@ -43,6 +48,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     json
     URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 
 # Download and load all libraries into the active build environment

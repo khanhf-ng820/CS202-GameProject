@@ -10,6 +10,7 @@
 #include "FlagZombie.h"
 #include "NewspaperZombie.h"
 #include "FootballZombie.h"
+#include "PoleVaultingZombie.h"
 #include <vector>
 #include <string>
 #include <algorithm>

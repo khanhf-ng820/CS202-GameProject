@@ -31,8 +31,13 @@ public:
 private:
     Resources& m_res;
     MenuAction m_action;
-    Reanimation m_anim;      // SelectorScreen.reanim
-    BitmapFont m_font;       // DwarvenTodcraft24 bitmap font
+    MenuAction m_pendingAction = MenuAction::None;
+    bool m_handActive = false;
+    float m_handTime = 0.0f;
+    Reanimation m_anim;                   // SelectorScreen.reanim
+    Reanimation m_handAnim;               // Zombie_hand.reanim
+    std::vector<Reanimation> m_cloudAnims; // Multiple concurrent moving cloud animations
+    BitmapFont m_font;                    // DwarvenTodcraft24 bitmap font
 
     // Manually loaded textures for bottom-bar buttons (not in reanim)
     Texture2D m_optionsBtn;
@@ -49,6 +54,7 @@ private:
     Texture2D m_keyShadow;
     Texture2D m_zenGardenBtn;
     Texture2D m_zenGardenBtnHl;
+    Texture2D m_bgTex;
 
     bool isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName);
 };

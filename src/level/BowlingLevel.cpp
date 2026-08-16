@@ -49,6 +49,7 @@ void BowlingLevel::spawnNextWave() {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
     } else if (m_currentWave == 4) {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
     } else if (m_currentWave == 5) {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
@@ -62,7 +63,7 @@ void BowlingLevel::spawnNextWave() {
         // Final wave!
         m_finalWaveAnnounced = true;
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(0)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
@@ -135,11 +136,11 @@ void BowlingLevel::update(float dt) {
         m_showDebug = !m_showDebug;
     }
 
-    // 5. Handle right-click on grid to spawn ZombieNormal at right of lane (x = 700.0f, y = 50.0f + r * 100.0f)
+    // 5. Handle right-click on grid to spawn PoleVaultingZombie at right of lane (x = 700.0f, y = 50.0f + r * 100.0f)
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         int r, c;
         if (getGridCell(mousePos, r, c)) {
-            m_zombies.push_back(std::make_unique<ZombieNormal>(res, 700.0f, 50.0f + r * 100.0f));
+            m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, 700.0f, 50.0f + r * 100.0f));
         }
     }
 

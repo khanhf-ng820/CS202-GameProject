@@ -28,6 +28,7 @@
 #include "BucketheadZombie.h"
 #include "NewspaperZombie.h"
 #include "FootballZombie.h"
+#include "PoleVaultingZombie.h"
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
@@ -203,6 +204,7 @@ void Level1::spawnNextWave() {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
     } else if (m_currentWave == 4) {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
     } else if (m_currentWave == 5) {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
@@ -216,7 +218,7 @@ void Level1::spawnNextWave() {
         // Final wave!
         m_finalWaveAnnounced = true;
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(0)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
@@ -502,6 +504,12 @@ void Level1::updateCollisions(float dt) {
     for (auto& z : m_zombies) {
         if (z->isDead() || z->isSquashed()) continue;
 
+        PoleVaultingZombie* pvz = dynamic_cast<PoleVaultingZombie*>(z.get());
+        if (pvz && pvz->isVaulting()) {
+            // In mid-air vaulting over plants: skip eating
+            continue;
+        }
+
         bool foundPlantToEat = false;
         int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
         if (zRow < 0) zRow = 0;
@@ -515,6 +523,15 @@ void Level1::updateCollisions(float dt) {
                 }
 
                 float plantX = (float)p->getX();
+
+                // Trigger pole vault if zombie hasn't vaulted yet
+                if (pvz && !pvz->hasVaulted() && !pvz->isVaulting()) {
+                    if (z->getX() >= plantX - 10.0f && z->getX() <= plantX + 80.0f) {
+                        pvz->startVault();
+                        break;
+                    }
+                }
+
                 if (z->getX() >= plantX - 20.0f && z->getX() <= plantX + 45.0f) {
                     if (p->getName() == "Garlic") {
                         p->takeDamage(25.0f); // Garlic takes bite damage
@@ -561,7 +578,7 @@ void Level1::updateCollisions(float dt) {
             }
         }
 
-        if (!foundPlantToEat) {
+        if (!foundPlantToEat && (!pvz || (!pvz->isVaulting() && pvz->hasVaulted()))) {
             if (z->isEating() || z->getAnim().GetCurrentAnimName() == "anim_eat") {
                 z->setEating(false);
                 z->resetEatTimer();
@@ -619,7 +636,7 @@ void Level1::update(float dt) {
         Vector2 mousePos = GetVirtualMousePosition();
         int getRow, getCol;
         if (getGridCell(mousePos, getRow, getCol)) {
-            m_zombies.push_back(std::make_unique<ZombieNormal>(res, 700.0f, 50.0f + getRow * 100.0f));
+            m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, 700.0f, 50.0f + getRow * 100.0f));
         }
     }
 

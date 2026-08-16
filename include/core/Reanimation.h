@@ -41,6 +41,7 @@ public:
     void ClearTrackImageOverride(const std::string& trackName);
     void AddCustomAnimation(const std::string& newAnimName, const std::string& baseAnimName);
     void BakeChildRotation(const std::string& parentTrack, const std::string& childTrack, const std::string& animName);
+    void AddCustomAnimation(const std::string& newAnimName, int startFrame, int endFrame);
     float GetLoopStartTime(int animIndex) const;
 
     // Get the bounding rectangle of a named track at the current frame,

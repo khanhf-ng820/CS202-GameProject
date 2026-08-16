@@ -45,10 +45,52 @@ MainMenu::MainMenu(Resources& res)
     m_anim.SetFrame(MENU_REST_FRAME);
     m_anim.SetPaused(true);
 
-    // Hide duplicate adventure button & shadow tracks to prevent overdrawing and darkening
+    // Load the Zombie_hand reanim
+    std::string handReanimPath = res.GetAssetPath("assets/reanim/Zombie_hand.reanim");
+    ReanimDefinition handDef = res.LoadReanim(handReanimPath);
+    m_handAnim.SetResources(handDef, res);
+    m_handAnim.SetFrame(0.0f);
+    m_handAnim.SetPaused(true);
+
+    // Hide sky in m_anim so that we can render the sky first, then clouds, then foreground
+    m_anim.SetTrackVisible("SelectorScreen_BG", false);
     m_anim.SetTrackVisible("SelectorScreen_Adventure_button", false);
     m_anim.SetTrackVisible("SelectorScreen_Adventure_shadow", false);
     m_anim.SetTrackVisible("almanac_key_shadow", false);
+
+    // Setup 6 concurrent animated drifting clouds (each running its own PopCap track)
+    struct CloudConfig {
+        const char* name;
+        int startFrame;
+        int endFrame;
+        float initialProgress; // Stagger initial positions across screen [0..1]
+        float speed;
+    };
+
+    static const CloudConfig CLOUD_CONFIGS[] = {
+        { "anim_cloud1", 198, 335, 0.00f, 1.3f },
+        { "anim_cloud7", 336, 421, 0.45f, 1.5f },
+        { "anim_cloud2", 422, 502, 0.20f, 1.4f },
+        { "anim_cloud4", 503, 568, 0.70f, 1.6f },
+        { "anim_cloud6", 569, 638, 0.35f, 1.35f },
+        { "anim_cloud5", 639, 705, 0.60f, 1.45f },
+    };
+
+    m_cloudAnims.reserve(6);
+    for (const auto& cfg : CLOUD_CONFIGS) {
+        m_cloudAnims.emplace_back();
+        Reanimation& cAnim = m_cloudAnims.back();
+        cAnim.SetResources(def, res);
+        cAnim.AddCustomAnimation(cfg.name, cfg.startFrame, cfg.endFrame);
+        cAnim.SetAnimation(cfg.name);
+        cAnim.SetSpeed(cfg.speed);
+        float duration = (float)(cfg.endFrame - cfg.startFrame);
+        cAnim.SetFrame((float)cfg.startFrame + cfg.initialProgress * duration);
+        cAnim.SetPaused(false);
+    }
+
+    // Load background sky texture
+    m_bgTex = res.GetTexture("SELECTORSCREEN_BG");
 
     // Load bottom-bar button textures from the already-loaded resource map
     m_optionsBtn   = res.GetTexture("SELECTORSCREEN_OPTIONS1");
@@ -81,6 +123,29 @@ void MainMenu::update(float dt) {
 
     // Reset action each frame
     m_action = MenuAction::None;
+
+    // Animate all drifting clouds concurrently
+    for (auto& cAnim : m_cloudAnims) {
+        cAnim.Update(dt);
+    }
+
+    // If zombie hand animation is emerging from the ground, update and wait until finished
+    if (m_handActive) {
+        m_anim.ClearTrackImageOverride(TRACK_START_ADVENTURE);
+        m_anim.ClearTrackImageOverride(TRACK_SURVIVAL);
+        m_anim.ClearTrackImageOverride(TRACK_CHALLENGES);
+        m_anim.ClearTrackImageOverride(TRACK_ZEN_GARDEN);
+
+        m_handTime += dt;
+        m_handAnim.Update(dt);
+        if (m_handAnim.GetCurrentFrame() >= m_handAnim.GetEndFrame() - 1 || m_handTime >= 0.83f) {
+            m_handActive = false;
+            m_handAnim.SetPaused(true);
+            m_action = m_pendingAction;
+            m_pendingAction = MenuAction::None;
+        }
+        return;
+    }
 
     if (!IsUIInteractionEnabled()) return;
 
@@ -118,7 +183,14 @@ void MainMenu::update(float dt) {
         if (hovered) {
             m_anim.OverrideTrackImage(btn.trackName, btn.highlightImg);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                m_action = btn.action;
+                m_pendingAction = btn.action;
+                m_handActive = true;
+                m_handTime = 0.0f;
+                m_handAnim.SetFrame(0.0f);
+                m_handAnim.SetPaused(false);
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/gravebutton.ogg"));
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/evillaugh.ogg"));
             }
         } else {
             m_anim.ClearTrackImageOverride(btn.trackName);
@@ -195,7 +267,20 @@ void MainMenu::draw() {
     float yOffset = ComputeYOffset();
     Vector2 mousePos = GetVirtualMousePosition();
 
-    // Draw the entire SelectorScreen reanim (background, clouds, buttons, leaves, flowers, signs)
+    // 1. Draw base sky background (stretched across 800x600 canvas)
+    if (m_bgTex.id != 0) {
+        DrawTexturePro(m_bgTex,
+                       Rectangle{ 0.0f, 0.0f, (float)m_bgTex.width, (float)m_bgTex.height },
+                       Rectangle{ 0.0f, 0.0f, screenW, screenH },
+                       Vector2{ 0.0f, 0.0f }, 0.0f, WHITE);
+    }
+
+    // 2. Draw all drifting clouds in the sky (BEHIND foreground trees, grass hill, tombstones, and signs)
+    for (const auto& cAnim : m_cloudAnims) {
+        cAnim.Draw(0, yOffset, REANIM_SCALE);
+    }
+
+    // 3. Draw foreground elements (trees, grass hill, tombstones, buttons, leaves, flowers, signs)
     // Anchor to the bottom of the window so the grass line matches the window's bottom edge.
     m_anim.Draw(0, yOffset, REANIM_SCALE);
 
@@ -221,6 +306,11 @@ void MainMenu::draw() {
             // Main pass
             m_font.DrawTextCentered(lbl.label, bounds, REANIM_SCALE, WHITE);
         }
+    }
+
+    // 4. Draw Zombie Hand emerging animation if active
+    if (m_handActive) {
+        m_handAnim.Draw(0, yOffset, REANIM_SCALE);
     }
 
     // --- Draw bottom-bar buttons (Options / Help / Quit) ---
@@ -316,6 +406,7 @@ void MainMenu::resetAction() {
 }
 
 bool MainMenu::isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName) {
+    if (m_handActive) return false;
     if (!IsUIInteractionEnabled()) return false;
     if (!CheckCollisionPointRec(mousePos, bounds)) return false;
     int localX = (int)((mousePos.x - bounds.x) / REANIM_SCALE);
