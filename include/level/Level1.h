@@ -14,6 +14,7 @@
 
 enum class LevelPhase {
     SeedSelection,
+    PanToLawn,
     ActiveWave
 };
 
@@ -34,10 +35,22 @@ private:
     SeedSelectMenu m_seedSelectMenu;
     SeedBank m_seedBank;
     
+    // Camera pan tracking
+    float m_cameraCropX = 500.0f;
+    float m_panTimer = 0.0f;
+    float m_panDuration = 2.5f;
+
     // 5x9 Lawn Grid for plant placement
     std::unique_ptr<Plant> m_grid[5][9];
     
+    struct PreviewZombieItem {
+        std::unique_ptr<Zombie> zombie;
+        float worldX;
+        float worldY;
+    };
+
     std::vector<std::unique_ptr<Zombie>> m_zombies;
+    std::vector<PreviewZombieItem> m_previewZombies;
     std::vector<Projectile> m_projectiles;
     std::vector<SunItem> m_suns;
     std::vector<ParticleEffect> m_effects;
@@ -53,6 +66,8 @@ private:
 
     // Helper functions
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
+    std::vector<std::string> getUniqueLevelZombieTypes() const;
+    void initPreviewZombies();
     void spawnSunFromSky();
     void spawnNextWave();
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);

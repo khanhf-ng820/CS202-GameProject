@@ -13,6 +13,7 @@ enum class MenuAction {
     Options,
     Help,
     Shop,
+    Almanac,
     ZenGarden,
     Quit
 };
@@ -43,6 +44,10 @@ private:
     Texture2D m_quitBtnHl;
     Texture2D m_storeBtn;
     Texture2D m_storeBtnHl;
+    Texture2D m_almanacBtn;
+    Texture2D m_almanacBtnHl;
+    Texture2D m_almanacShadow;
+    Texture2D m_keyShadow;
     Texture2D m_zenGardenBtn;
     Texture2D m_zenGardenBtnHl;
     Texture2D m_bgTex;

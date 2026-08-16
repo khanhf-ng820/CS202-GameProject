@@ -19,15 +19,17 @@
 #include "ZombieNormal.h"
 #include "ConeheadZombie.h"
 #include "BucketheadZombie.h"
+#include "FootballZombie.h"
+#include "NewspaperZombie.h"
 #include "PoleVaultingZombie.h"
 #include <algorithm>
 #include <string>
 #include <iostream>
 
-Testing::Testing(Resources& res, RenderTexture2D targetScreen) 
-    : res(res), targetScreen(targetScreen), 
-      currentPlantType(3), 
-      currentZombieType(-1) 
+Testing::Testing(Resources& res, RenderTexture2D targetScreen)
+    : res(res), targetScreen(targetScreen),
+      currentPlantType(3),
+      currentZombieType(-1)
 {
     currentPlant = std::make_unique<FirePea>(res, 480, 360);
     currentZombie = nullptr;
@@ -46,11 +48,11 @@ void Testing::run() {
         SetVirtualMouseScale(scaleX, scaleY);
 
         float dt = GetFrameTime();
-        
+
         if (!currentPlant->isDead()) {
             currentPlant->update(dt, projectiles, suns);
         }
-        if (currentZombie && !currentZombie->isDead()) {
+        if (currentZombie && !currentZombie->isFinished()) {
             currentZombie->update(dt);
         }
 
@@ -60,7 +62,7 @@ void Testing::run() {
         for (auto& s : suns) {
             s.update(dt);
         }
-        
+
         projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
             [](const Projectile& p) { return !p.isActive(); }), projectiles.end());
 
@@ -93,7 +95,7 @@ void Testing::run() {
         if (!currentPlant->isDead()) {
             currentPlant->draw();
         } else {
-            if (DrawButton({ 430, 280, 200, 50 }, "RESPAWN PLANT", RED, MAROON, WHITE)) {
+            if (DrawButton({ 400, 280, 180, 40 }, "RESPAWN PLANT", RED, MAROON, WHITE)) {
                 if (currentPlantType == 0) currentPlant = std::make_unique<PeaShooter>(res, 480, 360);
                 else if (currentPlantType == 1) currentPlant = std::make_unique<SnowPea>(res, 480, 360);
                 else if (currentPlantType == 2) currentPlant = std::make_unique<Cornpult>(res, 480, 360);
@@ -111,17 +113,19 @@ void Testing::run() {
                 suns.clear();
             }
         }
-        
+
         if (currentZombie) {
-            if (!currentZombie->isDead()) {
+            if (!currentZombie->isFinished()) {
                 currentZombie->draw();
+                if (DrawButton({ 600, 220, 180, 40 }, "TAKE DAMAGE (-100)", ORANGE, RED, WHITE)) {
+                    currentZombie->takeDamage(100.0f);
+                }
             } else {
                 if (DrawButton({ 600, 280, 180, 40 }, "RESPAWN ZOMBIE", RED, MAROON, WHITE)) {
                     if (currentZombieType == 0) currentZombie = std::make_unique<FlagZombie>(res, 680, 360);
                     else if (currentZombieType == 1) currentZombie = std::make_unique<ZombieNormal>(res, 680, 360);
                     else if (currentZombieType == 2) currentZombie = std::make_unique<ConeheadZombie>(res, 680, 360);
                     else if (currentZombieType == 3) currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360);
-                    else if (currentZombieType == 4) currentZombie = std::make_unique<PoleVaultingZombie>(res, 680, 360);
                 }
             }
         }
@@ -141,7 +145,7 @@ void Testing::run() {
         DrawLine(20, 58, 300, 58, ColorAlpha(WHITE, 0.2f));
 
         DrawText("Select Plant Type:", 20, 68, 15, SKYBLUE);
-        
+
         if (DrawButton({ 20, 90, 135, 22 }, "Peashooter", currentPlantType == 0 ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentPlantType == 0 ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentPlantType != 0) { currentPlantType = 0; currentPlant = std::make_unique<PeaShooter>(res, 480, 360); projectiles.clear(); suns.clear(); }
         }
@@ -183,7 +187,7 @@ void Testing::run() {
         }
 
         DrawLine(20, 270, 300, 270, ColorAlpha(WHITE, 0.2f));
-        
+
         DrawText("Select Zombie Type:", 20, 276, 15, SKYBLUE);
         if (DrawButton({ 20, 296, 135, 22 }, "Flag Zombie", currentZombieType == 0 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 0 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentZombieType != 0) { currentZombieType = 0; currentZombie = std::make_unique<FlagZombie>(res, 680, 360); }
@@ -197,15 +201,12 @@ void Testing::run() {
         if (DrawButton({ 165, 321, 135, 22 }, "Buckethead", currentZombieType == 3 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 3 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             if (currentZombieType != 3) { currentZombieType = 3; currentZombie = std::make_unique<BucketheadZombie>(res, 680, 360); }
         }
-        if (DrawButton({ 20, 346, 135, 22 }, "Pole Vaulter", currentZombieType == 4 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == 4 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
-            if (currentZombieType != 4) { currentZombieType = 4; currentZombie = std::make_unique<PoleVaultingZombie>(res, 680, 360); }
-        }
-        if (DrawButton({ 165, 346, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
+        if (DrawButton({ 20, 346, 135, 22 }, "Clear Zombie", currentZombieType == -1 ? ColorAlpha(RED, 0.6f) : ColorAlpha(DARKGRAY, 0.3f), currentZombieType == -1 ? ColorAlpha(RED, 0.8f) : ColorAlpha(GRAY, 0.6f), WHITE)) {
             currentZombieType = -1; currentZombie.reset();
         }
 
-        DrawLine(20, 373, 300, 373, ColorAlpha(WHITE, 0.2f));
-        DrawText("Select Animation:", 20, 378, 15, SKYBLUE);
+        DrawLine(20, 398, 300, 398, ColorAlpha(WHITE, 0.2f));
+        DrawText("Select Animation:", 20, 403, 15, SKYBLUE);
 
         Reanimation& activeAnim = (currentZombieType != -1 && currentZombie) ? currentZombie->getAnim() : currentPlant->getAnim();
         const auto& anims = activeAnim.GetAnimations();
@@ -218,7 +219,7 @@ void Testing::run() {
             int r = (int)(i / 2);
             int c = (int)(i % 2);
             float btnX = (c == 0) ? 20.0f : 165.0f;
-            float btnY = 398.0f + r * 26.0f;
+            float btnY = 423.0f + r * 26.0f;
 
             if (btnY + 22.0f > 600.0f - 10.0f) {
                 DrawText("...", 20, btnY, 14, GRAY);

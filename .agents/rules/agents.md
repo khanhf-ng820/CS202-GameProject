@@ -65,7 +65,7 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
         did_shoot = false; // Reset debounce
     }
     ```
-*   **Standard Scale:** Always draw plants and zombies at scale **`1.6f`** (except `Chomper` which uses `1.4f`).
+*   **Standard Scale:** Always draw plants and zombies at scale **`1.0f`** (`m_anim.Draw(m_x, m_y, 1.0f)`).
 
 ---
 
@@ -75,6 +75,16 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 *   **Global Frame Index:** Every `<t>` is a *global* keyframe index shared by all tracks in the file.
 *   **Inheritance:** Missing tags on a keyframe inherit their value from the previous frame (not default).
 *   **Track Lengths:** Ensure every track has the same total number of `<t>` entries. Shorter tracks will silently stop drawing, making sprite parts vanish midway through.
+
+---
+
+## 🖼️ Original Assets & Visual Bug Fixes
+
+*   **Never modify original `.reanim` or `.png` files:** Do not edit raw asset files to fix visual state bugs, add missing bones, change facial expressions (e.g., enraged states), or remove stray artifacts (like dotted black lines) from sprite boundaries. Original PopCap assets contain known artifacts that should be ignored.
+*   **Use Programmatic Overrides:** Resolve visual state bugs entirely in C++ using runtime tools:
+    *   Use `m_anim.OverrideTrackImage("track_name", "NEW_TEXTURE")` to swap textures dynamically (e.g., swapping a normal arm for a severed bone).
+    *   Use `m_anim.SetTrackVisible("track_name", false)` to hide lost limbs or shields. **Verify track names carefully** (e.g., `Zombie_paper_hands` for the left hand vs. `Zombie_paper_hands2` for the right hand).
+    *   Instantiate `FallingPart` objects manually in `takeDamage` to simulate dropping items (like torn newspaper pieces or glasses).
 
 ---
 
@@ -117,6 +127,21 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 
 *   **UI Class Instantiation Timing:** UI classes that query `Resources::GetTexture` during construction (such as `HelpMenu`, `OptionsMenu`, `ShopMenu`, or `MainMenu`) MUST be instantiated **after** asset loading completes (inside `if (doneLoading)`), or be managed via `std::unique_ptr` created lazily. Instantiating UI components before `AppState::Loading` completes caches uninitialized texture IDs (`0`), triggering placeholder fallback rectangles.
 *   **Non-Standard Image Alpha Masks:** Standard image masks in `assets/images` follow the `[stem]_.png` or `[stem]_.jpg` naming convention. For non-standard mask pairs (such as `ZombieNoteHelpBlack.png` requiring `ZombieNoteHelp.png`), add explicit mask mappings in `Resources::LoadFile` to invoke Raylib's native `ImageAlphaMask(&img, alphaMask)`.
+
+---
+
+## 📐 UI Layout & Asset Measurement Rules
+
+*   **Never Guess UI Layout Coordinates:** PopCap background and card artwork (such as `Almanac_PlantBack.jpg`, `Almanac_PlantCard.png`, `SeedChooser_Background.png`) contain pre-rendered dashed slots, wooden cutout frames, and button recesses. Agents MUST programmatically inspect the asset's pixel boundaries (via Python/PIL or C++ headless tools) to extract exact $(X_{\text{start}}, Y_{\text{start}}, \text{stepX}, \text{stepY}, \text{width}, \text{height})$ before writing UI grid layout or click-detection code. Delete the temporary files used for inspection after measurements are complete to avoid accidental commits of debugging code.
+*   **Reanimation Centering Calculation:** `Reanimation::Draw(x, y, scale)` uses `(x, y)` as the translation of the root bone origin, NOT the visual center. Because plant sprites span $[0..+75\text{ px}]$ and zombie sprites span $[0..+140\text{ px}]$, never pass the slot window midpoint directly to `Draw()`. Always compute the entity's visual center offset $(cx, cy) = (\frac{minX+maxX}{2}, \frac{minY+maxY}{2})$ from its idle keyframes, and set draw coordinates mathematically:
+    $$x_{\text{draw}} = X_{\text{slot\_center}} - cx \cdot \text{scale}$$
+    $$y_{\text{draw}} = Y_{\text{slot\_center}} - cy \cdot \text{scale}$$
+*   **UI Layering Hierarchy:** Always render UI card previews in strict layer order:
+    1. Ground / environment tile (`Almanac_GroundDay.jpg` / `Almanac_GroundRoof.jpg`).
+    2. Live animated entity model (`m_previewAnim.Draw(...)`).
+    3. Parchment frame overlay (`Almanac_PlantCard.png` / `Almanac_ZombieCard.png`).
+    4. Typography (Titles, two-tone stats, descriptions).
+
 
 
 

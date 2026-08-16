@@ -105,13 +105,13 @@ void <Name>::update(float deltaTime, std::vector<Projectile>& outProjectiles,
 
 ```cpp
 void <Name>::draw() {
-    m_anim.Draw(m_x, m_y, 1.6f);   // 1.6f scale is the project-wide standard
+    m_anim.Draw(m_x, m_y, 1.0f);   // 1.0f scale is the project-wide standard
 }
 ```
 
-- Every plant/zombie in this codebase draws at scale `1.6f` except
-  `Chomper`, which uses `1.4f` — match `1.6f` unless you have a specific,
-  documented reason not to (e.g. a visually oversized asset).
+- Every plant/zombie subclass in this codebase draws at scale `1.0f`
+  (e.g., `m_anim.Draw(m_x, m_y, 1.0f)`), because `.reanim` matrix transformation
+  calculations map 1:1 with screen resolution at `1.0f` scale.
 - A tint or overlay effect is fine (`FirePea` tints orange; `SunFlower`
   interpolates a golden glow before producing sun; `CherryBomb` draws a
   separate explosion sprite instead of the base animation while exploding)

@@ -52,6 +52,14 @@ void BowlingLevel::spawnNextWave() {
         m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
     } else if (m_currentWave == 5) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(2)));
+    } else if (m_currentWave == 6) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(2)));
+    } else if (m_currentWave == 7) {
         // Final wave!
         m_finalWaveAnnounced = true;
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));

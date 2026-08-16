@@ -446,6 +446,39 @@ void Reanimation::AddCustomAnimation(const std::string& newAnimName, const std::
     }
 }
 
+void Reanimation::BakeChildRotation(const std::string& parentTrack, const std::string& childTrack, const std::string& animName) {
+    int startFrame = -1, endFrame = -1;
+    for (const auto& anim : m_anims) {
+        if (anim.name == animName) {
+            startFrame = anim.startFrame;
+            endFrame = anim.endFrame;
+            break;
+        }
+    }
+    if (startFrame == -1) return;
+
+    ReanimTrack* pTrack = nullptr;
+    ReanimTrack* cTrack = nullptr;
+    for (auto& tr : m_def.tracks) {
+        if (tr.name == parentTrack) pTrack = &tr;
+        if (tr.name == childTrack) cTrack = &tr;
+    }
+    
+    if (!pTrack || !cTrack) return;
+    if (startFrame < 0 || endFrame >= (int)pTrack->keyframes.size() || endFrame >= (int)cTrack->keyframes.size()) return;
+    
+    float baseParentKx = pTrack->keyframes[startFrame].kx;
+    float baseChildKx = cTrack->keyframes[startFrame].kx;
+    float baseChildKy = cTrack->keyframes[startFrame].ky;
+    
+    for (int i = startFrame; i <= endFrame; i++) {
+        float deltaKx = pTrack->keyframes[i].kx - baseParentKx;
+        cTrack->keyframes[i].kx = baseChildKx + deltaKx;
+        // PopCap often mirrors ky and kx for simple rigid rotations
+        cTrack->keyframes[i].ky = baseChildKy + deltaKx;
+    }
+}
+
 void Reanimation::AddCustomAnimation(const std::string& newAnimName, int startFrame, int endFrame) {
     m_anims.push_back({newAnimName, startFrame, endFrame});
 }

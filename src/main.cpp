@@ -6,6 +6,7 @@
 #include "OptionsMenu.h"
 #include "ShopMenu.h"
 #include "HelpMenu.h"
+#include "AlmanacMenu.h"
 #include "UIHelpers.h"
 #include "testing.h"
 #include "Level1.h"
@@ -56,11 +57,13 @@ int main() {
     std::unique_ptr<OptionsMenu> optionsMenu;
     std::unique_ptr<ShopMenu> shopMenu;
     std::unique_ptr<HelpMenu> helpMenu;
+    std::unique_ptr<AlmanacMenu> almanacMenu;
 
     AppState currentState = AppState::Loading;
     bool showOptions = false;
     bool showShop = false;
     bool showHelp = false;
+    bool showAlmanac = false;
     bool exitGame = false;
 
     while (!WindowShouldClose() && !exitGame) {
@@ -82,6 +85,7 @@ int main() {
                 optionsMenu = std::make_unique<OptionsMenu>(res);
                 shopMenu = std::make_unique<ShopMenu>(res);
                 helpMenu = std::make_unique<HelpMenu>(res);
+                almanacMenu = std::make_unique<AlmanacMenu>(res);
                 currentState = AppState::MainMenu;
             }
         } else if (showOptions && optionsMenu) {
@@ -90,6 +94,8 @@ int main() {
             helpMenu->update(dt, showHelp);
         } else if (showShop && shopMenu) {
             shopMenu->update(dt, showShop);
+        } else if (showAlmanac && almanacMenu) {
+            almanacMenu->update(dt, showAlmanac);
         } else if (menu) {
             menu->update(dt);
             if (menu->getAction() == MenuAction::StartAdventure) {
@@ -113,13 +119,16 @@ int main() {
             } else if (menu->getAction() == MenuAction::Shop) {
                 showShop = true;
                 menu->resetAction();
+            } else if (menu->getAction() == MenuAction::Almanac) {
+                showAlmanac = true;
+                menu->resetAction();
             } else if (menu->getAction() == MenuAction::Quit || IsKeyPressed(KEY_ESCAPE)) {
                 exitGame = true;
             }
         }
 
         // Update UI interaction availability based on overlay menu visibility
-        SetUIInteractionEnabled(currentState == AppState::MainMenu && !showOptions && !showShop && !showHelp);
+        SetUIInteractionEnabled(currentState == AppState::MainMenu && !showOptions && !showShop && !showHelp && !showAlmanac);
 
         // --- Draw to Virtual Canvas ---
         BeginTextureMode(targetScreen);
@@ -129,6 +138,8 @@ int main() {
             loadingScreen.draw();
         } else if (showShop && shopMenu) {
             shopMenu->draw();
+        } else if (showAlmanac && almanacMenu) {
+            almanacMenu->draw();
         } else if (menu) {
             menu->draw();
             if (showOptions && optionsMenu) {
