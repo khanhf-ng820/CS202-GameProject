@@ -45,6 +45,13 @@ MainMenu::MainMenu(Resources& res)
     m_anim.SetFrame(MENU_REST_FRAME);
     m_anim.SetPaused(true);
 
+    // Load the Zombie_hand reanim
+    std::string handReanimPath = res.GetAssetPath("assets/reanim/Zombie_hand.reanim");
+    ReanimDefinition handDef = res.LoadReanim(handReanimPath);
+    m_handAnim.SetResources(handDef, res);
+    m_handAnim.SetFrame(0.0f);
+    m_handAnim.SetPaused(true);
+
     // Hide sky in m_anim so that we can render the sky first, then clouds, then foreground
     m_anim.SetTrackVisible("SelectorScreen_BG", false);
     m_anim.SetTrackVisible("SelectorScreen_Adventure_button", false);
@@ -122,6 +129,24 @@ void MainMenu::update(float dt) {
         cAnim.Update(dt);
     }
 
+    // If zombie hand animation is emerging from the ground, update and wait until finished
+    if (m_handActive) {
+        m_anim.ClearTrackImageOverride(TRACK_START_ADVENTURE);
+        m_anim.ClearTrackImageOverride(TRACK_SURVIVAL);
+        m_anim.ClearTrackImageOverride(TRACK_CHALLENGES);
+        m_anim.ClearTrackImageOverride(TRACK_ZEN_GARDEN);
+
+        m_handTime += dt;
+        m_handAnim.Update(dt);
+        if (m_handAnim.GetCurrentFrame() >= m_handAnim.GetEndFrame() - 1 || m_handTime >= 0.83f) {
+            m_handActive = false;
+            m_handAnim.SetPaused(true);
+            m_action = m_pendingAction;
+            m_pendingAction = MenuAction::None;
+        }
+        return;
+    }
+
     if (!IsUIInteractionEnabled()) return;
 
     // Animation is frozen; no need to call Update.
@@ -158,7 +183,14 @@ void MainMenu::update(float dt) {
         if (hovered) {
             m_anim.OverrideTrackImage(btn.trackName, btn.highlightImg);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                m_action = btn.action;
+                m_pendingAction = btn.action;
+                m_handActive = true;
+                m_handTime = 0.0f;
+                m_handAnim.SetFrame(0.0f);
+                m_handAnim.SetPaused(false);
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/gravebutton.ogg"));
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/evillaugh.ogg"));
             }
         } else {
             m_anim.ClearTrackImageOverride(btn.trackName);
@@ -276,6 +308,11 @@ void MainMenu::draw() {
         }
     }
 
+    // 4. Draw Zombie Hand emerging animation if active
+    if (m_handActive) {
+        m_handAnim.Draw(0, yOffset, REANIM_SCALE);
+    }
+
     // --- Draw bottom-bar buttons (Options / Help / Quit) ---
     float optW = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.width : 81.0f;
     float optH = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.height + 23.0f : 54.0f;
@@ -369,6 +406,7 @@ void MainMenu::resetAction() {
 }
 
 bool MainMenu::isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName) {
+    if (m_handActive) return false;
     if (!IsUIInteractionEnabled()) return false;
     if (!CheckCollisionPointRec(mousePos, bounds)) return false;
     int localX = (int)((mousePos.x - bounds.x) / REANIM_SCALE);

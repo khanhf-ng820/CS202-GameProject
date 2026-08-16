@@ -31,7 +31,11 @@ public:
 private:
     Resources& m_res;
     MenuAction m_action;
+    MenuAction m_pendingAction = MenuAction::None;
+    bool m_handActive = false;
+    float m_handTime = 0.0f;
     Reanimation m_anim;                   // SelectorScreen.reanim
+    Reanimation m_handAnim;               // Zombie_hand.reanim
     std::vector<Reanimation> m_cloudAnims; // Multiple concurrent moving cloud animations
     BitmapFont m_font;                    // DwarvenTodcraft24 bitmap font
 
