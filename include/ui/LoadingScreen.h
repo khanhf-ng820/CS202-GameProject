@@ -18,6 +18,7 @@ public:
 private:
     Resources& m_res;
     Texture2D m_titleTex;
+    Texture2D m_logoTex;
     Texture2D m_dirtTex;
     Texture2D m_grassTex;
     Texture2D m_sodCapTex;

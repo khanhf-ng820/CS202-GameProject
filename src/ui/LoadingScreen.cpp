@@ -5,6 +5,7 @@
 LoadingScreen::LoadingScreen(Resources& res)
     : m_res(res) {
     m_titleTex = res.GetTexture("TITLESCREEN");
+    m_logoTex  = res.GetTexture("PVZ_LOGO");
     m_dirtTex  = res.GetTexture("LOADBAR_DIRT");
     m_grassTex = res.GetTexture("LOADBAR_GRASS");
     m_sodCapTex = res.GetTexture("SODROLLCAP");
@@ -40,6 +41,15 @@ void LoadingScreen::draw() {
         );
     } else {
         ClearBackground(BLACK);
+    }
+
+    // 2. Draw PvZ Logo at the top of the window, horizontally centered
+    Texture2D logoTex = (m_logoTex.id != 0) ? m_logoTex : m_res.GetTexture("PVZ_LOGO");
+    if (logoTex.id != 0) {
+        float logoW = (float)logoTex.width;
+        float logoX = (800.0f - logoW) / 2.0f;
+        float logoY = 0.0f;
+        DrawTexture(logoTex, (int)logoX, (int)logoY, WHITE);
     }
 
     // 2. Draw Loading Progress Bar

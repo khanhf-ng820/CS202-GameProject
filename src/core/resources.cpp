@@ -120,6 +120,9 @@ void Resources::LoadMinimalForLoadingScreen() {
     std::string titlePath = GetAssetPath("assets/images/titlescreen.jpg");
     LoadFile(titlePath);
 
+    std::string logoPath = GetAssetPath("assets/images/PvZ_Logo.jpg");
+    LoadFile(logoPath);
+
     std::string dirtPath = GetAssetPath("assets/images/LoadBar_dirt.png");
     LoadFile(dirtPath);
 
