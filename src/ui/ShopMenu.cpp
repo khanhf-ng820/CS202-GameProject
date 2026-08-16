@@ -1,6 +1,7 @@
 #include "ShopMenu.h"
 #include "UIHelpers.h"
 #include "AudioManager.h"
+#include "ProfileManager.h"
 #include <iostream>
 
 static std::string FormatMoney(int amount) {
@@ -14,7 +15,7 @@ static std::string FormatMoney(int amount) {
 }
 
 ShopMenu::ShopMenu(Resources& res)
-    : m_res(res), m_currentPage(0), m_totalPages(4), m_playerMoney(500000) {
+    : m_res(res), m_currentPage(0), m_totalPages(4), m_playerMoney(ProfileManager::GetInstance().GetActiveProfile().coins) {
     // Load store background, car, price tag, coinbank, and button textures
     m_shopBack          = res.GetTexture("STORE_BACKGROUND");
     m_car               = res.GetTexture("STORE_CAR");
@@ -209,8 +210,13 @@ void ShopMenu::update(float dt, bool& showShop) {
     }
 
     // Update pixel-perfect hover checks and click interactions for current page seed packets
+    m_playerMoney = ProfileManager::GetInstance().GetActiveProfile().coins;
     if (m_currentPage >= 0 && m_currentPage < (int)m_pages.size()) {
         for (auto& item : m_pages[m_currentPage]) {
+            if (ProfileManager::GetInstance().IsPlantUnlocked(item.name)) {
+                item.isSoldOut = true;
+            }
+
             if (item.isSoldOut) {
                 item.hovered = false;
             } else {
@@ -219,6 +225,9 @@ void ShopMenu::update(float dt, bool& showShop) {
                     if (m_playerMoney >= item.priceValue) {
                         m_playerMoney -= item.priceValue;
                         item.isSoldOut = true;
+                        ProfileManager::GetInstance().SetActiveCoins(m_playerMoney);
+                        ProfileManager::GetInstance().UnlockPlant(item.name);
+                        AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/coin.ogg"));
                     }
                 }
             }

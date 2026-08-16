@@ -105,3 +105,10 @@ void AudioManager::PlaySoundEffect(const std::string& soundPath) {
     }
 }
 
+void AudioManager::StopSoundEffect(const std::string& soundPath) {
+    if (!m_isAudioInit || soundPath.empty()) return;
+    auto it = m_sounds.find(soundPath);
+    if (it != m_sounds.end()) {
+        ::StopSound(it->second);
+    }
+}

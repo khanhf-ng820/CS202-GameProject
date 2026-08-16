@@ -31,7 +31,10 @@ static float ComputeYOffset() {
 static constexpr float MENU_REST_FRAME = 40.0f;
 
 MainMenu::MainMenu(Resources& res)
-    : m_res(res), m_action(MenuAction::None) {
+    : m_res(res), m_action(MenuAction::None), m_userDialog(res) {
+    // Initialize profile manager
+    ProfileManager::GetInstance().Init();
+
     // Load the SelectorScreen reanim
     std::string reanimPath = res.GetAssetPath("assets/reanim/SelectorScreen.reanim");
     ReanimDefinition def = res.LoadReanim(reanimPath);
@@ -124,6 +127,12 @@ void MainMenu::update(float dt) {
     // Reset action each frame
     m_action = MenuAction::None;
 
+    // If UserDialog modal popup is open, handle its updates exclusively
+    if (m_userDialog.IsOpen()) {
+        m_userDialog.Update(dt);
+        return;
+    }
+
     // Animate all drifting clouds concurrently
     for (auto& cAnim : m_cloudAnims) {
         cAnim.Update(dt);
@@ -149,11 +158,23 @@ void MainMenu::update(float dt) {
 
     if (!IsUIInteractionEnabled()) return;
 
-    // Animation is frozen; no need to call Update.
-    // m_anim.Update(dt);
-
     Vector2 mousePos = GetVirtualMousePosition();
     float yOffset = ComputeYOffset();
+
+    // --- WoodSign User Selector ("(if this is not you, click here)") ---
+    Rectangle signRect = { 25.0f, 126.0f, 291.0f, 120.0f };
+    bool signHovered = CheckCollisionPointRec(mousePos, signRect);
+    if (signHovered) {
+        m_anim.OverrideTrackImage("woodsign3", "IMAGE_REANIM_SELECTORSCREEN_WOODSIGN3_PRESS");
+        m_anim.OverrideTrackImage("woodsign2", "IMAGE_REANIM_SELECTORSCREEN_WOODSIGN2_PRESS");
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            m_userDialog.Open();
+            return;
+        }
+    } else {
+        m_anim.ClearTrackImageOverride("woodsign3");
+        m_anim.ClearTrackImageOverride("woodsign2");
+    }
 
     // --- Interactive reanim-based buttons ---
     struct ButtonInfo {
@@ -293,7 +314,7 @@ void MainMenu::draw() {
     LevelLabel labels[] = {
         { TRACK_START_ADVENTURE, "Wall-nut Bowling" },
         { TRACK_SURVIVAL,        "Level 1" },
-        { TRACK_CHALLENGES,      "Level 2" },
+        { TRACK_CHALLENGES,      "Brain Busters" },
         { TRACK_ZEN_GARDEN,      "Level 3" },
     };
 
@@ -334,8 +355,9 @@ void MainMenu::draw() {
     }
 
     // Draw Options button
+    bool allowHover = IsUIInteractionEnabled() && !m_userDialog.IsOpen();
     if (m_optionsBtn.id != 0) {
-        bool hovered = IsUIInteractionEnabled() && CheckCollisionPointRec(mousePos, optRect);
+        bool hovered = allowHover && CheckCollisionPointRec(mousePos, optRect);
         Texture2D tex = hovered ? (m_optionsBtnHl.id != 0 ? m_optionsBtnHl : m_optionsBtn) : m_optionsBtn;
         DrawTexture(tex, (int)optRect.x, (int)optRect.y + 15, WHITE);
     } else {
@@ -344,7 +366,7 @@ void MainMenu::draw() {
 
     // Draw Help button
     if (m_helpBtn.id != 0) {
-        bool hovered = IsUIInteractionEnabled() && CheckCollisionPointRec(mousePos, helpRect);
+        bool hovered = allowHover && CheckCollisionPointRec(mousePos, helpRect);
         Texture2D tex = hovered ? (m_helpBtnHl.id != 0 ? m_helpBtnHl : m_helpBtn) : m_helpBtn;
         DrawTexture(tex, (int)helpRect.x, (int)helpRect.y + 30, WHITE);
     } else {
@@ -353,7 +375,7 @@ void MainMenu::draw() {
 
     // Draw Quit button
     if (m_quitBtn.id != 0) {
-        bool hovered = IsUIInteractionEnabled() && CheckCollisionPointRec(mousePos, quitRect);
+        bool hovered = allowHover && CheckCollisionPointRec(mousePos, quitRect);
         Texture2D tex = hovered ? (m_quitBtnHl.id != 0 ? m_quitBtnHl : m_quitBtn) : m_quitBtn;
         DrawTexture(tex, (int)quitRect.x + 5, (int)quitRect.y + 5, WHITE);
     } else {
@@ -395,6 +417,18 @@ void MainMenu::draw() {
         Texture2D tex = hovered ? (m_zenGardenBtnHl.id != 0 ? m_zenGardenBtnHl : m_zenGardenBtn) : m_zenGardenBtn;
         DrawTexture(tex, (int)zenRect.x, (int)zenRect.y, WHITE);
     }
+
+    // --- Draw current active user name on the WoodSign plaque (Green color, placed inside plaque) ---
+    std::string activeUser = ProfileManager::GetInstance().GetActiveUserName();
+    Rectangle userShadowRect = { 27.0f, 126.0f, 287.0f, 36.0f };
+    Rectangle userTextRect   = { 25.0f, 124.0f, 287.0f, 36.0f };
+    m_font.DrawTextCentered(activeUser.c_str(), userShadowRect, 0.85f, ColorAlpha(BLACK, 0.8f));
+    m_font.DrawTextCentered(activeUser.c_str(), userTextRect, 0.85f, Color{ 100, 255, 100, 255 });
+
+    // --- Draw UserDialog modal popup if open ---
+    if (m_userDialog.IsOpen()) {
+        m_userDialog.Draw();
+    }
 }
 
 MenuAction MainMenu::getAction() const {
@@ -407,6 +441,7 @@ void MainMenu::resetAction() {
 
 bool MainMenu::isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName) {
     if (m_handActive) return false;
+    if (m_userDialog.IsOpen()) return false;
     if (!IsUIInteractionEnabled()) return false;
     if (!CheckCollisionPointRec(mousePos, bounds)) return false;
     int localX = (int)((mousePos.x - bounds.x) / REANIM_SCALE);

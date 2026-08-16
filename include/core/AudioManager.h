@@ -21,6 +21,7 @@ public:
     void Update();
 
     void PlaySoundEffect(const std::string& soundPath);
+    void StopSoundEffect(const std::string& soundPath);
 
     void SetMusicVolume(float volume);
     float GetMusicVolume() const { return m_volume; }

@@ -3,6 +3,8 @@
 #include "resources.h"
 #include "Reanimation.h"
 #include "BitmapFont.h"
+#include "UserDialog.h"
+#include "ProfileManager.h"
 
 enum class MenuAction {
     None,
@@ -38,6 +40,7 @@ private:
     Reanimation m_handAnim;               // Zombie_hand.reanim
     std::vector<Reanimation> m_cloudAnims; // Multiple concurrent moving cloud animations
     BitmapFont m_font;                    // DwarvenTodcraft24 bitmap font
+    UserDialog m_userDialog;              // "Who are you?" user selection modal
 
     // Manually loaded textures for bottom-bar buttons (not in reanim)
     Texture2D m_optionsBtn;
