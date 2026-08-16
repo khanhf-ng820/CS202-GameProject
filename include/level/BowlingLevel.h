@@ -8,6 +8,8 @@
 #include "ConeheadZombie.h"
 #include "BucketheadZombie.h"
 #include "FlagZombie.h"
+#include "NewspaperZombie.h"
+#include "FootballZombie.h"
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -49,7 +51,7 @@ private:
 
     // Level progression & wave state
     int m_currentWave = 0;
-    int m_maxWaves = 5;
+    int m_maxWaves = 7;
     float m_waveTimer = 5.0f; // 5 seconds initial delay before Wave 1
     bool m_finalWaveAnnounced = false;
     bool m_levelWon = false;

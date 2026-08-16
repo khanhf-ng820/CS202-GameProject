@@ -26,6 +26,8 @@
 #include "FlagZombie.h"
 #include "ConeheadZombie.h"
 #include "BucketheadZombie.h"
+#include "NewspaperZombie.h"
+#include "FootballZombie.h"
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
@@ -34,7 +36,7 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen), m_phase(LevelPhase::SeedSelection),
       m_seedSelectMenu(res), m_seedBank(40000),
       m_skySunTimer(0.0f), m_waveTimer(12.0f), m_currentWave(0),
-      m_maxWaves(5), m_levelWon(false), m_levelLost(false),
+      m_maxWaves(7), m_levelWon(false), m_levelLost(false),
       m_finalWaveAnnounced(false) 
 {
     // Clear grid
@@ -60,6 +62,8 @@ std::vector<std::string> Level1::getUniqueLevelZombieTypes() const {
     addType("ZombieNormal");
     addType("ConeheadZombie");
     addType("BucketheadZombie");
+    addType("NewspaperZombie");
+    addType("FootballZombie");
     addType("FlagZombie");
 
     return uniqueTypes;
@@ -89,6 +93,10 @@ void Level1::initPreviewZombies() {
             previewZ = std::make_unique<ConeheadZombie>(res, worldX, worldY);
         } else if (typeName == "BucketheadZombie") {
             previewZ = std::make_unique<BucketheadZombie>(res, worldX, worldY);
+        } else if (typeName == "NewspaperZombie") {
+            previewZ = std::make_unique<NewspaperZombie>(res, worldX, worldY);
+        } else if (typeName == "FootballZombie") {
+            previewZ = std::make_unique<FootballZombie>(res, worldX, worldY);
         } else if (typeName == "FlagZombie") {
             previewZ = std::make_unique<FlagZombie>(res, worldX, worldY);
         } else {
@@ -197,6 +205,14 @@ void Level1::spawnNextWave() {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
     } else if (m_currentWave == 5) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+    } else if (m_currentWave == 6) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+    } else if (m_currentWave == 7) {
         // Final wave!
         m_finalWaveAnnounced = true;
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
