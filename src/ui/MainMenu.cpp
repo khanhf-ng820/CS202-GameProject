@@ -312,8 +312,8 @@ void MainMenu::draw() {
     };
 
     LevelLabel labels[] = {
-        { TRACK_START_ADVENTURE, "Wall-nut Bowling" },
-        { TRACK_SURVIVAL,        "Level 1" },
+        { TRACK_START_ADVENTURE, "Level 1" },
+        { TRACK_SURVIVAL,        "Wall-nut Bowling" },
         { TRACK_CHALLENGES,      "Brain Busters" },
         { TRACK_ZEN_GARDEN,      "Level 3" },
     };

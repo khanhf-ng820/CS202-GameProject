@@ -105,16 +105,16 @@ int main() {
         } else if (menu) {
             menu->update(dt);
             if (menu->getAction() == MenuAction::StartAdventure) {
-                BowlingLevel bowlingState(res, targetScreen);
-                bowlingState.run();
+                Level1 level1State(res, targetScreen);
+                level1State.run();
                 menu->resetAction();
             } else if (menu->getAction() == MenuAction::ZenGarden) {
                 Testing testingState(res, targetScreen);
                 testingState.run();
                 menu->resetAction();
             } else if (menu->getAction() == MenuAction::Level1) {
-                Level1 level1State(res, targetScreen);
-                level1State.run();
+                BowlingLevel bowlingState(res, targetScreen);
+                bowlingState.run();
                 menu->resetAction();
             } else if (menu->getAction() == MenuAction::Level2) {
                 showQuiz = true;
