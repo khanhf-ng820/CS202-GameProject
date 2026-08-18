@@ -282,23 +282,43 @@ void OptionsMenu::draw3SliceButton(Rectangle rect, const char* text, bool hovere
     Texture2D rightTex  = pressed ? m_btnRightDown : m_btnRight;
 
     if (leftTex.id != 0 && midTex.id != 0 && rightTex.id != 0) {
-        // Draw left side piece (fixed 36px width)
-        DrawTexture(leftTex, (int)rect.x, (int)rect.y, WHITE);
+        float scaleY = (leftTex.height > 0) ? (rect.height / (float)leftTex.height) : 1.0f;
+        float leftW = (float)leftTex.width * scaleY;
+        float rightW = (float)rightTex.width * scaleY;
+        float midX = rect.x + leftW;
+        float midW = rect.width - leftW - rightW;
 
-        // Draw middle piece (stretched to fill the remaining width)
-        float midX = rect.x + 36.0f;
-        float midW = rect.width - 36.0f - 35.0f;
+        // 1. Draw left side piece (scaled to match rect.height)
         DrawTexturePro(
-            midTex,
-            { 0.0f, 0.0f, (float)midTex.width, (float)midTex.height },
-            { midX, rect.y, midW, rect.height },
+            leftTex,
+            { 0.0f, 0.0f, (float)leftTex.width, (float)leftTex.height },
+            { rect.x, rect.y, leftW, rect.height },
             { 0.0f, 0.0f },
             0.0f,
             WHITE
         );
 
-        // Draw right side piece (fixed 35px width)
-        DrawTexture(rightTex, (int)(rect.x + rect.width - 35.0f), (int)rect.y, WHITE);
+        // 2. Draw middle piece (stretched to fill the remaining width)
+        if (midW > 0.0f) {
+            DrawTexturePro(
+                midTex,
+                { 0.0f, 0.0f, (float)midTex.width, (float)midTex.height },
+                { midX, rect.y, midW, rect.height },
+                { 0.0f, 0.0f },
+                0.0f,
+                WHITE
+            );
+        }
+
+        // 3. Draw right side piece (scaled to match rect.height)
+        DrawTexturePro(
+            rightTex,
+            { 0.0f, 0.0f, (float)rightTex.width, (float)rightTex.height },
+            { rect.x + rect.width - rightW, rect.y, rightW, rect.height },
+            { 0.0f, 0.0f },
+            0.0f,
+            WHITE
+        );
     } else {
         // Fallback solid color rendering
         DrawRectangleRec(rect, pressed ? DARKGRAY : (hovered ? GRAY : LIGHTGRAY));
