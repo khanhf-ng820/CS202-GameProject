@@ -13,6 +13,7 @@
 #include "testing.h"
 #include "Level1.h"
 #include "BowlingLevel.h"
+#include "VasebreakerLevel.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -121,6 +122,10 @@ int main() {
             } else if (menu->getAction() == MenuAction::ZenGarden) {
                 Testing testingState(res, targetScreen);
                 testingState.run();
+                menu->resetAction();
+            } else if (menu->getAction() == MenuAction::Vasebreaker) {
+                VasebreakerLevel vasebreakerState(res, targetScreen);
+                vasebreakerState.run();
                 menu->resetAction();
             } else if (menu->getAction() == MenuAction::Level1) {
                 BowlingLevel bowlingState(res, targetScreen);

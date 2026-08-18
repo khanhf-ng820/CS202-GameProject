@@ -12,6 +12,7 @@ enum class MenuAction {
     Level1,
     Level2,
     Level3,
+    Vasebreaker,
     Options,
     Help,
     Shop,
