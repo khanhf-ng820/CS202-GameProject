@@ -38,8 +38,10 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen)
       m_seedSelectMenu(res), m_seedBank(40000),
       m_skySunTimer(0.0f), m_waveTimer(12.0f), m_currentWave(0),
       m_maxWaves(7), m_levelWon(false), m_levelLost(false),
-      m_finalWaveAnnounced(false) 
+      m_finalWaveAnnounced(false), m_exitToMainMenu(false)
 {
+    m_inGameMenu = std::make_unique<InGameMenu>(res);
+
     // Clear grid
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
@@ -48,6 +50,34 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen)
     }
 
     // Generate preview zombies for seed selection phase
+    initPreviewZombies();
+}
+
+void Level1::restartLevel() {
+    // Clear grid
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            m_grid[r][c] = nullptr;
+        }
+    }
+
+    m_zombies.clear();
+    m_projectiles.clear();
+    m_suns.clear();
+    m_effects.clear();
+
+    m_currentWave = 0;
+    m_waveTimer = 12.0f;
+    m_skySunTimer = 0.0f;
+    m_levelWon = false;
+    m_levelLost = false;
+    m_finalWaveAnnounced = false;
+    m_exitToMainMenu = false;
+
+    m_phase = LevelPhase::SeedSelection;
+    m_cameraCropX = 500.0f;
+    m_panTimer = 0.0f;
+    m_seedBank.deselect();
     initPreviewZombies();
 }
 
@@ -594,7 +624,32 @@ void Level1::updateCollisions(float dt) {
 }
 
 void Level1::update(float dt) {
+    // 0. Update in-game pause menu if open (pauses game loop simulation)
+    if (m_inGameMenu && m_inGameMenu->isOpen()) {
+        InGameMenuAction action = m_inGameMenu->update(dt);
+        if (action == InGameMenuAction::RestartLevel) {
+            restartLevel();
+        } else if (action == InGameMenuAction::MainMenu) {
+            m_exitToMainMenu = true;
+        }
+        return;
+    }
+
+    // Toggle menu via ESC key in any phase
+    if (!m_levelWon && !m_levelLost && IsKeyPressed(KEY_ESCAPE)) {
+        if (m_inGameMenu) m_inGameMenu->open();
+        return;
+    }
+
     Vector2 mousePos = GetVirtualMousePosition();
+
+    // Check click on top-right Menu button in any phase
+    Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
+    if (!m_levelWon && !m_levelLost && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, menuBtnRect)) {
+        if (m_inGameMenu) m_inGameMenu->open();
+        return;
+    }
+
     bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
     if (m_phase == LevelPhase::SeedSelection) {
@@ -914,9 +969,22 @@ void Level1::draw() {
         }
     }
 
+    // 9. Draw top-right "Menu" stone button (680, 0, 110, 36) in all phases
+    Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
+    bool menuHovered = CheckCollisionPointRec(mousePos, menuBtnRect);
+    bool menuPressed = menuHovered && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    if (m_inGameMenu) {
+        m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
+    }
+
+    // 10. Draw in-game pause menu dialog if open (on top of all phases)
+    if (m_inGameMenu && m_inGameMenu->isOpen()) {
+        m_inGameMenu->draw();
+    }
+
     EndTextureMode();
 
-    // 9. Draw stretched to screen
+    // 11. Draw stretched to screen
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -943,7 +1011,7 @@ void Level1::run() {
         update(dt);
         draw();
 
-        if (IsKeyPressed(KEY_ESCAPE) || (m_levelWon && IsKeyPressed(KEY_ENTER))) {
+        if (m_exitToMainMenu || (m_levelWon && IsKeyPressed(KEY_ENTER)) || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
             break;
         }
     }
