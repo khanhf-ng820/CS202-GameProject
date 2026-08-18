@@ -142,6 +142,8 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
     3. Parchment frame overlay (`Almanac_PlantCard.png` / `Almanac_ZombieCard.png`).
     4. Typography (Titles, two-tone stats, descriptions).
 
+---
 
+## 🖼️ UI Layout Visual Review & Verification Invariant
 
-
+*   **Generate Test Images for Layout Reviews:** When dealing with or modifying UI layouts, background scenery composition, coordinate adjustments, button sizing, or asset placement, the agent MUST generate a visual test image (e.g., using Python/PIL to composite layers and typography into the artifact `scratch/` directory). Embed this test preview image directly into the implementation plan or response, and proactively ask the user to inspect the preview and provide feedback or approval before or during execution.
