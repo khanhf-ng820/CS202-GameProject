@@ -5,6 +5,13 @@
 
 VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
+    // Load and initialize the mallet cursor reanimation
+    std::string hammerPath = res.GetAssetPath("assets/reanim/Hammer.reanim");
+    ReanimDefinition hammerDef = res.LoadReanim(hammerPath);
+    m_malletAnim.SetResources(hammerDef, res);
+    m_malletAnim.SetAnimation("anim_open_pot");
+    m_malletAnim.SetFrame(14.0f); // Resting upright angle
+    m_malletAnim.SetPaused(true);
 }
 
 bool VasebreakerLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
@@ -31,6 +38,25 @@ void VasebreakerLevel::update(float dt) {
     if (m_levelLost || m_levelWon) return;
 
     Vector2 mousePos = GetVirtualMousePosition();
+
+    // Left-click to trigger mallet strike swing animation
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        m_isSwinging = true;
+        m_malletAnim.SetAnimation("anim_open_pot");
+        m_malletAnim.SetFrame(9.0f); // Start of strike swing
+        m_malletAnim.SetSpeed(2.5f); // Fast responsive swing
+        m_malletAnim.SetPaused(false);
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/swing.ogg"));
+    }
+
+    if (m_isSwinging) {
+        m_malletAnim.Update(dt);
+        if (m_malletAnim.GetCurrentFrame() >= m_malletAnim.GetEndFrame() - 1 || m_malletAnim.GetCurrentFrame() >= 16) {
+            m_isSwinging = false;
+            m_malletAnim.SetFrame(14.0f); // Return to resting upright pose
+            m_malletAnim.SetPaused(true);
+        }
+    }
 
     // Right-click a tile in a lane to spawn a ZombieNormal
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
@@ -117,9 +143,16 @@ void VasebreakerLevel::draw() {
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     }
 
+    // 5. Draw Mallet cursor at virtual mouse position (Option 1A: -42.0f, -6.0f)
+    m_malletAnim.Draw(mousePos.x - 42.0f, mousePos.y - 6.0f, 1.0f);
+
+    // 6. Draw debug red dot showing exact virtual cursor coordinates
+    DrawCircle((int)mousePos.x, (int)mousePos.y, 4.0f, RED);
+    DrawCircleLines((int)mousePos.x, (int)mousePos.y, 4.0f, WHITE);
+
     EndTextureMode();
 
-    // 5. Draw targetScreen stretched to actual window dimensions
+    // 7. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -135,6 +168,7 @@ void VasebreakerLevel::draw() {
 
 void VasebreakerLevel::run() {
     SetUIInteractionEnabled(true);
+    HideCursor();
     AudioManager::GetInstance().PlayMusic(MusicTrack::Vasebreaker);
 
     while (!WindowShouldClose()) {
@@ -151,4 +185,6 @@ void VasebreakerLevel::run() {
             break;
         }
     }
+
+    ShowCursor();
 }

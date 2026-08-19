@@ -3,6 +3,7 @@
 #include "resources.h"
 #include "Zombie.h"
 #include "ZombieNormal.h"
+#include "Reanimation.h"
 #include <vector>
 #include <memory>
 
@@ -18,6 +19,10 @@ public:
 private:
     Resources& res;
     RenderTexture2D targetScreen;
+
+    // Mallet cursor animation state
+    Reanimation m_malletAnim;
+    bool m_isSwinging = false;
 
     // Active zombies on the lawn
     std::vector<std::unique_ptr<Zombie>> m_zombies;
