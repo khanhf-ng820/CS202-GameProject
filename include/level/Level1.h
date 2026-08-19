@@ -69,6 +69,7 @@ private:
 
     // In-game pause menu
     std::unique_ptr<InGameMenu> m_inGameMenu;
+    bool m_ignoreInitialClick = true;
 
     // Helper functions
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;

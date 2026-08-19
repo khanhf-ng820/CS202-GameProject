@@ -78,6 +78,7 @@ void Level1::restartLevel() {
     m_cameraCropX = 500.0f;
     m_panTimer = 0.0f;
     m_seedBank.deselect();
+    m_ignoreInitialClick = true;
     initPreviewZombies();
 }
 
@@ -643,14 +644,21 @@ void Level1::update(float dt) {
 
     Vector2 mousePos = GetVirtualMousePosition();
 
+    bool mouseClicked = false;
+    if (m_ignoreInitialClick) {
+        if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            m_ignoreInitialClick = false;
+        }
+    } else {
+        mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    }
+
     // Check click on top-right Menu button in any phase
     Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
-    if (!m_levelWon && !m_levelLost && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, menuBtnRect)) {
+    if (!m_levelWon && !m_levelLost && mouseClicked && CheckCollisionPointRec(mousePos, menuBtnRect)) {
         if (m_inGameMenu) m_inGameMenu->open();
         return;
     }
-
-    bool mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
 
     if (m_phase == LevelPhase::SeedSelection) {
         m_cameraCropX = 500.0f;
