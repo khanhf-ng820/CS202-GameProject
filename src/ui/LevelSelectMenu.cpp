@@ -79,9 +79,9 @@ void LevelSelectMenu::update(float dt, bool& showLevelSelect) {
 
     // 2. Stage Tombstone Button Click Checks
     float bgScale = 800.0f / 3940.0f;
-    float btnScale = bgScale * 0.85f;
-    Rectangle dayRect   = { 60.0f,  430.0f, 594.0f * btnScale, 657.0f * btnScale };
-    Rectangle nightRect = { 190.0f, 450.0f, 545.0f * btnScale, 481.0f * btnScale };
+    float btnScale = bgScale * 0.85f * 1.5f;
+    Rectangle dayRect   = { 25.0f,  380.0f, 594.0f * btnScale, 657.0f * btnScale };
+    Rectangle nightRect = { 170.0f, 410.0f, 545.0f * btnScale, 481.0f * btnScale };
 
     bool dayHovered   = isStageHovered(mousePos, dayRect, "LEVELSELECT_BUTTON_DAY", btnScale);
     bool nightHovered = isStageHovered(mousePos, nightRect, "LEVELSELECT_BUTTON_NIGHT", btnScale);
@@ -417,13 +417,13 @@ void LevelSelectMenu::draw() {
         );
     }
 
-    // 6. Draw 5 Tombstone Buttons along the lawn (uniform scale)
-    float btnScale = bgScale * 0.85f;
-    Rectangle dayRect   = { 60.0f,  430.0f, 594.0f * btnScale, 657.0f * btnScale };
-    Rectangle nightRect = { 190.0f, 450.0f, 545.0f * btnScale, 481.0f * btnScale };
-    Rectangle poolRect  = { 325.0f, 430.0f, 529.0f * btnScale, 488.0f * btnScale };
-    Rectangle fogRect   = { 465.0f, 405.0f, 497.0f * btnScale, 653.0f * btnScale };
-    Rectangle roofRect  = { 600.0f, 435.0f, 516.0f * btnScale, 599.0f * btnScale };
+    // 6. Draw 5 Tombstone Buttons along the lawn (1.5x scale)
+    float btnScale = bgScale * 0.85f * 1.5f;
+    Rectangle dayRect   = { 25.0f,  380.0f, 594.0f * btnScale, 657.0f * btnScale };
+    Rectangle nightRect = { 170.0f, 410.0f, 545.0f * btnScale, 481.0f * btnScale };
+    Rectangle poolRect  = { 320.0f, 380.0f, 529.0f * btnScale, 488.0f * btnScale };
+    Rectangle fogRect   = { 470.0f, 345.0f, 497.0f * btnScale, 653.0f * btnScale };
+    Rectangle roofRect  = { 620.0f, 390.0f, 516.0f * btnScale, 599.0f * btnScale };
 
     bool dayHovered   = isStageHovered(mousePos, dayRect, "LEVELSELECT_BUTTON_DAY", btnScale);
     bool nightHovered = isStageHovered(mousePos, nightRect, "LEVELSELECT_BUTTON_NIGHT", btnScale);
@@ -432,21 +432,21 @@ void LevelSelectMenu::draw() {
     bool nightSelected = (m_stageMode == LevelStageMode::Night);
 
     // Day (Active / Unlocked)
-    drawTombstoneButton("DAY", dayRect, m_btnDay, m_btnDaySel, dayHovered, daySelected, true, Vector2{ 320.0f, 246.0f }, -3.0f, Vector2{ 2.0f, 4.0f }, 0.60f);
+    drawTombstoneButton("DAY", dayRect, m_btnDay, m_btnDaySel, dayHovered, daySelected, true, Vector2{ 320.0f, 246.0f }, -3.0f, Vector2{ 2.0f, 4.0f }, 0.90f);
 
     // Night (Active / Unlocked)
-    drawTombstoneButton("NIGHT", nightRect, m_btnNight, m_btnNightSel, nightHovered, nightSelected, true, Vector2{ 315.0f, 318.0f }, 9.0f, Vector2{ 1.0f, 4.0f }, 0.55f);
+    drawTombstoneButton("NIGHT", nightRect, m_btnNight, m_btnNightSel, nightHovered, nightSelected, true, Vector2{ 315.0f, 318.0f }, 9.0f, Vector2{ 1.0f, 4.0f }, 0.825f);
 
     // Pool, Fog, Roof (Disabled)
-    drawTombstoneButton("POOL", poolRect, m_btnPoolDis, m_btnPoolDis, false, false, false, Vector2{ 220.0f, 252.0f }, 0.0f, Vector2{ 0.0f, 4.0f }, 0.55f);
-    drawTombstoneButton("FOG", fogRect, m_btnFogDis, m_btnFogDis, false, false, false, Vector2{ 210.0f, 470.0f }, -7.0f, Vector2{ -1.0f, 4.0f }, 0.55f);
-    drawTombstoneButton("ROOF", roofRect, m_btnRoofDis, m_btnRoofDis, false, false, false, Vector2{ 215.0f, 275.0f }, -9.5f, Vector2{ 1.0f, 4.0f }, 0.55f);
+    drawTombstoneButton("POOL", poolRect, m_btnPoolDis, m_btnPoolDis, false, false, false, Vector2{ 220.0f, 252.0f }, 0.0f, Vector2{ 0.0f, 4.0f }, 0.825f);
+    drawTombstoneButton("FOG", fogRect, m_btnFogDis, m_btnFogDis, false, false, false, Vector2{ 210.0f, 470.0f }, -7.0f, Vector2{ -1.0f, 4.0f }, 0.825f);
+    drawTombstoneButton("ROOF", roofRect, m_btnRoofDis, m_btnRoofDis, false, false, false, Vector2{ 215.0f, 275.0f }, -9.5f, Vector2{ 1.0f, 4.0f }, 0.825f);
 
     // 7. Draw Upper Level Cards on the Stone Wall (Seamless Composite of LevelPanelFrame + SpecialFrame)
     drawLevelCards(mousePos);
 
-    // 8. Draw "ADVENTURE" Carved Title
-    Rectangle titleRect = { 200.0f, 375.0f, 400.0f, 35.0f };
+    // 8. Draw "ADVENTURE" Carved Title near bottom edge
+    Rectangle titleRect = { 200.0f, 550.0f, 400.0f, 35.0f };
     Rectangle shadowTitle = { titleRect.x + 2.0f, titleRect.y + 2.0f, titleRect.width, titleRect.height };
     if (m_fontLoaded) {
         m_font.DrawTextCentered("ADVENTURE", shadowTitle, 1.0f, ColorAlpha(BLACK, 0.8f));
