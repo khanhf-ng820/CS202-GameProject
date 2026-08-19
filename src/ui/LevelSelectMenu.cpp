@@ -126,8 +126,20 @@ void LevelSelectMenu::update(float dt, bool& showLevelSelect) {
     }
 }
 
-void LevelSelectMenu::drawTombstoneButton(const std::string& label, Rectangle screenRect, Texture2D normalTex, Texture2D selTex, bool hovered, bool active) {
-    Texture2D texToDraw = (hovered && selTex.id != 0) ? selTex : normalTex;
+void LevelSelectMenu::drawTombstoneButton(
+    const std::string& label,
+    Rectangle screenRect,
+    Texture2D normalTex,
+    Texture2D selTex,
+    bool hovered,
+    bool selected,
+    bool enabled,
+    Vector2 nativeCenter,
+    float angleDeg,
+    Vector2 sinkOffset,
+    float fontScale
+) {
+    Texture2D texToDraw = (selected && selTex.id != 0) ? selTex : normalTex;
     if (texToDraw.id != 0) {
         DrawTexturePro(
             texToDraw,
@@ -137,6 +149,38 @@ void LevelSelectMenu::drawTombstoneButton(const std::string& label, Rectangle sc
             0.0f,
             WHITE
         );
+    }
+
+    if (m_fontLoaded && !label.empty() && normalTex.width > 0) {
+        float btnScale = screenRect.width / (float)normalTex.width;
+        Vector2 center = {
+            screenRect.x + nativeCenter.x * btnScale,
+            screenRect.y + nativeCenter.y * btnScale
+        };
+
+        if (selected) {
+            center.x += sinkOffset.x * btnScale;
+            center.y += sinkOffset.y * btnScale;
+        }
+
+        Vector2 shadowCenter = { center.x + 1.5f, center.y + 1.5f };
+        Color textColor;
+        if (!enabled) {
+            // Disabled -> Keep the same grey color
+            textColor = Color{ 140, 140, 140, 255 };
+        } else if (selected) {
+            // Selected -> The same green color
+            textColor = GREEN;
+        } else if (hovered) {
+            // Hovered -> The same yellow color
+            textColor = Color{ 255, 230, 80, 255 };
+        } else {
+            // Not selected -> Change to a darker grey
+            textColor = Color{ 95, 95, 95, 255 };
+        }
+
+        m_font.DrawTextRotated(label.c_str(), shadowCenter, angleDeg, fontScale, ColorAlpha(BLACK, 0.8f));
+        m_font.DrawTextRotated(label.c_str(), center, angleDeg, fontScale, textColor);
     }
 }
 
@@ -384,23 +428,19 @@ void LevelSelectMenu::draw() {
     bool dayHovered   = isStageHovered(mousePos, dayRect, "LEVELSELECT_BUTTON_DAY", btnScale);
     bool nightHovered = isStageHovered(mousePos, nightRect, "LEVELSELECT_BUTTON_NIGHT", btnScale);
 
-    if (m_stageMode == LevelStageMode::Day && !dayHovered) {
-        dayHovered = true;
-    }
-    if (m_stageMode == LevelStageMode::Night && !nightHovered) {
-        nightHovered = true;
-    }
+    bool daySelected   = (m_stageMode == LevelStageMode::Day);
+    bool nightSelected = (m_stageMode == LevelStageMode::Night);
 
-    // Day (Active)
-    drawTombstoneButton("DAY", dayRect, m_btnDay, m_btnDaySel, dayHovered, true);
+    // Day (Active / Unlocked)
+    drawTombstoneButton("DAY", dayRect, m_btnDay, m_btnDaySel, dayHovered, daySelected, true, Vector2{ 320.0f, 246.0f }, -3.0f, Vector2{ 2.0f, 4.0f }, 0.60f);
 
-    // Night (Active)
-    drawTombstoneButton("NIGHT", nightRect, m_btnNight, m_btnNightSel, nightHovered, true);
+    // Night (Active / Unlocked)
+    drawTombstoneButton("NIGHT", nightRect, m_btnNight, m_btnNightSel, nightHovered, nightSelected, true, Vector2{ 315.0f, 318.0f }, 9.0f, Vector2{ 1.0f, 4.0f }, 0.55f);
 
     // Pool, Fog, Roof (Disabled)
-    drawTombstoneButton("POOL", poolRect, m_btnPoolDis, m_btnPoolDis, false, false);
-    drawTombstoneButton("FOG", fogRect, m_btnFogDis, m_btnFogDis, false, false);
-    drawTombstoneButton("ROOF", roofRect, m_btnRoofDis, m_btnRoofDis, false, false);
+    drawTombstoneButton("POOL", poolRect, m_btnPoolDis, m_btnPoolDis, false, false, false, Vector2{ 220.0f, 252.0f }, 0.0f, Vector2{ 0.0f, 4.0f }, 0.55f);
+    drawTombstoneButton("FOG", fogRect, m_btnFogDis, m_btnFogDis, false, false, false, Vector2{ 210.0f, 470.0f }, -7.0f, Vector2{ -1.0f, 4.0f }, 0.55f);
+    drawTombstoneButton("ROOF", roofRect, m_btnRoofDis, m_btnRoofDis, false, false, false, Vector2{ 215.0f, 275.0f }, -9.5f, Vector2{ 1.0f, 4.0f }, 0.55f);
 
     // 7. Draw Upper Level Cards on the Stone Wall (Seamless Composite of LevelPanelFrame + SpecialFrame)
     drawLevelCards(mousePos);

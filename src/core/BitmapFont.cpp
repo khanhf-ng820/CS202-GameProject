@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
+#include <cmath>
 
 // ---------------------------------------------------------------------------
 // Helper: trim whitespace from both ends
@@ -418,3 +419,58 @@ void BitmapFont::DrawTextRightAligned(const char* text, Rectangle bounds, float 
 
     DrawText(text, x, y, scale, tint);
 }
+
+// ---------------------------------------------------------------------------
+// BitmapFont::DrawTextRotated
+// ---------------------------------------------------------------------------
+void BitmapFont::DrawTextRotated(const char* text, Vector2 center, float angleDeg, float scale, Color tint) const {
+    if (!text || m_atlas.id == 0) return;
+
+    int textW = MeasureText(text, scale);
+    float textH = (float)m_glyphHeight * scale;
+    float halfW = (float)textW / 2.0f;
+    float halfH = textH / 2.0f;
+
+    float renderAngle = -angleDeg;
+    float rad = renderAngle * (PI / 180.0f);
+    float cosA = std::cos(rad);
+    float sinA = std::sin(rad);
+
+    float cursorX = 0.0f;
+    size_t len = std::strlen(text);
+
+    for (size_t i = 0; i < len; ++i) {
+        char ch = text[i];
+        auto it = m_glyphs.find(ch);
+        if (it == m_glyphs.end()) continue;
+
+        const GlyphInfo& glyph = it->second;
+
+        if (glyph.srcRect.width > 0 && glyph.srcRect.height > 0) {
+            float localX = cursorX + glyph.offset.x * scale - halfW;
+            float localY = glyph.offset.y * scale - halfH;
+
+            float rotX = center.x + localX * cosA - localY * sinA;
+            float rotY = center.y + localX * sinA + localY * cosA;
+
+            Rectangle dest = {
+                rotX,
+                rotY,
+                glyph.srcRect.width * scale,
+                glyph.srcRect.height * scale
+            };
+            DrawTexturePro(m_atlas, glyph.srcRect, dest, Vector2{ 0.0f, 0.0f }, renderAngle, tint);
+        }
+
+        cursorX += (float)glyph.advanceWidth * scale;
+
+        if (i + 1 < len) {
+            std::string pair = {ch, text[i + 1]};
+            auto kit = m_kerning.find(pair);
+            if (kit != m_kerning.end()) {
+                cursorX += (float)kit->second * scale;
+            }
+        }
+    }
+}
+

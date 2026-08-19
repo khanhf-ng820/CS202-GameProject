@@ -79,7 +79,7 @@ private:
 
     // Helper functions
     bool isStageHovered(Vector2 mousePos, Rectangle screenRect, const std::string& texName, float scale);
-    void drawTombstoneButton(const std::string& label, Rectangle screenRect, Texture2D normalTex, Texture2D selTex, bool hovered, bool active);
+    void drawTombstoneButton(const std::string& label, Rectangle screenRect, Texture2D normalTex, Texture2D selTex, bool hovered, bool selected, bool enabled, Vector2 nativeCenter, float angleDeg, Vector2 sinkOffset, float fontScale);
     void drawLevelCards(Vector2 mousePos);
     void draw3SliceButton(Rectangle rect, const char* text, bool hovered, bool pressed);
 };
