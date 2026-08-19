@@ -2,6 +2,7 @@
 #include "UIHelpers.h"
 #include "AudioManager.h"
 #include <algorithm>
+#include <cmath>
 
 VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
@@ -12,6 +13,79 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     m_malletAnim.SetAnimation("anim_open_pot");
     m_malletAnim.SetFrame(14.0f); // Resting upright angle
     m_malletAnim.SetPaused(true);
+
+    // Preload textures
+    std::string potPath = res.GetAssetPath("assets/images/Scary_Pot.png");
+    res.LoadFile(potPath);
+    std::string chunksPath = res.GetAssetPath("assets/particles/vase_chunks.png");
+    res.LoadFile(chunksPath);
+
+    // Populate initial vases
+    spawnVases();
+}
+
+void VasebreakerLevel::spawnVases() {
+    // Clear all cells
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            m_vases[r][c].reset();
+        }
+    }
+
+    // Populate columns 6, 7, 8 across all 5 rows
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 6; c < 9; ++c) {
+            float cellX = 140.0f + (c == 0 ? 0.0f : 80.0f + (c - 1) * 70.0f);
+            float cellY = 80.0f + r * 100.0f;
+            float cellW = (c == 0) ? 80.0f : 70.0f;
+            float cellH = 100.0f;
+            float centerX = cellX + cellW / 2.0f;
+            float centerY = cellY + cellH / 2.0f;
+            float vaseX = centerX - 40.0f;
+            float vaseY = centerY - 50.0f;
+
+            if ((r == 1 && c == 7) || (r == 3 && c == 7)) {
+                m_vases[r][c] = std::make_unique<GreenVase>(r, c, vaseX, vaseY);
+            } else {
+                m_vases[r][c] = std::make_unique<BrownVase>(r, c, vaseX, vaseY);
+            }
+        }
+    }
+}
+
+void VasebreakerLevel::breakVase(int row, int col) {
+    if (row < 0 || row >= 5 || col < 0 || col >= 9 || !m_vases[row][col]) return;
+
+    m_vases[row][col]->destroy();
+
+    // Play shattering sound effect
+    std::string shatterSound = res.GetAssetPath("assets/sounds/vase_breaking.ogg");
+    AudioManager::GetInstance().PlaySoundEffect(shatterSound);
+
+    // Determine shard texture row (0 for Brown Mystery Vase, 1 for Green Leaf Vase)
+    int shardRow = (m_vases[row][col]->getType() == VaseType::Green) ? 1 : 0;
+    float cx = m_vases[row][col]->getX() + 40.0f;
+    float cy = m_vases[row][col]->getY() + 50.0f;
+    float groundY = cy + 35.0f;
+
+    // Spawn 16 ceramic shards
+    for (int i = 0; i < 16; ++i) {
+        VaseShard shard;
+        shard.x = cx + (float)GetRandomValue(-15, 15);
+        shard.y = cy + (float)GetRandomValue(-25, 20);
+        float angleDeg = (float)GetRandomValue(200, 340); // upward fan
+        float speed = (float)GetRandomValue(120, 280);
+        shard.vx = cosf(angleDeg * DEG2RAD) * speed;
+        shard.vy = sinf(angleDeg * DEG2RAD) * speed;
+        shard.rotation = (float)GetRandomValue(0, 360);
+        shard.rotSpeed = (float)GetRandomValue(-720, 720);
+        shard.groundY = groundY + (float)GetRandomValue(-8, 8);
+        shard.maxLifetime = (float)GetRandomValue(70, 95) / 100.0f; // 0.70s to 0.95s
+        shard.lifetime = shard.maxLifetime;
+        shard.frameCol = GetRandomValue(0, 8);
+        shard.frameRow = shardRow;
+        m_shards.push_back(shard);
+    }
 }
 
 bool VasebreakerLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
@@ -47,8 +121,20 @@ void VasebreakerLevel::update(float dt) {
         m_malletAnim.SetSpeed(2.5f); // Fast responsive swing
         m_malletAnim.SetPaused(false);
         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/swing.ogg"));
+
+        // Only target ONE vase at a time that is targetable (Intact)
+        int clickRow, clickCol;
+        if (getGridCell(mousePos, clickRow, clickCol)) {
+            if (m_vases[clickRow][clickCol] && m_vases[clickRow][clickCol]->isTargetable() && m_pendingVaseRow == -1) {
+                m_vases[clickRow][clickCol]->setPendingBreak();
+                m_pendingVaseRow = clickRow;
+                m_pendingVaseCol = clickCol;
+                m_pendingVaseTimer = 0.15f; // Mallet strike impact delay
+            }
+        }
     }
 
+    // Process mallet swing animation
     if (m_isSwinging) {
         m_malletAnim.Update(dt);
         if (m_malletAnim.GetCurrentFrame() >= m_malletAnim.GetEndFrame() - 1 || m_malletAnim.GetCurrentFrame() >= 16) {
@@ -57,6 +143,41 @@ void VasebreakerLevel::update(float dt) {
             m_malletAnim.SetPaused(true);
         }
     }
+
+    // Process pending vase strike impact
+    if (m_pendingVaseTimer > 0.0f) {
+        m_pendingVaseTimer -= dt;
+        if (m_pendingVaseTimer <= 0.0f && m_pendingVaseRow >= 0) {
+            breakVase(m_pendingVaseRow, m_pendingVaseCol);
+            m_pendingVaseRow = -1;
+            m_pendingVaseCol = -1;
+            m_pendingVaseTimer = 0.0f;
+        }
+    }
+
+    // Update active shards
+    for (auto& shard : m_shards) {
+        shard.lifetime -= dt;
+        shard.vy += 500.0f * dt; // Gravity
+        shard.x += shard.vx * dt;
+        shard.y += shard.vy * dt;
+        shard.rotation += shard.rotSpeed * dt;
+
+        // Ground bounce
+        if (shard.y >= shard.groundY && shard.vy > 0.0f) {
+            shard.y = shard.groundY;
+            shard.vy = -shard.vy * 0.4f; // bounce restitution
+            shard.vx *= 0.7f;            // ground friction
+            shard.rotSpeed *= 0.6f;
+        }
+    }
+
+    // Remove expired shards
+    m_shards.erase(
+        std::remove_if(m_shards.begin(), m_shards.end(),
+            [](const VaseShard& s) { return s.lifetime <= 0.0f; }),
+        m_shards.end()
+    );
 
     // Right-click a tile in a lane to spawn a ZombieNormal
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
@@ -127,14 +248,58 @@ void VasebreakerLevel::draw() {
         DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
     }
 
-    // 3. Draw active zombies
+    // 3. Draw active intact & pending vases
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            if (m_vases[r][c] && !m_vases[r][c]->isDestroyed()) {
+                m_vases[r][c]->draw(res);
+            }
+        }
+    }
+
+    // 4. Draw ceramic shards
+    Texture2D chunksTex = res.GetTexture("VASE_CHUNKS");
+    if (chunksTex.id == 0) chunksTex = res.GetTexture("vase_chunks");
+    if (chunksTex.id == 0) {
+        std::string chunksPath = res.GetAssetPath("assets/particles/vase_chunks.png");
+        res.LoadFile(chunksPath);
+        chunksTex = res.GetTexture("VASE_CHUNKS");
+        if (chunksTex.id == 0) chunksTex = res.GetTexture("vase_chunks");
+    }
+
+    if (chunksTex.id != 0) {
+        for (const auto& shard : m_shards) {
+            float alpha = 1.0f;
+            if (shard.lifetime < 0.3f) {
+                alpha = shard.lifetime / 0.3f;
+            }
+            Color tint = ColorAlpha(WHITE, alpha);
+
+            Rectangle srcRec = {
+                shard.frameCol * 32.0f,
+                shard.frameRow * 32.0f,
+                32.0f,
+                32.0f
+            };
+            Rectangle destRec = {
+                shard.x,
+                shard.y,
+                28.0f,
+                28.0f
+            };
+            Vector2 origin = { 14.0f, 14.0f };
+            DrawTexturePro(chunksTex, srcRec, destRec, origin, shard.rotation, tint);
+        }
+    }
+
+    // 5. Draw active zombies
     for (const auto& z : m_zombies) {
         if (!z->isFinished()) {
             z->draw();
         }
     }
 
-    // 4. Draw Game Over / Loss overlay if triggered
+    // 6. Draw Game Over / Loss overlay if triggered
     if (m_levelLost) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
@@ -143,16 +308,16 @@ void VasebreakerLevel::draw() {
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     }
 
-    // 5. Draw Mallet cursor at virtual mouse position (Option 1A: -42.0f, -6.0f)
+    // 7. Draw Mallet cursor at virtual mouse position (Option 1A: -42.0f, -6.0f)
     m_malletAnim.Draw(mousePos.x - 42.0f, mousePos.y - 6.0f, 1.0f);
 
-    // 6. Draw debug red dot showing exact virtual cursor coordinates
+    // 8. Draw debug red dot showing exact virtual cursor coordinates
     DrawCircle((int)mousePos.x, (int)mousePos.y, 4.0f, RED);
     DrawCircleLines((int)mousePos.x, (int)mousePos.y, 4.0f, WHITE);
 
     EndTextureMode();
 
-    // 7. Draw targetScreen stretched to actual window dimensions
+    // 9. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
