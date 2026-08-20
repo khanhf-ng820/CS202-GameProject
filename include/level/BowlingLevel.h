@@ -17,6 +17,7 @@
 #include <memory>
 
 #include "BowlingNut.h"
+#include "InGameMenu.h"
 
 struct BowlingCard {
     float x;
@@ -31,6 +32,7 @@ public:
     void run();
     void update(float dt);
     void draw();
+    void restartLevel();
 
 private:
     Resources& res;
@@ -57,6 +59,7 @@ private:
     bool m_finalWaveAnnounced = false;
     bool m_levelWon = false;
     bool m_levelLost = false;
+    bool m_exitToMainMenu = false;
 
     // Grid state for placed plants
     std::unique_ptr<Plant> m_grid[5][9];
@@ -65,6 +68,10 @@ private:
     bool m_isHoldingCard = false;
     std::string m_heldPlantType = "";
 
+    // In-game pause menu
+    std::unique_ptr<InGameMenu> m_inGameMenu;
+
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     void spawnNextWave();
 };
+

@@ -8,6 +8,7 @@
 #include "particle.h"
 #include "Projectile.h"
 #include "SunItem.h"
+#include "InGameMenu.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -26,6 +27,7 @@ public:
     void run();
     void update(float dt);
     void draw();
+    void restartLevel();
 
 private:
     Resources& res;
@@ -63,6 +65,11 @@ private:
     bool m_levelWon;
     bool m_levelLost;
     bool m_finalWaveAnnounced;
+    bool m_exitToMainMenu;
+
+    // In-game pause menu
+    std::unique_ptr<InGameMenu> m_inGameMenu;
+    bool m_ignoreInitialClick = true;
 
     // Helper functions
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;

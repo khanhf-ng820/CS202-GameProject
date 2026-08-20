@@ -109,6 +109,14 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 
 ---
 
+## 🏺 Vasebreaker Mode (Vase Slicing, Shattering & Mallet Cursor Rules)
+
+*   **Row 2 Texture Extraction for Normal Vases:** In `assets/images/Scary_Pot.png` ($240 \times 202\text{px}$), normal rendered vases (both Brown mystery vases `col = 0` and Green leaf plant vases `col = 1`) MUST be sliced from the **second row of textures** ($y = 101\text{px}$, height $= 101\text{px}$), i.e., `Rectangle srcRec = { col * 80.0f, 101.0f, 80.0f, 101.0f };`.
+*   **Debounced Strike State (`VaseState::PendingBreak`):** Interactive breakable entities with delayed impact animations (such as the $\sim 0.15\text{s}$ mallet swing) MUST immediately enter `VaseState::PendingBreak` on click frame 0 so `isTargetable()` returns `false`. This prevents rapid double-clicks from triggering duplicate destruction, duplicate shard particle bursts, or overlapping sound effects during the impact delay window.
+*   **Mallet Cursor Offset & Resting Anchor:** When drawing the wooden mallet cursor (`Hammer.reanim`) at the virtual mouse position, anchor the mallet with offset `(mousePos.x - 42.0f, mousePos.y - 6.0f)` so the cursor contact point aligns directly against the left upper neck/shoulder of the mallet.
+
+---
+
 ## 🧟 Zombie Death Animations & Armor Detachment Rules
 
 *   **Zombie Render Loop Condition:** In level draw loops (`BowlingLevel::draw`, `Level1::draw`), ALWAYS gate zombie drawing using `if (!z->isFinished())` rather than `if (!z->isDead())`. Using `!z->isDead()` instantly stops rendering the zombie on frame 0 of fatal hit, hiding its 2.2-second PopCap death animation (`anim_death`/`anim_death2`) and falling limb physics.
@@ -142,6 +150,17 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
     3. Parchment frame overlay (`Almanac_PlantCard.png` / `Almanac_ZombieCard.png`).
     4. Typography (Titles, two-tone stats, descriptions).
 
+---
 
+## 🖼️ UI Layout Visual Review & Verification Invariant
 
+*   **Generate Test Images for Layout Reviews:** When dealing with or modifying UI layouts, background scenery composition, coordinate adjustments, button sizing, or asset placement, the agent MUST generate a visual test image (e.g., using Python/PIL to composite layers and typography into the artifact `scratch/` directory). Embed this test preview image directly into the implementation plan or response, and proactively ask the user to inspect the preview and provide feedback or approval before or during execution.
+
+---
+
+## ⚡ Reanimation Engine & Hot-Loop Memory Safety Rules
+
+*   **Zero-Allocation Keyframe Interpolation Invariant:** Never return owning containers with heap allocations (such as `std::string` exceeding SSO capacity) by value in per-frame animation loops (`GetInterpolatedKeyframe`). Keyframe interpolation must only compute and copy numeric transform fields (`x`, `y`, `sx`, `sy`, `kx`, `ky`, `f`) with `imageName` left default-constructed (0 heap allocations). Texture image names must always be resolved independently by traversing `track.keyframes`.
+*   **Defensive Keyframe Vector Index Clamping:** When iterating keyframe arrays in `GetLoopStartTime`, `BakeChildRotation`, or custom animation tracks, always clamp `startFrame = std::max(0, startFrame)` and guard `startFrame > endFrame`. Unchecked negative indexing into `track.keyframes` causes heap corruption before the vector buffer allocation.
+*   **De-duplicate Per-Frame Track Overrides:** In 60 FPS update loops (such as mouse hover checks in `MainMenu::update`), never unconditionally insert or erase from `m_trackImageOverrides` map. Check `if (it != m_trackImageOverrides.end() && it->second == newImage) return;` to avoid constant map rehashing and string allocations.
 

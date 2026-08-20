@@ -8,10 +8,12 @@
 #include "HelpMenu.h"
 #include "AlmanacMenu.h"
 #include "QuizMenu.h"
+#include "LevelSelectMenu.h"
 #include "UIHelpers.h"
 #include "testing.h"
 #include "Level1.h"
 #include "BowlingLevel.h"
+#include "VasebreakerLevel.h"
 #include <iostream>
 #include <string>
 #include <vector>
@@ -60,6 +62,7 @@ int main() {
     std::unique_ptr<HelpMenu> helpMenu;
     std::unique_ptr<AlmanacMenu> almanacMenu;
     std::unique_ptr<QuizMenu> quizMenu;
+    std::unique_ptr<LevelSelectMenu> levelSelectMenu;
 
     AppState currentState = AppState::Loading;
     bool showOptions = false;
@@ -67,6 +70,7 @@ int main() {
     bool showHelp = false;
     bool showAlmanac = false;
     bool showQuiz = false;
+    bool showLevelSelect = false;
     bool exitGame = false;
 
     while (!WindowShouldClose() && !exitGame) {
@@ -90,7 +94,15 @@ int main() {
                 helpMenu = std::make_unique<HelpMenu>(res);
                 almanacMenu = std::make_unique<AlmanacMenu>(res);
                 quizMenu = std::make_unique<QuizMenu>(res);
+                levelSelectMenu = std::make_unique<LevelSelectMenu>(res);
                 currentState = AppState::MainMenu;
+            }
+        } else if (showLevelSelect && levelSelectMenu) {
+            levelSelectMenu->update(dt, showLevelSelect);
+            if (levelSelectMenu->getAction() == LevelSelectAction::PlayLevel1) {
+                Level1 level1State(res, targetScreen);
+                level1State.run();
+                levelSelectMenu->resetAction();
             }
         } else if (showOptions && optionsMenu) {
             optionsMenu->update(dt, showOptions, windowWidth, windowHeight);
@@ -105,16 +117,19 @@ int main() {
         } else if (menu) {
             menu->update(dt);
             if (menu->getAction() == MenuAction::StartAdventure) {
-                BowlingLevel bowlingState(res, targetScreen);
-                bowlingState.run();
+                showLevelSelect = true;
                 menu->resetAction();
             } else if (menu->getAction() == MenuAction::ZenGarden) {
                 Testing testingState(res, targetScreen);
                 testingState.run();
                 menu->resetAction();
+            } else if (menu->getAction() == MenuAction::Vasebreaker) {
+                VasebreakerLevel vasebreakerState(res, targetScreen);
+                vasebreakerState.run();
+                menu->resetAction();
             } else if (menu->getAction() == MenuAction::Level1) {
-                Level1 level1State(res, targetScreen);
-                level1State.run();
+                BowlingLevel bowlingState(res, targetScreen);
+                bowlingState.run();
                 menu->resetAction();
             } else if (menu->getAction() == MenuAction::Level2) {
                 showQuiz = true;
@@ -137,7 +152,7 @@ int main() {
         }
 
         // Update UI interaction availability based on overlay menu visibility
-        SetUIInteractionEnabled(currentState == AppState::MainMenu && !showOptions && !showShop && !showHelp && !showAlmanac && !showQuiz);
+        SetUIInteractionEnabled(currentState == AppState::MainMenu && !showOptions && !showShop && !showHelp && !showAlmanac && !showQuiz && !showLevelSelect);
 
         // --- Draw to Virtual Canvas ---
         BeginTextureMode(targetScreen);
@@ -145,6 +160,8 @@ int main() {
 
         if (currentState == AppState::Loading) {
             loadingScreen.draw();
+        } else if (showLevelSelect && levelSelectMenu) {
+            levelSelectMenu->draw();
         } else if (showShop && shopMenu) {
             shopMenu->draw();
         } else if (showAlmanac && almanacMenu) {

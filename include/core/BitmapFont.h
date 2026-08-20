@@ -23,6 +23,9 @@ public:
     // Draw text right-aligned within a bounding rectangle with padding on the right.
     void DrawTextRightAligned(const char* text, Rectangle bounds, float paddingRight, float scale, Color tint) const;
 
+    // Draw text centered at a given point and rotated by angleDeg (degrees).
+    void DrawTextRotated(const char* text, Vector2 center, float angleDeg, float scale, Color tint) const;
+
     // Measure the total pixel width of a string at the given scale.
     int MeasureText(const char* text, float scale) const;
 

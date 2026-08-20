@@ -4,6 +4,30 @@
 
 BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
+    m_inGameMenu = std::make_unique<InGameMenu>(res);
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            m_grid[r][c] = nullptr;
+        }
+    }
+}
+
+void BowlingLevel::restartLevel() {
+    m_currentWave = 0;
+    m_waveTimer = 5.0f;
+    m_finalWaveAnnounced = false;
+    m_levelWon = false;
+    m_levelLost = false;
+    m_exitToMainMenu = false;
+
+    m_zombies.clear();
+    m_bowlingNuts.clear();
+    m_hitDebugTimers.clear();
+    m_cards.clear();
+    m_cardSpawnTimer = 0.0f;
+    m_isHoldingCard = false;
+    m_heldPlantType = "";
+
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             m_grid[r][c] = nullptr;
@@ -71,6 +95,32 @@ void BowlingLevel::spawnNextWave() {
 }
 
 void BowlingLevel::update(float dt) {
+    // 0. Update in-game pause menu if open (pauses game loop simulation)
+    if (m_inGameMenu && m_inGameMenu->isOpen()) {
+        InGameMenuAction action = m_inGameMenu->update(dt);
+        if (action == InGameMenuAction::RestartLevel) {
+            restartLevel();
+        } else if (action == InGameMenuAction::MainMenu) {
+            m_exitToMainMenu = true;
+        }
+        return;
+    }
+
+    // Toggle menu via ESC key when playing
+    if (!m_levelWon && !m_levelLost && IsKeyPressed(KEY_ESCAPE)) {
+        if (m_inGameMenu) m_inGameMenu->open();
+        return;
+    }
+
+    Vector2 mousePos = GetVirtualMousePosition();
+
+    // Check click on top-right Menu button
+    Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
+    if (!m_levelWon && !m_levelLost && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, menuBtnRect)) {
+        if (m_inGameMenu) m_inGameMenu->open();
+        return;
+    }
+
     if (m_levelWon || m_levelLost) return;
 
     // 0. Wave spawn timer
@@ -128,10 +178,8 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    Vector2 mousePos = GetVirtualMousePosition();
-
-    // 4. Handle Debug toggle button click (700, 10, 90, 30)
-    Rectangle debugBtnRect = { 700.0f, 10.0f, 90.0f, 30.0f };
+    // 4. Handle Debug toggle button click (580, 5, 90, 26)
+    Rectangle debugBtnRect = { 580.0f, 5.0f, 90.0f, 26.0f };
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, debugBtnRect)) {
         m_showDebug = !m_showDebug;
     }
@@ -335,14 +383,22 @@ void BowlingLevel::draw() {
         nut->draw(res, m_showDebug);
     }
 
-    // Draw Debug toggle button in top right UI area (700, 10, 90, 30)
-    Rectangle debugBtnRect = { 700.0f, 10.0f, 90.0f, 30.0f };
+    // Draw Debug toggle button in top right UI area (580, 5, 90, 26)
+    Rectangle debugBtnRect = { 580.0f, 5.0f, 90.0f, 26.0f };
     DrawRectangleRec(debugBtnRect, m_showDebug ? DARKGREEN : DARKGRAY);
     DrawRectangleLinesEx(debugBtnRect, 2.0f, WHITE);
-    DrawText(m_showDebug ? "Debug: ON" : "Debug: OFF", 708, 17, 14, WHITE);
+    DrawText(m_showDebug ? "Debug: ON" : "Debug: OFF", 588, 11, 14, WHITE);
+
+    // Draw top-right "Menu" stone button (680, 0, 110, 36)
+    Vector2 mousePos = GetVirtualMousePosition();
+    Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
+    bool menuHovered = CheckCollisionPointRec(mousePos, menuBtnRect);
+    bool menuPressed = menuHovered && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    if (m_inGameMenu) {
+        m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
+    }
 
     // 6. Draw hover highlight cell on front lawn grid
-    Vector2 mousePos = GetVirtualMousePosition();
     int hoverRow, hoverCol;
     if (getGridCell(mousePos, hoverRow, hoverCol)) {
         float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
@@ -444,9 +500,14 @@ void BowlingLevel::draw() {
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     }
 
+    // 11. Draw in-game pause menu dialog if open
+    if (m_inGameMenu && m_inGameMenu->isOpen()) {
+        m_inGameMenu->draw();
+    }
+
     EndTextureMode();
 
-    // 11. Draw targetScreen stretched to actual window dimensions
+    // 12. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -473,7 +534,7 @@ void BowlingLevel::run() {
         update(dt);
         draw();
 
-        if (IsKeyPressed(KEY_ESCAPE) || (m_levelWon && IsKeyPressed(KEY_ENTER))) {
+        if (m_exitToMainMenu || (m_levelWon && IsKeyPressed(KEY_ENTER)) || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
             break;
         }
     }

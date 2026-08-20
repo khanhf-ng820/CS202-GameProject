@@ -53,7 +53,7 @@ void Reanimation::PopulateAnimations() {
 
     // If no animations found, create a default range for the whole file
     if (m_anims.empty()) {
-        m_anims.push_back({"All Frames", 0, m_def.maxFrames - 1});
+        m_anims.push_back({"All Frames", 0, std::max(0, m_def.maxFrames - 1)});
     }
 }
 
@@ -95,7 +95,16 @@ ReanimKeyframe Reanimation::GetInterpolatedKeyframe(const ReanimTrack& track, fl
 
     float fraction = frameFloat - (float)f1;
     if (fraction <= 0.0001f) {
-        return track.keyframes[f1];
+        ReanimKeyframe res;
+        const auto& kf = track.keyframes[f1];
+        res.x = kf.x;
+        res.y = kf.y;
+        res.sx = kf.sx;
+        res.sy = kf.sy;
+        res.kx = kf.kx;
+        res.ky = kf.ky;
+        res.f = kf.f;
+        return res;
     }
 
     int startFrame = 0;
@@ -103,9 +112,9 @@ ReanimKeyframe Reanimation::GetInterpolatedKeyframe(const ReanimTrack& track, fl
     int loopStartFrame = 0;
 
     if (animIndex >= 0 && animIndex < (int)m_anims.size()) {
-        startFrame = m_anims[animIndex].startFrame;
-        endFrame = m_anims[animIndex].endFrame;
-        loopStartFrame = (int)GetLoopStartTime(animIndex);
+        startFrame = std::max(0, m_anims[animIndex].startFrame);
+        endFrame = std::min((int)track.keyframes.size() - 1, m_anims[animIndex].endFrame);
+        loopStartFrame = std::max(0, (int)GetLoopStartTime(animIndex));
     }
 
     int f2 = f1 + 1;
@@ -114,17 +123,35 @@ ReanimKeyframe Reanimation::GetInterpolatedKeyframe(const ReanimTrack& track, fl
     }
 
     if (f2 < 0 || f2 >= (int)track.keyframes.size()) {
-        return track.keyframes[f1];
+        ReanimKeyframe res;
+        const auto& kf = track.keyframes[f1];
+        res.x = kf.x;
+        res.y = kf.y;
+        res.sx = kf.sx;
+        res.sy = kf.sy;
+        res.kx = kf.kx;
+        res.ky = kf.ky;
+        res.f = kf.f;
+        return res;
     }
 
     const auto& kf1 = track.keyframes[f1];
     const auto& kf2 = track.keyframes[f2];
 
     if (kf1.f == -1 || kf2.f == -1) {
-        return kf1;
+        ReanimKeyframe res;
+        res.x = kf1.x;
+        res.y = kf1.y;
+        res.sx = kf1.sx;
+        res.sy = kf1.sy;
+        res.kx = kf1.kx;
+        res.ky = kf1.ky;
+        res.f = kf1.f;
+        return res;
     }
 
-    ReanimKeyframe result = kf1;
+    ReanimKeyframe result;
+    result.f = kf1.f;
     result.x = kf1.x + (kf2.x - kf1.x) * fraction;
     result.y = kf1.y + (kf2.y - kf1.y) * fraction;
     result.sx = kf1.sx + (kf2.sx - kf1.sx) * fraction;
@@ -430,11 +457,20 @@ void Reanimation::SetFrame(float frame) {
 }
 
 void Reanimation::OverrideTrackImage(const std::string& trackName, const std::string& imageName) {
-    m_trackImageOverrides[trackName] = imageName;
+    auto it = m_trackImageOverrides.find(trackName);
+    if (it != m_trackImageOverrides.end()) {
+        if (it->second == imageName) return; // avoid redundant string reallocation and map write
+        it->second = imageName;
+    } else {
+        m_trackImageOverrides[trackName] = imageName;
+    }
 }
 
 void Reanimation::ClearTrackImageOverride(const std::string& trackName) {
-    m_trackImageOverrides.erase(trackName);
+    auto it = m_trackImageOverrides.find(trackName);
+    if (it != m_trackImageOverrides.end()) {
+        m_trackImageOverrides.erase(it);
+    }
 }
 
 void Reanimation::AddCustomAnimation(const std::string& newAnimName, const std::string& baseAnimName) {
@@ -455,7 +491,7 @@ void Reanimation::BakeChildRotation(const std::string& parentTrack, const std::s
             break;
         }
     }
-    if (startFrame == -1) return;
+    if (startFrame < 0 || endFrame < startFrame) return;
 
     ReanimTrack* pTrack = nullptr;
     ReanimTrack* cTrack = nullptr;
@@ -486,8 +522,10 @@ void Reanimation::AddCustomAnimation(const std::string& newAnimName, int startFr
 float Reanimation::GetLoopStartTime(int animIndex) const {
     if (animIndex < 0 || animIndex >= (int)m_anims.size()) return 0.0f;
     
-    int startFrame = m_anims[animIndex].startFrame;
+    int startFrame = std::max(0, m_anims[animIndex].startFrame);
     int endFrame = m_anims[animIndex].endFrame;
+
+    if (startFrame > endFrame) return (float)startFrame;
 
     std::map<int, int> snapCount;
     for (const auto& track : m_def.tracks) {

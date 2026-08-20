@@ -283,7 +283,13 @@ void QuizMenu::update(float dt, bool& showQuiz) {
 
     Vector2 mousePos = GetVirtualMousePosition();
 
-    // 1. Check Exit / Main Menu button (bottom-right: 615, 548, 164, 26)
+    // 1. Check Exit / Main Menu button (bottom-right: 615, 548, 164, 26) or ESC key
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/gravebutton.ogg"));
+        showQuiz = false;
+        return;
+    }
+
     Rectangle exitRect = { 615.0f, 548.0f, 164.0f, 26.0f };
     if (CheckCollisionPointRec(mousePos, exitRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/gravebutton.ogg"));
@@ -510,10 +516,20 @@ void QuizMenu::draw() {
     bool exitHovered = CheckCollisionPointRec(mousePos, exitRect);
     if (m_closeBtn.id != 0) {
         Texture2D tex = exitHovered ? (m_closeBtnHl.id != 0 ? m_closeBtnHl : m_closeBtn) : m_closeBtn;
-        DrawTexture(tex, (int)exitRect.x, (int)exitRect.y, WHITE);
+        DrawTexturePro(
+            tex,
+            Rectangle{ 0.0f, 0.0f, (float)tex.width, (float)tex.height },
+            exitRect,
+            Vector2{ 0.0f, 0.0f },
+            0.0f,
+            WHITE
+        );
     } else {
-        DrawButton(exitRect, "MAIN MENU", ColorAlpha(BROWN, 0.8f), ColorAlpha(BEIGE, 0.9f), WHITE);
+        DrawRectangleRec(exitRect, exitHovered ? DARKGREEN : DARKGRAY);
+        DrawRectangleLinesEx(exitRect, 2.0f, GOLD);
     }
+
+    m_fontOption.DrawTextCentered("MAIN MENU", exitRect, 0.70f, exitHovered ? GREEN : Color{ 230, 210, 160, 255 });
 
     // 6. Draw Floating Texts (e.g. "+$250 Cash!")
     for (const auto& ft : m_floatingTexts) {

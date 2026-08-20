@@ -7,8 +7,8 @@
 // Track names from SelectorScreen.reanim used for interactive buttons
 // --------------------------------------------------------------------------
 static const char* TRACK_START_ADVENTURE = "SelectorScreen_StartAdventure_button";
-static const char* TRACK_SURVIVAL        = "SelectorScreen_Survival_button";
-static const char* TRACK_CHALLENGES      = "SelectorScreen_Challenges_button";
+static const char* TRACK_SURVIVAL        = "SelectorScreen_Survival_button"; // The texture has the text "MINI-GAMES" on the tombstone button but is named "Survival"
+static const char* TRACK_CHALLENGES      = "SelectorScreen_Challenges_button"; // The texture has the text "PUZZLE" on the tombstone button but is named "Challenges"
 static const char* TRACK_ZEN_GARDEN      = "SelectorScreen_ZenGarden_button";
 
 // Highlight image names (swap on hover via OverrideTrackImage)
@@ -187,7 +187,7 @@ void MainMenu::update(float dt) {
         { TRACK_START_ADVENTURE, IMG_START_ADV_HL,   MenuAction::StartAdventure },
         { TRACK_SURVIVAL,        IMG_SURVIVAL_HL,     MenuAction::Level1 },
         { TRACK_CHALLENGES,      IMG_CHALLENGES_HL,   MenuAction::Level2 },
-        { TRACK_ZEN_GARDEN,      IMG_ZEN_GARDEN_HL,   MenuAction::Level3 },
+        { TRACK_ZEN_GARDEN,      IMG_ZEN_GARDEN_HL,   MenuAction::Vasebreaker },
     };
 
     for (const auto& btn : buttons) {
@@ -197,7 +197,7 @@ void MainMenu::update(float dt) {
         if (btn.action == MenuAction::StartAdventure) texName = "SELECTORSCREEN_STARTADVENTURE_BUTTON1";
         else if (btn.action == MenuAction::Level1) texName = "SELECTORSCREEN_SURVIVAL_BUTTON";
         else if (btn.action == MenuAction::Level2) texName = "SELECTORSCREEN_CHALLENGES_BUTTON";
-        else if (btn.action == MenuAction::Level3) texName = "SELECTORSCREEN_VASEBREAKER_BUTTON";
+        else if (btn.action == MenuAction::Vasebreaker) texName = "SELECTORSCREEN_VASEBREAKER_BUTTON";
 
         bool hovered = (bounds.width > 0) && isGraveButtonHovered(mousePos, bounds, texName);
 
@@ -312,10 +312,10 @@ void MainMenu::draw() {
     };
 
     LevelLabel labels[] = {
-        { TRACK_START_ADVENTURE, "Wall-nut Bowling" },
-        { TRACK_SURVIVAL,        "Level 1" },
+        { TRACK_START_ADVENTURE, "Levels" },
+        { TRACK_SURVIVAL,        "Wall-nut Bowling" },
         { TRACK_CHALLENGES,      "Brain Busters" },
-        { TRACK_ZEN_GARDEN,      "Level 3" },
+        { TRACK_ZEN_GARDEN,      "Vasebreaker" },
     };
 
     for (const auto& lbl : labels) {

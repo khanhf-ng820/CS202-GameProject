@@ -44,6 +44,8 @@ void AudioManager::PlayMusic(MusicTrack track) {
         soundPath = res.GetAssetPath("assets/sounds/main_menu.ogg");
     } else if (track == MusicTrack::ShopMenu) {
         soundPath = res.GetAssetPath("assets/sounds/shop.ogg");
+    } else if (track == MusicTrack::Vasebreaker) {
+        soundPath = res.GetAssetPath("assets/sounds/moongrains.ogg");
     }
 
     if (!soundPath.empty()) {
