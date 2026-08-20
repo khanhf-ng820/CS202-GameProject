@@ -1,4 +1,5 @@
 #include "PeaShooter.h"
+#include "AudioManager.h"
 
 PeaShooter::PeaShooter(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 100, "PeaShooter") {
@@ -42,7 +43,8 @@ void PeaShooter::update(float deltaTime, std::vector<Projectile>& outProjectiles
     if (currentAnim == "anim_shooting" && m_anim.GetCurrentFrame() == 65 && !did_shoot) {
         // Bắn đạn
         Texture2D tex = res.GetTexture("ProjectilePea"); 
-        outProjectiles.push_back(Projectile(m_x + 60, m_y + 15, 400.0f, tex));
+        outProjectiles.push_back(Projectile(m_x + 46, m_y + 12, 400.0f, tex));
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/throw.ogg"));
         did_shoot = 1;
     }
 

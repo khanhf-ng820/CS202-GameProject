@@ -1,4 +1,5 @@
 #include "Cabbagepult.h"
+#include "AudioManager.h"
 #include <cmath>
 #include <algorithm>
 
@@ -45,26 +46,33 @@ void Cabbagepult::update(float deltaTime, std::vector<Projectile>& outProjectile
     bool isShooting = (m_anim.GetCurrentAnimName() == "anim_shooting");
 
     if (isShooting) {
-        if (currentFrame >= 36) {
+        if (currentFrame >= 48) {
+            // Hide the cabbage in the basket after launch
             m_anim.SetTrackVisible("Cabbagepult_cabbage", false);
         } else {
+            // Show before launch
             m_anim.SetTrackVisible("Cabbagepult_cabbage", true);
         }
     } else {
+        // Show by default in other animations (like idle)
         m_anim.SetTrackVisible("Cabbagepult_cabbage", true);
+        if (m_anim.GetCurrentAnimName() != "anim_idle") {
+            m_anim.SetAnimation("anim_idle");
+        }
     }
 
-    // Shoot cabbage when shooting animation reaches the launch frame (frame 36)
-    if (isShooting && currentFrame == 36 && !did_shoot) {
+    // Shoot cabbage when shooting animation reaches the launch frame (frame 48)
+    if (isShooting && currentFrame == 48 && !did_shoot) {
         Texture2D tex = res.GetTexture("Cabbagepult_cabbage");
         const float travelDistance = std::max(0.0f, distance);
         const float launchSpeed = std::max(300.0f, ComputeLobbedArcLength(travelDistance, 150.0f)) * 0.5f;
 
         outProjectiles.push_back(Projectile(m_x + 90, m_y - 60, launchSpeed, tex, false, true, 1.0f, 40, &res, travelDistance));
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/throw.ogg"));
         did_shoot = true;
     }
 
-    if (currentFrame == 37) {
+    if (currentFrame == 49) {
         did_shoot = false;
     }
 }

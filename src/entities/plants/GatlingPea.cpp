@@ -1,4 +1,5 @@
 #include "GatlingPea.h"
+#include "AudioManager.h"
 
 GatlingPea::GatlingPea(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 250, "GatlingPea") {
@@ -21,16 +22,15 @@ void GatlingPea::update(float deltaTime, std::vector<Projectile>& outProjectiles
     }
 
     if (currentAnim == "anim_shooting") {
-        if (m_anim.GetCurrentFrame() == 59 && did_shoot == false) {
+        int frame = m_anim.GetCurrentFrame();
+        if ((frame == 65 || frame == 71 || frame == 77 || frame == 83) && !did_shoot) {
             Texture2D tex = res.GetTexture("ProjectilePea"); 
-            outProjectiles.push_back(Projectile(m_x + 60, m_y + 15, 400.0f, tex));
-            outProjectiles.push_back(Projectile(m_x + 15, m_y + 15, 400.0f, tex));
-            outProjectiles.push_back(Projectile(m_x - 30, m_y + 15, 400.0f, tex));
-            outProjectiles.push_back(Projectile(m_x - 75, m_y + 15, 400.0f, tex));
+            outProjectiles.push_back(Projectile(m_x + 46, m_y + 12, 400.0f, tex));
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/throw.ogg"));
             did_shoot = true;
         }
 
-        if (m_anim.GetCurrentFrame() == 60) {
+        if (frame == 66 || frame == 72 || frame == 78 || frame == 84) {
             did_shoot = false;
         }
     }

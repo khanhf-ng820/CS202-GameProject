@@ -42,6 +42,10 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen)
 {
     m_inGameMenu = std::make_unique<InGameMenu>(res);
 
+    // Initialize "READY... SET... PLANT!" intro animation
+    ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
+    m_readySetPlantAnim.SetResources(readyDef, res);
+
     // Clear grid
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
@@ -77,8 +81,10 @@ void Level1::restartLevel() {
     m_phase = LevelPhase::SeedSelection;
     m_cameraCropX = 500.0f;
     m_panTimer = 0.0f;
+    m_readySetPlantTimer = 0.0f;
     m_seedBank.deselect();
     m_ignoreInitialClick = true;
+    AudioManager::GetInstance().PlayMusic(MusicTrack::None);
     initPreviewZombies();
 }
 
@@ -245,14 +251,36 @@ void Level1::spawnNextWave() {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
-    } else if (m_currentWave == 7) {
-        // Final wave!
+    }
+
+    // Play iconic zombie groan / "zombies are coming" sound once per wave
+    static const std::vector<std::string> waveGroanSounds = {
+        "assets/sounds/sukhbir.ogg",
+        "assets/sounds/sukhbir2.ogg",
+        "assets/sounds/sukhbir3.ogg",
+        "assets/sounds/sukhbir4.ogg",
+        "assets/sounds/sukhbir5.ogg",
+        "assets/sounds/sukhbir6.ogg",
+        "assets/sounds/groan.ogg",
+        "assets/sounds/groan2.ogg",
+        "assets/sounds/groan3.ogg",
+        "assets/sounds/lowgroan.ogg",
+        "assets/sounds/lowgroan2.ogg"
+    };
+
+    if (m_currentWave == 7) {
+        // Final wave fanfare / siren
         m_finalWaveAnnounced = true;
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(0)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
+    } else {
+        int rIdx = GetRandomValue(0, (int)waveGroanSounds.size() - 1);
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(waveGroanSounds[rIdx]));
     }
 }
 
@@ -347,6 +375,40 @@ void Level1::updateCollisions(float dt) {
             float projBaseY = p.isLobbed() ? (p.getStartY() + 60.0f) : p.getY();
             if (std::abs(projBaseY - (z->getY() + 40.0f)) < 55.0f) {
                 if (p.getX() >= z->getX() + 10.0f && p.getX() <= z->getX() + 20.0f) {
+                    // Play projectile impact sound effects
+                    if (p.isMelon()) {
+                        static const std::vector<std::string> melonHitSounds = {
+                            "assets/sounds/melonimpact.ogg",
+                            "assets/sounds/melonimpact2.ogg"
+                        };
+                        int idx = GetRandomValue(0, (int)melonHitSounds.size() - 1);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(melonHitSounds[idx]));
+                    } else if (p.isButter()) {
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/butter.ogg"));
+                    } else if (z->getName() == "BucketheadZombie" && z->getHp() > 200) {
+                        static const std::vector<std::string> shieldSounds = {
+                            "assets/sounds/shieldhit.ogg",
+                            "assets/sounds/shieldhit2.ogg"
+                        };
+                        int idx = GetRandomValue(0, (int)shieldSounds.size() - 1);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(shieldSounds[idx]));
+                    } else if (z->getName() == "ConeheadZombie" && z->getHp() > 200) {
+                        static const std::vector<std::string> plasticSounds = {
+                            "assets/sounds/plastichit.ogg",
+                            "assets/sounds/plastichit2.ogg"
+                        };
+                        int idx = GetRandomValue(0, (int)plasticSounds.size() - 1);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(plasticSounds[idx]));
+                    } else {
+                        static const std::vector<std::string> splatSounds = {
+                            "assets/sounds/splat.ogg",
+                            "assets/sounds/splat2.ogg",
+                            "assets/sounds/splat3.ogg"
+                        };
+                        int idx = GetRandomValue(0, (int)splatSounds.size() - 1);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(splatSounds[idx]));
+                    }
+
                     z->takeDamage(p.getDamage());
                     
                     // Splash damage for Melonpult to nearby zombies
@@ -378,6 +440,7 @@ void Level1::updateCollisions(float dt) {
                 Plant* plant = m_grid[pRow][pCol].get();
                 if (plant && plant->getName() == "Torchwood" && !plant->isDead()) {
                     p.setFire(true);
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/ignite.ogg"));
                 }
             }
         }
@@ -591,11 +654,18 @@ void Level1::updateCollisions(float dt) {
 
                     p->takeDamage((float)z->getDamage() * dt);
 
-                    // Spawn eating food crumbs effect periodically
+                    // Spawn eating food crumbs effect & play chomp sound periodically
                     z->addEatTimer(dt);
-                    if (z->getEatTimer() >= 0.18f) {
+                    if (z->getEatTimer() >= 0.28f) {
                         z->resetEatTimer();
                         createEatingParticle(plantX + 25.0f, (float)p->getY() + 45.0f);
+                        static const std::vector<std::string> chompSounds = {
+                            "assets/sounds/chomp.ogg",
+                            "assets/sounds/chomp2.ogg",
+                            "assets/sounds/chompsoft.ogg"
+                        };
+                        int chompIdx = GetRandomValue(0, (int)chompSounds.size() - 1);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(chompSounds[chompIdx]));
                     }
 
                     if (p->isDead()) {
@@ -603,6 +673,7 @@ void Level1::updateCollisions(float dt) {
                         z->setEating(false);
                         z->resetEatTimer();
                         z->getAnim().SetAnimation("anim_walk");
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/gulp.ogg"));
                     }
                     break;
                 }
@@ -684,26 +755,35 @@ void Level1::update(float dt) {
 
         if (t >= 1.0f) {
             m_cameraCropX = 90.0f;
-            m_phase = LevelPhase::ActiveWave;
+            m_phase = LevelPhase::ReadySetPlant;
             m_previewZombies.clear(); // Clear preview zombies upon reaching active gameplay
+            m_readySetPlantTimer = 0.0f;
+            m_readySetPlantAnim.SetFrame(0.0f);
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));
+        }
+        return;
+    }
+
+    if (m_phase == LevelPhase::ReadySetPlant) {
+        m_readySetPlantTimer += dt;
+        m_readySetPlantAnim.Update(dt);
+
+        if (m_readySetPlantTimer >= 1.9f) {
+            m_phase = LevelPhase::ActiveWave;
+            AudioManager::GetInstance().PlayMusic(MusicTrack::DayLevel);
         }
         return;
     }
 
     if (m_levelWon || m_levelLost) return;
 
-    // Update SeedBank
     bool rightClicked = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
-
-    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+    if (rightClicked) {
         Vector2 mousePos = GetVirtualMousePosition();
         int getRow, getCol;
         if (getGridCell(mousePos, getRow, getCol)) {
-            m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, 700.0f, 50.0f + getRow * 100.0f));
+            m_zombies.push_back(std::make_unique<FlagZombie>(res, 700.0f, 45.0f + getRow * 100.0f));
         }
-    }
-
-    if (rightClicked) {
         m_seedBank.deselect();
     }
 
@@ -722,7 +802,7 @@ void Level1::update(float dt) {
                         int zRow = (int)((zombie->getY() - 45.0f + 50.0f) / 100.0f);
                         if (zRow == r) {
                             float dist = zombie->getX() - plantX;
-                            if (dist >= 0.0f && dist <= 700.0f) {
+                            if (dist >= 0.0f && dist <= 750.0f) {
                                 shoot = true;
                                 min_distance = std::min(min_distance, dist);
                                 break;
@@ -832,8 +912,11 @@ void Level1::update(float dt) {
     for (auto& s : m_suns) {
         s.update(dt);
         if (mouseClicked && s.isActive() && s.isClicked(mousePos)) {
-            m_seedBank.addSun(2500);
-            s.collect();
+            s.collect(20.0f, 15.0f);
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/points.ogg"));
+        }
+        if (s.hasArrived()) {
+            m_seedBank.addSun(25);
         }
     }
 
@@ -916,6 +999,11 @@ void Level1::draw() {
             item.zombie->draw();
         }
         m_seedBank.draw(res, mousePos);
+    } else if (m_phase == LevelPhase::ReadySetPlant) {
+        // Draw SeedBank
+        m_seedBank.draw(res, mousePos);
+        // Draw "READY... SET... PLANT!" animated banner centered on screen
+        m_readySetPlantAnim.Draw(400.0f, 300.0f, 1.0f);
     } else {
         // 2. Draw hover highlight cell on lawn grid
         int hoverRow, hoverCol;
@@ -961,7 +1049,10 @@ void Level1::draw() {
         // 7. Draw Top SeedBank & Plant Seed Packets UI
         m_seedBank.draw(res, mousePos);
 
-        // 8. Draw Win / Loss Overlays
+        // 8. Draw Bottom-Right FlagMeter Progress Bar
+        drawProgressBar();
+
+        // 9. Draw Win / Loss Overlays
         if (m_levelWon) {
             DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
             DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
@@ -977,7 +1068,7 @@ void Level1::draw() {
         }
     }
 
-    // 9. Draw top-right "Menu" stone button (680, 0, 110, 36) in all phases
+    // 10. Draw top-right "Menu" stone button (680, 0, 110, 36) in all phases
     Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
     bool menuHovered = CheckCollisionPointRec(mousePos, menuBtnRect);
     bool menuPressed = menuHovered && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
@@ -985,14 +1076,14 @@ void Level1::draw() {
         m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
     }
 
-    // 10. Draw in-game pause menu dialog if open (on top of all phases)
+    // 11. Draw in-game pause menu dialog if open (on top of all phases)
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }
 
     EndTextureMode();
 
-    // 11. Draw stretched to screen
+    // 12. Draw stretched to screen
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -1004,6 +1095,65 @@ void Level1::draw() {
         WHITE
     );
     EndDrawing();
+}
+
+void Level1::drawProgressBar() {
+    Texture2D texMeter = res.GetTexture("FLAGMETER");
+    Texture2D texBadge = res.GetTexture("FLAGMETERLEVELPROGRESS");
+    Texture2D texParts = res.GetTexture("FLAGMETERPARTS");
+
+    if (texMeter.id == 0) return;
+
+    // Progress computation (0.0 to 1.0)
+    float waveProgress = (float)m_currentWave / (float)std::max(1, m_maxWaves);
+    if (m_currentWave < m_maxWaves) {
+        float waveFraction = std::clamp((22.0f - m_waveTimer) / 22.0f, 0.0f, 1.0f);
+        waveProgress = ((float)m_currentWave + waveFraction) / (float)m_maxWaves;
+    }
+    waveProgress = std::clamp(waveProgress, 0.0f, 1.0f);
+
+    float barX = 625.0f;
+    float barY = 572.0f;
+
+    // 1. Draw level text to the left: "Level 1-1"
+    DrawText("Level 1-1", (int)(barX - 82.0f), (int)(barY + 5.0f), 18, Color{ 235, 200, 45, 255 });
+
+    // 2. Draw Progress Bar Frame (0, 0, 158, 25)
+    Rectangle srcFrame = { 0.0f, 0.0f, 158.0f, 25.0f };
+    DrawTextureRec(texMeter, srcFrame, { barX, barY }, WHITE);
+
+    // 3. Draw Green Progress Fill (filling from right to left)
+    // Slot width = 149 (from x=6 to x=155)
+    float maxFillWidth = 149.0f;
+    float currentFillWidth = maxFillWidth * waveProgress;
+    if (currentFillWidth > 0.0f) {
+        Rectangle srcFill = { 155.0f - currentFillWidth, 27.0f, currentFillWidth, 24.0f };
+        Vector2 destFillPos = { barX + 155.0f - currentFillWidth, barY };
+        DrawTextureRec(texMeter, srcFill, destFillPos, WHITE);
+    }
+
+    // 4. Draw "LEVEL PROGRESS" badge in the lower middle slot
+    if (texBadge.id != 0) {
+        DrawTextureRec(texBadge, { 0.0f, 0.0f, (float)texBadge.width, (float)texBadge.height }, { barX + 36.0f, barY + 13.0f }, WHITE);
+    }
+
+    // 5. Draw Red Flag at final wave position (left side of the bar)
+    if (texParts.id != 0) {
+        // Flag pole
+        Rectangle srcPole = { 25.0f, 0.0f, 25.0f, 25.0f };
+        DrawTextureRec(texParts, srcPole, { barX + 6.0f, barY - 2.0f }, WHITE);
+
+        // Red flag (raised when near/in final wave)
+        float flagOffsetY = (waveProgress >= 0.90f) ? -6.0f : -2.0f;
+        Rectangle srcFlag = { 50.0f, 0.0f, 25.0f, 25.0f };
+        DrawTextureRec(texParts, srcFlag, { barX + 6.0f, barY + flagOffsetY }, WHITE);
+
+        // 6. Draw Zombie Head Slider (moves from right to left as progress advances)
+        Rectangle srcHead = { 0.0f, 0.0f, 25.0f, 25.0f };
+        float headX = barX + 155.0f - currentFillWidth - 12.0f;
+        float headY = barY - 2.0f;
+        DrawTextureRec(texParts, srcHead, { headX, headY }, WHITE);
+    }
 }
 
 void Level1::run() {

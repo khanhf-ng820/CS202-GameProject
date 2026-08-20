@@ -102,6 +102,7 @@ int main() {
             if (levelSelectMenu->getAction() == LevelSelectAction::PlayLevel1) {
                 Level1 level1State(res, targetScreen);
                 level1State.run();
+                AudioManager::GetInstance().PlayMusic(MusicTrack::MainMenu);
                 levelSelectMenu->resetAction();
             }
         } else if (showOptions && optionsMenu) {
