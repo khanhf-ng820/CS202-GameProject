@@ -7,6 +7,7 @@
 
 enum class LevelSelectAction {
     None,
+    PlayLevel,
     PlayLevel1,
     BackToMainMenu
 };
@@ -25,11 +26,13 @@ public:
     void draw();
 
     LevelSelectAction getAction() const { return m_action; }
+    int getSelectedLevel() const { return m_selectedLevel; }
     void resetAction() { m_action = LevelSelectAction::None; }
 
 private:
     Resources& m_res;
     LevelSelectAction m_action = LevelSelectAction::None;
+    int m_selectedLevel = 1;
     LevelStageMode m_stageMode = LevelStageMode::Day;
 
     // Background Sky & Wall/Lawn Foreground & Scenery

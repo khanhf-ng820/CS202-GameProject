@@ -64,6 +64,7 @@ bool ProfileManager::loadProfileFromFile(const std::string& filePath, UserProfil
 
         outProfile.name = j.value("name", "Unknown");
         outProfile.coins = j.value("coins", 1000);
+        outProfile.maxLevel = j.value("maxLevel", 1);
         outProfile.unlockedPlants.clear();
 
         if (j.contains("unlockedPlants") && j["unlockedPlants"].is_array()) {
@@ -89,6 +90,7 @@ void ProfileManager::saveProfileToFile(const UserProfile& profile) const {
             json j;
             j["name"] = profile.name;
             j["coins"] = profile.coins;
+            j["maxLevel"] = profile.maxLevel;
             j["unlockedPlants"] = profile.unlockedPlants;
             file << j.dump(4);
         }
@@ -331,4 +333,16 @@ bool ProfileManager::IsPlantUnlocked(const std::string& plantName) const {
         }
     }
     return false;
+}
+
+void ProfileManager::SetMaxLevel(int level) {
+    m_activeProfile.maxLevel = std::max(1, level);
+    SaveCurrentProfile();
+}
+
+void ProfileManager::UnlockNextLevel(int completedLevel) {
+    if (completedLevel >= m_activeProfile.maxLevel) {
+        m_activeProfile.maxLevel = completedLevel + 1;
+        SaveCurrentProfile();
+    }
 }

@@ -12,6 +12,11 @@
 #include "UIHelpers.h"
 #include "testing.h"
 #include "Level1.h"
+#include "Level2.h"
+#include "Level3.h"
+#include "Level4.h"
+#include "Level5.h"
+#include "Level6.h"
 #include "BowlingLevel.h"
 #include "VasebreakerLevel.h"
 #include <iostream>
@@ -99,11 +104,30 @@ int main() {
             }
         } else if (showLevelSelect && levelSelectMenu) {
             levelSelectMenu->update(dt, showLevelSelect);
-            if (levelSelectMenu->getAction() == LevelSelectAction::PlayLevel1) {
-                Level1 level1State(res, targetScreen);
-                level1State.run();
+            if (levelSelectMenu->getAction() == LevelSelectAction::PlayLevel || levelSelectMenu->getAction() == LevelSelectAction::PlayLevel1) {
+                int selectedLevel = levelSelectMenu->getSelectedLevel();
+                if (selectedLevel == 6) {
+                    Level6 level6State(res, targetScreen);
+                    level6State.run();
+                } else if (selectedLevel == 5) {
+                    Level5 level5State(res, targetScreen);
+                    level5State.run();
+                } else if (selectedLevel == 4) {
+                    Level4 level4State(res, targetScreen);
+                    level4State.run();
+                } else if (selectedLevel == 3) {
+                    Level3 level3State(res, targetScreen);
+                    level3State.run();
+                } else if (selectedLevel == 2) {
+                    Level2 level2State(res, targetScreen);
+                    level2State.run();
+                } else {
+                    Level1 level1State(res, targetScreen);
+                    level1State.run();
+                }
                 AudioManager::GetInstance().PlayMusic(MusicTrack::MainMenu);
                 levelSelectMenu->resetAction();
+                showLevelSelect = true;
             }
         } else if (showOptions && optionsMenu) {
             optionsMenu->update(dt, showOptions, windowWidth, windowHeight);

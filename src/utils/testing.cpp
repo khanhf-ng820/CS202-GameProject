@@ -74,13 +74,13 @@ void Testing::run() {
 
     auto createZombie = [this](int type) -> std::unique_ptr<Zombie> {
         switch (type) {
-            case 0: return std::make_unique<FlagZombie>(res, 680, 360);
-            case 1: return std::make_unique<ZombieNormal>(res, 680, 360);
-            case 2: return std::make_unique<ConeheadZombie>(res, 680, 360);
-            case 3: return std::make_unique<BucketheadZombie>(res, 680, 360);
-            case 4: return std::make_unique<FootballZombie>(res, 680, 360);
-            case 5: return std::make_unique<NewspaperZombie>(res, 680, 360);
-            case 6: return std::make_unique<PoleVaultingZombie>(res, 680, 360);
+            case 0: return std::make_unique<FlagZombie>(res, 680.0f, 360.0f);
+            case 1: return std::make_unique<ZombieNormal>(res, 680.0f, 360.0f);
+            case 2: return std::make_unique<ConeheadZombie>(res, 680.0f, 360.0f);
+            case 3: return std::make_unique<BucketheadZombie>(res, 680.0f, 360.0f);
+            case 4: return std::make_unique<FootballZombie>(res, 680.0f, 360.0f);
+            case 5: return std::make_unique<NewspaperZombie>(res, 680.0f, 360.0f);
+            case 6: return std::make_unique<PoleVaultingZombie>(res, 680.0f, 360.0f);
             default: return nullptr;
         }
     };

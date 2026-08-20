@@ -1,6 +1,7 @@
 #include "LevelSelectMenu.h"
 #include "AudioManager.h"
 #include "UIHelpers.h"
+#include "ProfileManager.h"
 #include <algorithm>
 
 LevelSelectMenu::LevelSelectMenu(Resources& res)
@@ -104,26 +105,34 @@ void LevelSelectMenu::update(float dt, bool& showLevelSelect) {
         return;
     }
 
-    // 3. Level 1 Play Button Interaction (Only entering level when clicking PLAY button)
-    if (m_stageMode == LevelStageMode::Day) {
-        float cardW = 215.0f;
-        float specW = 100.8f;
-        float specH = 54.0f;
-        float overlap = 28.7f;
-        float startX = 38.0f;
-        float cardY = 30.0f;
+    // 3. Level Card Play Button Interaction (Checks all unlocked level cards)
+    int maxLevel = ProfileManager::GetInstance().GetMaxLevel();
+    float cardW = 215.0f;
+    float specW = 100.8f;
+    float specH = 54.0f;
+    float overlap = 28.7f;
+    float startX = 38.0f;
+    float spacing = 254.5f;
+    float cardY = 30.0f;
+    float btnW = 118.0f;
+    float btnH = 26.0f;
 
-        float btnW = 118.0f;
-        float btnH = 26.0f;
-        float btnX = startX + (cardW - btnW) / 2.0f;
-        float btnY = cardY + specH - overlap + 139.0f;
-        Rectangle playBtnRect = { btnX, btnY, btnW, btnH };
+    for (int i = 0; i < 3; ++i) {
+        int levelNum = (m_stageMode == LevelStageMode::Day) ? (i + 1) : (i + 4);
+        bool isUnlocked = (levelNum <= maxLevel);
 
-        if (CheckCollisionPointRec(mousePos, playBtnRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/gravebutton.ogg"));
-            m_action = LevelSelectAction::PlayLevel1;
-            showLevelSelect = false;
-            return;
+        if (isUnlocked) {
+            float cardX = startX + (float)i * spacing;
+            float btnX = cardX + (cardW - btnW) / 2.0f;
+            float btnY = cardY + specH - overlap + 139.0f;
+            Rectangle playBtnRect = { btnX, btnY, btnW, btnH };
+
+            if (CheckCollisionPointRec(mousePos, playBtnRect) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/gravebutton.ogg"));
+                m_selectedLevel = levelNum;
+                m_action = LevelSelectAction::PlayLevel;
+                return;
+            }
         }
     }
 }
@@ -192,11 +201,21 @@ void LevelSelectMenu::drawLevelCards(Vector2 mousePos) {
         bool active;
     };
 
+    int maxLevel = ProfileManager::GetInstance().GetMaxLevel();
+
     std::vector<LevelCardInfo> cards;
     if (m_stageMode == LevelStageMode::Day) {
-        cards = { { "Level 1", true }, { "Level 2", false }, { "Level 3", false } };
+        cards = {
+            { "Level 1", true },
+            { "Level 2", maxLevel >= 2 },
+            { "Level 3", maxLevel >= 3 }
+        };
     } else {
-        cards = { { "Level 4", false }, { "Level 5", false }, { "Level 6", false } };
+        cards = {
+            { "Level 4", maxLevel >= 4 },
+            { "Level 5", maxLevel >= 5 },
+            { "Level 6", maxLevel >= 6 }
+        };
     }
 
     float cardW = 215.0f;

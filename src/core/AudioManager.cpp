@@ -48,6 +48,8 @@ void AudioManager::PlayMusic(MusicTrack track) {
         soundPath = res.GetAssetPath("assets/sounds/moongrains.ogg");
     } else if (track == MusicTrack::DayLevel) {
         soundPath = res.GetAssetPath("assets/sounds/grasswalk.ogg");
+    } else if (track == MusicTrack::NightLevel) {
+        soundPath = res.GetAssetPath("assets/sounds/watery_graves.ogg");
     }
 
     if (!soundPath.empty()) {

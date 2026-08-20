@@ -11,31 +11,49 @@
 #include "InGameMenu.h"
 #include "Reanimation.h"
 #include "LawnMower.h"
+#include "Level1.h"
 #include <vector>
 #include <memory>
 #include <string>
 
-enum class LevelPhase {
-    SeedSelection,
-    PanToLawn,
-    ReadySetPlant,
-    ActiveWave
+struct GraveStone {
+    int row;
+    int col;
+    int frameCol;
+    int frameRow;
+    bool isDestroyed;
+    float shakeTimer;
+    float introRiseTimer;
+    std::string pendingZombieType;
 };
 
-class Level1 {
+struct RisingZombie {
+    std::unique_ptr<Zombie> zombie;
+    float targetY;
+    float currentYOffset;
+    float riseTimer;
+    float maxRiseTime;
+    int row;
+};
+
+class Level4 {
 public:
-    Level1(Resources& res, RenderTexture2D targetScreen, int levelNumber = 1);
-    virtual ~Level1() = default;
+    Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber = 4);
+    virtual ~Level4() = default;
 
     void run();
-    void update(float dt);
-    void draw();
+    virtual void update(float dt);
+    virtual void draw();
     virtual void restartLevel();
 
 protected:
     Resources& res;
     RenderTexture2D targetScreen;
-    int m_levelNumber = 1;
+
+    int m_levelNumber = 4;
+    bool m_hasFog = false;
+    float m_fogTimer = 0.0f;
+    float m_fogStartX = 480.0f;
 
     LevelPhase m_phase;
     SeedSelectMenu m_seedSelectMenu;
@@ -49,6 +67,7 @@ protected:
     // Intro "READY... SET... PLANT!" animation
     Reanimation m_readySetPlantAnim;
     float m_readySetPlantTimer = 0.0f;
+    bool m_introGraveSoundPlayed = false;
 
     // 5x9 Lawn Grid for plant placement
     std::unique_ptr<Plant> m_grid[5][9];
@@ -60,14 +79,21 @@ protected:
     };
 
     std::vector<std::unique_ptr<Zombie>> m_zombies;
+    std::vector<RisingZombie> m_risingZombies;
     std::vector<PreviewZombieItem> m_previewZombies;
     std::vector<Projectile> m_projectiles;
     std::vector<SunItem> m_suns;
     std::vector<ParticleEffect> m_effects;
     std::vector<LawnMower> m_lawnMowers;
+    std::vector<GraveStone> m_graves;
+
+    // Textures for Night Background, Graves & Fog
+    Texture2D m_texBgNight;
+    Texture2D m_texTombstones;
+    Texture2D m_texMounds;
+    Texture2D m_texFog;
 
     // Spawning & progression state
-    float m_skySunTimer;
     float m_waveTimer;
     int m_currentWave;
     int m_maxWaves;
@@ -95,13 +121,19 @@ protected:
     std::unique_ptr<InGameMenu> m_inGameMenu;
     bool m_ignoreInitialClick = true;
 
-    // Helper functions & Virtual hooks for derived levels
+    // Helper functions
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
+    bool isCellBlockedByGrave(int row, int col) const;
     virtual std::vector<std::string> getUniqueLevelZombieTypes() const;
-    void initPreviewZombies();
-    void initLawnMowers();
-    void spawnSunFromSky();
+    virtual void initPreviewZombies();
+    virtual void initLawnMowers();
+    virtual void initGraves();
     virtual void spawnNextWave();
+    virtual void triggerGraveRising(int count = -1);
+    virtual void drawFog();
+
+    void createGraveDirtParticle(float x, float y, int count = 25);
+    void createGraveCrumbleParticles(float x, float y);
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
     void createSplat(float x, float y, bool isSnow);
     void createFireSplat(float x, float y);

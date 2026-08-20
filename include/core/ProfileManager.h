@@ -6,6 +6,7 @@ struct UserProfile {
     std::string name;
     int coins = 1000;
     std::vector<std::string> unlockedPlants;
+    int maxLevel = 1;
 };
 
 class ProfileManager {
@@ -29,6 +30,10 @@ public:
     void AddCoins(int amount);
     void UnlockPlant(const std::string& plantName);
     bool IsPlantUnlocked(const std::string& plantName) const;
+
+    int GetMaxLevel() const { return m_activeProfile.maxLevel; }
+    void SetMaxLevel(int level);
+    void UnlockNextLevel(int completedLevel);
 
     static std::vector<std::string> GetAllPlantTypes();
     static std::vector<std::string> GetDefaultStarterPlants();

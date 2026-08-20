@@ -1,4 +1,4 @@
-#include "Level1.h"
+#include "Level4.h"
 #include "UIHelpers.h"
 #include "AudioManager.h"
 #include "ProfileManager.h"
@@ -33,17 +33,20 @@
 #include <algorithm>
 #include <iostream>
 #include <cstdlib>
+#include <cmath>
 
-Level1::Level1(Resources& res, RenderTexture2D targetScreen, int levelNumber)
-    : res(res), targetScreen(targetScreen), m_levelNumber(levelNumber),
+Level4::Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber)
+    : res(res), targetScreen(targetScreen),
+      m_levelNumber(levelNumber), m_hasFog(false), m_fogTimer(0.0f), m_fogStartX(480.0f),
       m_phase(LevelPhase::SeedSelection),
       m_seedSelectMenu(res), m_seedBank(40000),
-      m_skySunTimer(0.0f), m_waveTimer(14.0f), m_currentWave(0),
-      m_maxWaves(5), m_levelWon(false), m_levelLost(false),
+      m_waveTimer(14.0f), m_currentWave(0),
+      m_maxWaves(8), m_levelWon(false), m_levelLost(false),
       m_finalWaveAnnounced(false), m_exitToMainMenu(false),
       m_gameSpeed(1.0f), m_isSpeedPaused(false),
       m_winTimer(0.0f), m_awardY(-150.0f), m_awardRaysRotation(0.0f), m_winMusicPlayed(false),
-      m_loseTimer(0.0f), m_screamSoundPlayed(false), m_loseMusicPlayed(false)
+      m_loseTimer(0.0f), m_screamSoundPlayed(false), m_loseMusicPlayed(false),
+      m_introGraveSoundPlayed(false)
 {
     m_inGameMenu = std::make_unique<InGameMenu>(res);
 
@@ -51,6 +54,18 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen, int levelNumber)
     ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
     m_readySetPlantAnim.SetResources(readyDef, res);
 
+    m_texBgNight = res.GetTexture("BACKGROUND2");
+    if (m_texBgNight.id == 0) m_texBgNight = res.GetTexture("background2");
+
+    m_texTombstones = res.GetTexture("TOMBSTONES");
+    if (m_texTombstones.id == 0) m_texTombstones = res.GetTexture("Tombstones");
+
+    m_texMounds = res.GetTexture("TOMBSTONE_MOUNDS");
+    if (m_texMounds.id == 0) m_texMounds = res.GetTexture("Tombstone_mounds");
+
+    m_texFog = res.GetTexture("FOG");
+    if (m_texFog.id == 0) m_texFog = res.GetTexture("fog");
+
     // Clear grid
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
@@ -58,13 +73,32 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen, int levelNumber)
         }
     }
 
-    // Generate preview zombies and lawn mowers
+    initGraves();
     initPreviewZombies();
     initLawnMowers();
 }
 
-void Level1::restartLevel() {
-    // Clear grid
+void Level4::initGraves() {
+    m_graves.clear();
+    m_introGraveSoundPlayed = false;
+    // Default tombstones on cols 6..8
+    m_graves.push_back({ 0, 7, GetRandomValue(0, 4), 0, false, 0.0f, 0.0f, "" });
+    m_graves.push_back({ 1, 6, GetRandomValue(0, 4), 0, false, 0.0f, 0.0f, "" });
+    m_graves.push_back({ 2, 8, GetRandomValue(0, 4), 0, false, 0.0f, 0.0f, "" });
+    m_graves.push_back({ 3, 7, GetRandomValue(0, 4), 0, false, 0.0f, 0.0f, "" });
+    m_graves.push_back({ 4, 6, GetRandomValue(0, 4), 0, false, 0.0f, 0.0f, "" });
+}
+
+bool Level4::isCellBlockedByGrave(int row, int col) const {
+    for (const auto& g : m_graves) {
+        if (!g.isDestroyed && g.row == row && g.col == col) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Level4::restartLevel() {
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             m_grid[r][c] = nullptr;
@@ -72,14 +106,13 @@ void Level1::restartLevel() {
     }
 
     m_zombies.clear();
+    m_risingZombies.clear();
     m_projectiles.clear();
     m_suns.clear();
     m_effects.clear();
 
     m_currentWave = 0;
     m_waveTimer = 14.0f;
-    m_maxWaves = 5;
-    m_skySunTimer = 0.0f;
     m_levelWon = false;
     m_levelLost = false;
     m_finalWaveAnnounced = false;
@@ -102,30 +135,23 @@ void Level1::restartLevel() {
     m_seedBank.deselect();
     m_ignoreInitialClick = true;
     AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+
+    initGraves();
     initPreviewZombies();
     initLawnMowers();
 }
 
-std::vector<std::string> Level1::getUniqueLevelZombieTypes() const {
-    std::vector<std::string> uniqueTypes;
-    auto addType = [&](const std::string& typeName) {
-        if (std::find(uniqueTypes.begin(), uniqueTypes.end(), typeName) == uniqueTypes.end()) {
-            uniqueTypes.push_back(typeName);
-        }
+std::vector<std::string> Level4::getUniqueLevelZombieTypes() const {
+    return {
+        "ZombieNormal",
+        "ConeheadZombie",
+        "BucketheadZombie",
+        "NewspaperZombie",
+        "FlagZombie"
     };
-
-    // Inspect wave configuration data across all waves
-    addType("ZombieNormal");
-    addType("ConeheadZombie");
-    addType("BucketheadZombie");
-    addType("NewspaperZombie");
-    addType("FootballZombie");
-    addType("FlagZombie");
-
-    return uniqueTypes;
 }
 
-void Level1::initPreviewZombies() {
+void Level4::initPreviewZombies() {
     m_previewZombies.clear();
     std::vector<std::string> uniqueTypes = getUniqueLevelZombieTypes();
 
@@ -138,21 +164,16 @@ void Level1::initPreviewZombies() {
         std::string typeName = uniqueTypes[i];
         int row = availableRows[i % availableRows.size()];
 
-        // Street world X range on background1.png (1400px wide): 1130.0f..1350.0f
         float worldX = 1130.0f + (float)(GetRandomValue(0, 180));
         float worldY = laneY(row) + (float)(GetRandomValue(-10, 10));
 
         std::unique_ptr<Zombie> previewZ;
-        if (typeName == "ZombieNormal") {
-            previewZ = std::make_unique<ZombieNormal>(res, worldX, worldY);
-        } else if (typeName == "ConeheadZombie") {
+        if (typeName == "ConeheadZombie") {
             previewZ = std::make_unique<ConeheadZombie>(res, worldX, worldY);
         } else if (typeName == "BucketheadZombie") {
             previewZ = std::make_unique<BucketheadZombie>(res, worldX, worldY);
         } else if (typeName == "NewspaperZombie") {
             previewZ = std::make_unique<NewspaperZombie>(res, worldX, worldY);
-        } else if (typeName == "FootballZombie") {
-            previewZ = std::make_unique<FootballZombie>(res, worldX, worldY);
         } else if (typeName == "FlagZombie") {
             previewZ = std::make_unique<FlagZombie>(res, worldX, worldY);
         } else {
@@ -166,14 +187,13 @@ void Level1::initPreviewZombies() {
         }
     }
 
-    // Sort preview zombies by Y ascending so lower row zombies (higher Y) draw on top
     std::sort(m_previewZombies.begin(), m_previewZombies.end(),
         [](const PreviewZombieItem& a, const PreviewZombieItem& b) {
             return a.worldY < b.worldY;
         });
 }
 
-void Level1::initLawnMowers() {
+void Level4::initLawnMowers() {
     m_lawnMowers.clear();
     for (int r = 0; r < 5; ++r) {
         float mowerX = 65.0f;
@@ -182,7 +202,7 @@ void Level1::initLawnMowers() {
     }
 }
 
-bool Level1::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
+bool Level4::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
     float startX = 140.0f;
     float startY = 80.0f;
 
@@ -202,15 +222,172 @@ bool Level1::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
     return false;
 }
 
-void Level1::spawnSunFromSky() {
-    float spawnX = (float)(220 + std::rand() % 500);
-    float targetY = (float)(120 + std::rand() % 380);
-    Texture2D tex = res.GetTexture("SUN");
-    if (tex.id == 0) tex = res.GetTexture("Sun");
-    m_suns.push_back(SunItem(spawnX, -40.0f, targetY, tex));
+void Level4::createGraveDirtParticle(float x, float y, int count) {
+    for (int i = 0; i < count; ++i) {
+        ParticleEffect p;
+        p.x = x + (float)GetRandomValue(-25, 25);
+        p.y = y + (float)GetRandomValue(-15, 15);
+        p.vx = (float)GetRandomValue(-180, 180);
+        p.vy = (float)GetRandomValue(-320, -90);
+        p.gravity = 600.0f;
+        p.rotation = (float)GetRandomValue(0, 360);
+        p.vr = (float)GetRandomValue(-600, 600);
+        p.scale = (float)GetRandomValue(12, 22) / 10.0f;
+        p.alpha = 1.0f;
+        p.fadeRate = 1.4f;
+        p.isPhysicsParticle = true;
+        p.active = true;
+
+        int c = GetRandomValue(0, 3);
+        if (c == 0) p.tint = Color{ 110, 75, 45, 255 };
+        else if (c == 1) p.tint = Color{ 60, 40, 20, 255 };
+        else if (c == 2) p.tint = Color{ 160, 120, 70, 255 };
+        else p.tint = Color{ 85, 60, 35, 255 };
+
+        m_effects.push_back(p);
+    }
 }
 
-void Level1::createPlant(const std::string& type, int row, int col, int pixelX, int pixelY) {
+void Level4::createGraveCrumbleParticles(float x, float y) {
+    int rockCount = GetRandomValue(20, 28);
+    for (int i = 0; i < rockCount; ++i) {
+        ParticleEffect p;
+        p.x = x + (float)GetRandomValue(-25, 25);
+        p.y = y + (float)GetRandomValue(-25, 25);
+        p.vx = (float)GetRandomValue(-220, 220);
+        p.vy = (float)GetRandomValue(-360, -120);
+        p.gravity = 650.0f;
+        p.rotation = (float)GetRandomValue(0, 360);
+        p.vr = (float)GetRandomValue(-720, 720);
+        p.scale = (float)GetRandomValue(14, 26) / 10.0f;
+        p.alpha = 1.0f;
+        p.fadeRate = 1.5f;
+        p.isPhysicsParticle = true;
+        p.active = true;
+
+        int c = GetRandomValue(0, 2);
+        if (c == 0) p.tint = Color{ 145, 145, 150, 255 };
+        else if (c == 1) p.tint = Color{ 95, 95, 100, 255 };
+        else p.tint = Color{ 180, 180, 185, 255 };
+
+        m_effects.push_back(p);
+    }
+
+    createGraveDirtParticle(x, y, 25);
+}
+
+void Level4::triggerGraveRising(int count) {
+    std::vector<int> activeIndices;
+    for (size_t i = 0; i < m_graves.size(); ++i) {
+        if (!m_graves[i].isDestroyed && m_graves[i].shakeTimer <= 0.0f) {
+            activeIndices.push_back((int)i);
+        }
+    }
+
+    if (activeIndices.empty()) return;
+
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/gravestone_rumble.ogg"));
+
+    if (count <= 0 || count >= (int)activeIndices.size()) {
+        for (int idx : activeIndices) {
+            auto& g = m_graves[idx];
+            g.shakeTimer = 0.8f;
+            if (m_currentWave >= 6 && GetRandomValue(0, 2) == 0) {
+                g.pendingZombieType = "BucketheadZombie";
+            } else if (m_currentWave >= 3 && GetRandomValue(0, 1) == 0) {
+                g.pendingZombieType = "ConeheadZombie";
+            } else {
+                g.pendingZombieType = "ZombieNormal";
+            }
+        }
+    } else {
+        std::vector<int> shuffled = activeIndices;
+        for (int i = (int)shuffled.size() - 1; i > 0; --i) {
+            int j = GetRandomValue(0, i);
+            std::swap(shuffled[i], shuffled[j]);
+        }
+        for (int i = 0; i < count && i < (int)shuffled.size(); ++i) {
+            auto& g = m_graves[shuffled[i]];
+            g.shakeTimer = 0.8f;
+            if (m_currentWave >= 6 && GetRandomValue(0, 2) == 0) {
+                g.pendingZombieType = "BucketheadZombie";
+            } else if (m_currentWave >= 3 && GetRandomValue(0, 1) == 0) {
+                g.pendingZombieType = "ConeheadZombie";
+            } else {
+                g.pendingZombieType = "ZombieNormal";
+            }
+        }
+    }
+}
+
+void Level4::spawnNextWave() {
+    m_currentWave++;
+    float spawnX = 700.0f;
+
+    auto laneY = [](int row) -> float {
+        return 45.0f + row * 100.0f;
+    };
+
+    bool isHugeWave = false;
+
+    if (m_currentWave == 1) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
+        triggerGraveRising(1);
+    } else if (m_currentWave == 2) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(3)));
+        triggerGraveRising(1);
+    } else if (m_currentWave == 3) {
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
+        triggerGraveRising(2);
+    } else if (m_currentWave == 4) {
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(3)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(2)));
+        triggerGraveRising(2);
+    } else if (m_currentWave == 5) {
+        isHugeWave = true;
+        m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+        triggerGraveRising(-1); // ALL graves emerge!
+    } else if (m_currentWave == 6) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(3)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
+        triggerGraveRising(2);
+    } else if (m_currentWave == 7) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(1)));
+        triggerGraveRising(3);
+    } else if (m_currentWave == 8) {
+        isHugeWave = true;
+        m_finalWaveAnnounced = true;
+        m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+        triggerGraveRising(-1); // ALL graves emerge!
+    }
+
+    if (isHugeWave) {
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
+    } else {
+        static const std::vector<std::string> waveGroanSounds = {
+            "assets/sounds/sukhbir.ogg", "assets/sounds/sukhbir2.ogg", "assets/sounds/sukhbir3.ogg",
+            "assets/sounds/groan.ogg", "assets/sounds/groan2.ogg", "assets/sounds/lowgroan.ogg"
+        };
+        int rIdx = GetRandomValue(0, (int)waveGroanSounds.size() - 1);
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(waveGroanSounds[rIdx]));
+    }
+}
+
+void Level4::createPlant(const std::string& type, int row, int col, int pixelX, int pixelY) {
     if (type == "PeaShooter") {
         m_grid[row][col] = std::make_unique<PeaShooter>(res, pixelX, pixelY);
     } else if (type == "SunFlower") {
@@ -256,44 +433,7 @@ void Level1::createPlant(const std::string& type, int row, int col, int pixelX, 
     }
 }
 
-void Level1::spawnNextWave() {
-    m_currentWave++;
-    float spawnX = 700.0f;
-
-    auto laneY = [](int row) -> float {
-        return 45.0f + row * 100.0f;
-    };
-
-    if (m_currentWave == 1) {
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
-    } else if (m_currentWave == 2) {
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
-    } else if (m_currentWave == 3) {
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
-    } else if (m_currentWave == 4) {
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(3)));
-    } else if (m_currentWave == 5) {
-        m_finalWaveAnnounced = true;
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
-        m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
-        return;
-    }
-
-    static const std::vector<std::string> waveGroanSounds = {
-        "assets/sounds/sukhbir.ogg", "assets/sounds/sukhbir2.ogg", "assets/sounds/sukhbir3.ogg",
-        "assets/sounds/groan.ogg", "assets/sounds/groan2.ogg", "assets/sounds/lowgroan.ogg"
-    };
-    int rIdx = GetRandomValue(0, (int)waveGroanSounds.size() - 1);
-    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(waveGroanSounds[rIdx]));
-}
-
-void Level1::createSplat(float x, float y, bool isSnow) {
+void Level4::createSplat(float x, float y, bool isSnow) {
     ParticleEffect eff;
     if (isSnow) {
         eff.texture = res.GetTexture("SNOWPEA_SPLATS");
@@ -316,7 +456,7 @@ void Level1::createSplat(float x, float y, bool isSnow) {
     m_effects.push_back(eff);
 }
 
-void Level1::createFireSplat(float x, float y) {
+void Level4::createFireSplat(float x, float y) {
     Texture2D sparkTex = res.GetTexture("FirePea_spark");
     if (sparkTex.id == 0) sparkTex = res.GetTexture("FIREPEA_SPARK");
 
@@ -326,13 +466,13 @@ void Level1::createFireSplat(float x, float y) {
         p.x = x + (float)GetRandomValue(-5, 5);
         p.y = y + (float)GetRandomValue(-5, 5);
         p.vx = (float)GetRandomValue(-160, 160);
-        p.vy = (float)GetRandomValue(-200, 30);  // Fly outward & pop up
-        p.gravity = 450.0f;                      // Pull sparks back down
+        p.vy = (float)GetRandomValue(-200, 30);
+        p.gravity = 450.0f;
         p.rotation = (float)GetRandomValue(0, 360);
         p.vr = (float)GetRandomValue(-600, 600);
         p.scale = (float)GetRandomValue(9, 18) / 10.0f;
         p.alpha = 1.0f;
-        p.fadeRate = 3.2f;                       // Fades out in ~0.3s
+        p.fadeRate = 3.2f;
         p.isPhysicsParticle = true;
         p.active = true;
         if (sparkTex.id != 0) {
@@ -340,51 +480,49 @@ void Level1::createFireSplat(float x, float y) {
         }
 
         int c = GetRandomValue(0, 2);
-        if (c == 0) p.tint = Color{ 255, 230, 80, 255 };      // Vivid Yellow / Gold
-        else if (c == 1) p.tint = Color{ 255, 140, 20, 255 }; // Fiery Orange
-        else p.tint = Color{ 255, 50, 10, 255 };              // Fiery Red
+        if (c == 0) p.tint = Color{ 255, 230, 80, 255 };
+        else if (c == 1) p.tint = Color{ 255, 140, 20, 255 };
+        else p.tint = Color{ 255, 50, 10, 255 };
 
         m_effects.push_back(p);
     }
 }
 
-void Level1::createEatingParticle(float x, float y) {
+void Level4::createEatingParticle(float x, float y) {
     int count = GetRandomValue(2, 4);
     for (int i = 0; i < count; ++i) {
         ParticleEffect p;
         p.x = x + (float)GetRandomValue(0, 20);
         p.y = y + (float)GetRandomValue(-15, 10);
         p.vx = (float)GetRandomValue(-55, 55);
-        p.vy = (float)GetRandomValue(-120, -40); // Pop upward
-        p.gravity = 500.0f;                      // Gravity pulls down
+        p.vy = (float)GetRandomValue(-120, -40);
+        p.gravity = 500.0f;
         p.rotation = (float)GetRandomValue(0, 360);
         p.vr = (float)GetRandomValue(-360, 360);
         p.scale = (float)GetRandomValue(8, 14) / 10.0f;
         p.alpha = 1.0f;
-        p.fadeRate = 2.5f; // Fades in ~0.4s
+        p.fadeRate = 2.5f;
         p.isPhysicsParticle = true;
         p.active = true;
 
         int c = GetRandomValue(0, 2);
-        if (c == 0) p.tint = Color{ 34, 177, 76, 255 };      // Vivid Green
-        else if (c == 1) p.tint = Color{ 140, 210, 40, 255 }; // Light/Lime Green
-        else p.tint = Color{ 20, 120, 40, 255 };              // Dark Leaf Green
+        if (c == 0) p.tint = Color{ 34, 177, 76, 255 };
+        else if (c == 1) p.tint = Color{ 140, 210, 40, 255 };
+        else p.tint = Color{ 20, 120, 40, 255 };
 
         m_effects.push_back(p);
     }
 }
 
-void Level1::updateCollisions(float dt) {
+void Level4::updateCollisions(float dt) {
     // 1. Projectiles vs Zombies
     for (auto& p : m_projectiles) {
         if (!p.isActive() || p.isImpacting()) continue;
         for (auto& z : m_zombies) {
             if (z->isDead()) continue;
-            // Check Y lane match (within 55 pixels) and X collision
             float projBaseY = p.isLobbed() ? (p.getStartY() + 60.0f) : p.getY();
             if (std::abs(projBaseY - (z->getY() + 40.0f)) < 55.0f) {
                 if (p.getX() >= z->getX() + 5.0f && p.getX() <= z->getX() + 45.0f) {
-                    // Play projectile impact sound effects
                     if (p.isMelon()) {
                         static const std::vector<std::string> melonHitSounds = {
                             "assets/sounds/melonimpact.ogg",
@@ -419,15 +557,14 @@ void Level1::updateCollisions(float dt) {
                     }
 
                     z->takeDamage(p.getDamage());
-                    
-                    // Splash damage for Melonpult to nearby zombies
+
                     if (p.isMelon()) {
                         for (auto& otherZ : m_zombies) {
                             if (otherZ.get() == z.get() || otherZ->isDead()) continue;
                             float dx = otherZ->getX() - z->getX();
                             float dy = otherZ->getY() - z->getY();
                             if (dx * dx + dy * dy <= 120.0f * 120.0f) {
-                                otherZ->takeDamage(26); // Melon splash damage ~26 HP
+                                otherZ->takeDamage(26);
                             }
                         }
                     }
@@ -455,7 +592,7 @@ void Level1::updateCollisions(float dt) {
         }
     }
 
-    // 1.8. Grid Plant Triggers vs Zombies
+    // 1.8. Grid Plant Triggers vs Zombies & Graves
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             Plant* plant = m_grid[r][c].get();
@@ -599,17 +736,42 @@ void Level1::updateCollisions(float dt) {
                         }
                     }
                 }
+            } else if (plant->getName() == "Gravebuster") {
+                Gravebuster* gb = dynamic_cast<Gravebuster*>(plant);
+                if (gb) {
+                    for (auto& g : m_graves) {
+                        if (!g.isDestroyed && g.row == r && g.col == c) {
+                            float progress = gb->getEatProgress();
+                            if (GetRandomValue(0, 3) == 0) {
+                                float cellX = 140.0f + (g.col == 0 ? 0.0f : 80.0f + (g.col - 1) * 70.0f);
+                                float cellY = 80.0f + g.row * 100.0f;
+                                createGraveDirtParticle(cellX + 35.0f, cellY + 45.0f + progress * 25.0f, 2);
+                            }
+
+                            if (gb->isFinished()) {
+                                g.isDestroyed = true;
+                                float cellX = 140.0f + (g.col == 0 ? 0.0f : 80.0f + (g.col - 1) * 70.0f);
+                                float cellY = 80.0f + g.row * 100.0f;
+                                createGraveCrumbleParticles(cellX + 35.0f, cellY + 75.0f);
+                                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
+                                Texture2D texSun = res.GetTexture("SUN");
+                                if (texSun.id == 0) texSun = res.GetTexture("Sun");
+                                m_suns.emplace_back(cellX + 25.0f, cellY + 15.0f, texSun);
+                            }
+                            break;
+                        }
+                    }
+                }
             }
         }
     }
 
-    // 2. Zombies eating Plants
+    // 2. Zombies Eating Plants & House Breach
     for (auto& z : m_zombies) {
         if (z->isDead() || z->isSquashed()) continue;
 
         PoleVaultingZombie* pvz = dynamic_cast<PoleVaultingZombie*>(z.get());
         if (pvz && pvz->isVaulting()) {
-            // In mid-air vaulting over plants: skip eating
             continue;
         }
 
@@ -622,12 +784,11 @@ void Level1::updateCollisions(float dt) {
             Plant* p = m_grid[zRow][c].get();
             if (p && !p->isDead()) {
                 if (p->getName() == "Caltrop" || p->getName() == "SpikeRock") {
-                    continue; // Zombies cannot eat floor spike plants!
+                    continue;
                 }
 
                 float plantX = (float)p->getX();
 
-                // Trigger pole vault if zombie hasn't vaulted yet
                 if (pvz && !pvz->hasVaulted() && !pvz->isVaulting()) {
                     if (z->getX() >= plantX - 10.0f && z->getX() <= plantX + 80.0f) {
                         pvz->startVault();
@@ -637,7 +798,7 @@ void Level1::updateCollisions(float dt) {
 
                 if (z->getX() >= plantX - 20.0f && z->getX() <= plantX + 45.0f) {
                     if (p->getName() == "Garlic") {
-                        p->takeDamage(25.0f); // Garlic takes bite damage
+                        p->takeDamage(25.0f);
                         int nextRow = zRow;
                         if (zRow == 0) nextRow = 1;
                         else if (zRow == 4) nextRow = 3;
@@ -663,7 +824,6 @@ void Level1::updateCollisions(float dt) {
 
                     p->takeDamage((float)z->getDamage() * dt);
 
-                    // Spawn eating food crumbs effect & play chomp sound periodically
                     z->addEatTimer(dt);
                     if (z->getEatTimer() >= 0.28f) {
                         z->resetEatTimer();
@@ -697,7 +857,7 @@ void Level1::updateCollisions(float dt) {
             }
         }
 
-        // Check if zombie triggers lawnmower on this row
+        // LawnMower check
         for (auto& mower : m_lawnMowers) {
             if (mower.getRow() == zRow && !mower.isFinished()) {
                 if (!mower.isTriggered() && z->getX() <= mower.getX() + 30.0f) {
@@ -706,7 +866,7 @@ void Level1::updateCollisions(float dt) {
             }
         }
 
-        // Check loss condition: Zombie reaches house door (x <= 20)
+        // House Breach
         if (z->getX() <= 20.0f) {
             bool rowHasMower = false;
             for (const auto& mower : m_lawnMowers) {
@@ -721,13 +881,12 @@ void Level1::updateCollisions(float dt) {
         }
     }
 
-    // Process moving LawnMowers vs plants and zombies
+    // 3. LawnMower Clears
     for (auto& mower : m_lawnMowers) {
         if (!mower.isTriggered() || mower.isFinished()) continue;
         int mRow = mower.getRow();
         float mX = mower.getX();
 
-        // 1. Clear plants on this lane as mower rolls through
         for (int c = 0; c < 9; ++c) {
             float cellX = 140.0f + (c == 0 ? 0.0f : 80.0f + (c - 1) * 70.0f);
             if (mX >= cellX && m_grid[mRow][c] != nullptr) {
@@ -735,21 +894,19 @@ void Level1::updateCollisions(float dt) {
             }
         }
 
-        // 2. Crush and dismember zombies on this lane
         for (auto& z : m_zombies) {
             if (z->isDead() || z->isDevoured()) continue;
             int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
             if (zRow == mRow) {
                 if (std::abs(z->getX() - mX) <= 50.0f || (z->getX() <= mX && z->getX() >= mX - 60.0f)) {
-                    z->takeDamage(1800.0f); // Fatal damage triggers decapitation / head & arms drop
+                    z->takeDamage(1800.0f);
                 }
             }
         }
     }
 }
 
-void Level1::update(float dt) {
-    // 0. Update in-game pause menu if open (pauses game loop simulation)
+void Level4::update(float dt) {
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         InGameMenuAction action = m_inGameMenu->update(dt);
         if (action == InGameMenuAction::RestartLevel) {
@@ -760,14 +917,12 @@ void Level1::update(float dt) {
         return;
     }
 
-    // Toggle menu via ESC key in any phase
     if (!m_levelWon && !m_levelLost && IsKeyPressed(KEY_ESCAPE)) {
         if (m_inGameMenu) m_inGameMenu->open();
         return;
     }
 
     Vector2 mousePos = GetVirtualMousePosition();
-
     bool mouseClicked = false;
     if (m_ignoreInitialClick) {
         if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
@@ -777,22 +932,22 @@ void Level1::update(float dt) {
         mouseClicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     }
 
-    // Check click on top-right Menu button in any phase
     Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
-    if (!m_levelWon && !m_levelLost && mouseClicked && CheckCollisionPointRec(mousePos, menuBtnRect)) {
+    if (mouseClicked && CheckCollisionPointRec(mousePos, menuBtnRect)) {
         if (m_inGameMenu) m_inGameMenu->open();
         return;
     }
 
     if (m_phase == LevelPhase::SeedSelection) {
-        m_cameraCropX = 500.0f;
         for (auto& item : m_previewZombies) {
             item.zombie->getAnim().Update(dt);
         }
-        if (m_seedSelectMenu.update(dt, mousePos, mouseClicked)) {
-            m_seedBank.initFromDeck(m_seedSelectMenu.getChosenDeck());
+        bool startPan = m_seedSelectMenu.update(dt, mousePos, mouseClicked);
+        if (startPan) {
             m_phase = LevelPhase::PanToLawn;
             m_panTimer = 0.0f;
+            m_seedBank.initFromDeck(m_seedSelectMenu.getChosenDeck());
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/gravebutton.ogg"));
         }
         return;
     }
@@ -803,13 +958,13 @@ void Level1::update(float dt) {
         }
         m_panTimer += dt;
         float t = std::min(1.0f, m_panTimer / m_panDuration);
-        float easeT = t * t * (3.0f - 2.0f * t); // Smooth-step cubic lerp
+        float easeT = t * t * (3.0f - 2.0f * t);
         m_cameraCropX = 500.0f + (90.0f - 500.0f) * easeT;
 
         if (t >= 1.0f) {
             m_cameraCropX = 90.0f;
             m_phase = LevelPhase::ReadySetPlant;
-            m_previewZombies.clear(); // Clear preview zombies upon reaching active gameplay
+            m_previewZombies.clear();
             m_readySetPlantTimer = 0.0f;
             m_readySetPlantAnim.SetFrame(0.0f);
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));
@@ -821,14 +976,29 @@ void Level1::update(float dt) {
         m_readySetPlantTimer += dt;
         m_readySetPlantAnim.Update(dt);
 
+        if (!m_introGraveSoundPlayed) {
+            m_introGraveSoundPlayed = true;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
+        }
+
+        // Graves rising up from underground during Ready Set Plant
+        for (auto& g : m_graves) {
+            g.introRiseTimer += dt * 0.9f;
+            float gx = 140.0f + (g.col == 0 ? 0.0f : 80.0f + (g.col - 1) * 70.0f) - 6.0f;
+            float gy = 80.0f + g.row * 100.0f + 6.0f;
+            if (g.introRiseTimer < 1.0f && GetRandomValue(0, 2) == 0) {
+                createGraveDirtParticle(gx + 43.0f, gy + 75.0f, 3);
+            }
+        }
+
         if (m_readySetPlantTimer >= 1.9f) {
+            for (auto& g : m_graves) g.introRiseTimer = 1.0f;
             m_phase = LevelPhase::ActiveWave;
-            AudioManager::GetInstance().PlayMusic(MusicTrack::DayLevel);
+            AudioManager::GetInstance().PlayMusic(MusicTrack::NightLevel);
         }
         return;
     }
 
-    // Handle Speed & Pause Buttons in ActiveWave phase
     Rectangle pauseBtn = { 668.0f, 538.0f, 26.0f, 26.0f };
     Rectangle speedBtn = { 698.0f, 538.0f, 85.0f, 26.0f };
 
@@ -857,8 +1027,7 @@ void Level1::update(float dt) {
         if (!m_winMusicPlayed) {
             m_winMusicPlayed = true;
             ProfileManager::GetInstance().UnlockNextLevel(m_levelNumber);
-            int rewardCoins = (m_levelNumber == 1 ? 250 : (m_levelNumber == 2 ? 350 : 500));
-            ProfileManager::GetInstance().AddCoins(rewardCoins);
+            ProfileManager::GetInstance().AddCoins(500);
             AudioManager::GetInstance().PlayMusic(MusicTrack::None);
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/winmusic.ogg"));
         }
@@ -890,16 +1059,7 @@ void Level1::update(float dt) {
     }
 
     float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
-
-    bool rightClicked = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT);
-    if (rightClicked) {
-        Vector2 mousePos = GetVirtualMousePosition();
-        int getRow, getCol;
-        if (getGridCell(mousePos, getRow, getCol)) {
-            m_zombies.push_back(std::make_unique<FlagZombie>(res, 700.0f, 45.0f + getRow * 100.0f));
-        }
-        m_seedBank.deselect();
-    }
+    m_fogTimer += simDt;
 
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
@@ -908,9 +1068,7 @@ void Level1::update(float dt) {
             } else if (m_grid[r][c]) {
                 bool shoot = false;
                 float plantX = (float)m_grid[r][c]->getX();
-                float plantY = (float)m_grid[r][c]->getY();
-
-                float min_distance = 800.0f; // Only consider zombies within 700 pixels in front of the plant
+                float min_distance = 800.0f;
                 for (auto &zombie : m_zombies) {
                     if (!zombie->isDead() && !zombie->isDevoured()) {
                         int zRow = (int)((zombie->getY() - 45.0f + 50.0f) / 100.0f);
@@ -926,8 +1084,8 @@ void Level1::update(float dt) {
                 }
 
                 std::string plantName = m_grid[r][c]->getName();
-                if (plantName == "CherryBomb" || plantName == "Jalapeno" || plantName == "PotatoMine" || plantName == "Squash" || plantName == "IceShroom" || plantName == "Chomper" || plantName == "Caltrop" || plantName == "SpikeRock") {
-                    continue; // Let self-animated/trigger plants manage their own animations
+                if (plantName == "CherryBomb" || plantName == "Jalapeno" || plantName == "PotatoMine" || plantName == "Squash" || plantName == "IceShroom" || plantName == "Chomper" || plantName == "Caltrop" || plantName == "SpikeRock" || plantName == "Gravebuster") {
+                    continue;
                 }
 
                 std::string targetAnim;
@@ -950,9 +1108,6 @@ void Level1::update(float dt) {
 
                 if (m_grid[r][c]->getAnim().GetCurrentAnimName() != targetAnim) {
                     m_grid[r][c]->SetAnimation(targetAnim);
-                    if (plantName == "SunFlower" && targetAnim == "anim_idle") {
-                        m_grid[r][c]->SetBaseAnimation("anim_idle");
-                    }
                 }
             }
         }
@@ -960,7 +1115,7 @@ void Level1::update(float dt) {
 
     m_seedBank.update(simDt, mousePos, mouseClicked);
 
-    // Plant placement / Shovel removal logic
+    // Plant placement logic
     int hoverRow, hoverCol;
     if (mouseClicked && getGridCell(mousePos, hoverRow, hoverCol)) {
         if (m_seedBank.isShovelSelected()) {
@@ -971,21 +1126,35 @@ void Level1::update(float dt) {
         } else {
             std::string selectedType = m_seedBank.getSelectedPlantType();
             if (!selectedType.empty() && m_grid[hoverRow][hoverCol] == nullptr) {
-                float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
-                float cellH = 100.0f;
-                float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
-                float cellY = 80.0f + hoverRow * 100.0f;
-                float centerX = cellX + cellW / 2.0f;
-                float centerY = cellY + cellH / 2.0f;
-                int px = (int)(centerX - 30.0f - 10.0f);
-                int py = (int)(centerY - 35.0f );
-                createPlant(selectedType, hoverRow, hoverCol, px, py);
-                m_seedBank.consumeSelected();
+                bool isGrave = isCellBlockedByGrave(hoverRow, hoverCol);
+                bool canPlant = (selectedType == "Gravebuster") ? isGrave : !isGrave;
+
+                if (canPlant) {
+                    float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
+                    float cellH = 100.0f;
+                    float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
+                    float cellY = 80.0f + hoverRow * 100.0f;
+                    
+                    int px, py;
+                    if (selectedType == "Gravebuster") {
+                        float gx = cellX - 6.0f;
+                        float gy = cellY + 6.0f;
+                        px = (int)(gx - 2.0f);
+                        py = (int)(gy - 28.0f); // Starts higher up above the grave
+                    } else {
+                        float centerX = cellX + cellW / 2.0f;
+                        float centerY = cellY + cellH / 2.0f;
+                        px = (int)(centerX - 30.0f - 10.0f);
+                        py = (int)(centerY - 35.0f);
+                    }
+                    createPlant(selectedType, hoverRow, hoverCol, px, py);
+                    m_seedBank.consumeSelected();
+                }
             }
         }
     }
 
-    // Click collection for sun items
+    // Sun Click Collection
     if (mouseClicked) {
         for (auto& s : m_suns) {
             if (s.isActive() && s.isClicked(mousePos)) {
@@ -995,8 +1164,7 @@ void Level1::update(float dt) {
         }
     }
 
-    // Sub-stepping simulation loop:
-    // Fixed sub-step size of ~1/60s (0.0166f) ensures rock-solid collision detection & physics at 2x, 4x, 8x speeds.
+    // Sub-stepping simulation loop
     float remainingDt = simDt;
     const float maxSubStep = 0.0166f;
 
@@ -1004,14 +1172,6 @@ void Level1::update(float dt) {
         float subDt = std::min(remainingDt, maxSubStep);
         remainingDt -= subDt;
 
-        // Sky sun timer
-        m_skySunTimer += subDt;
-        if (m_skySunTimer >= 10.0f) {
-            m_skySunTimer = 0.0f;
-            spawnSunFromSky();
-        }
-
-        // Wave spawn timer
         if (m_currentWave < m_maxWaves) {
             m_waveTimer -= subDt;
             if (m_waveTimer <= 0.0f) {
@@ -1020,33 +1180,105 @@ void Level1::update(float dt) {
             }
         }
 
-        // Update plants
+        // Update shaking graves & trigger rising zombies + grave destruction
+        for (auto& g : m_graves) {
+            if (g.isDestroyed || g.shakeTimer <= 0.0f) continue;
+            g.shakeTimer -= subDt;
+
+            float cellX = 140.0f + (g.col == 0 ? 0.0f : 80.0f + (g.col - 1) * 70.0f);
+            float cellY = 80.0f + g.row * 100.0f;
+
+            if (GetRandomValue(0, 2) == 0) {
+                createGraveDirtParticle(cellX + 35.0f, cellY + 75.0f, 4);
+            }
+
+            if (g.shakeTimer <= 0.0f) {
+                // Grave breaks and disappears!
+                g.isDestroyed = true;
+                createGraveCrumbleParticles(cellX + 35.0f, cellY + 75.0f);
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
+
+                float gx = cellX - 5.0f;
+                float gy = 45.0f + g.row * 100.0f;
+
+                std::unique_ptr<Zombie> newZ;
+                if (g.pendingZombieType == "BucketheadZombie") {
+                    newZ = std::make_unique<BucketheadZombie>(res, gx, gy + 70.0f);
+                } else if (g.pendingZombieType == "ConeheadZombie") {
+                    newZ = std::make_unique<ConeheadZombie>(res, gx, gy + 70.0f);
+                } else {
+                    newZ = std::make_unique<ZombieNormal>(res, gx, gy + 70.0f);
+                }
+
+                if (newZ) {
+                    newZ->getAnim().SetBaseAnimation("anim_walk");
+                    newZ->getAnim().SetAnimation("anim_walk");
+                    m_risingZombies.push_back({ std::move(newZ), gy, 70.0f, 0.0f, 0.9f, g.row });
+                }
+                g.pendingZombieType = "";
+            }
+        }
+
+        // Update Rising Zombies
+        for (auto it = m_risingZombies.begin(); it != m_risingZombies.end(); ) {
+            it->riseTimer += subDt;
+            float t = std::min(1.0f, it->riseTimer / it->maxRiseTime);
+            it->currentYOffset = 70.0f * (1.0f - t);
+            it->zombie->setY(it->targetY + it->currentYOffset);
+            it->zombie->getAnim().Update(subDt);
+
+            if (t >= 1.0f) {
+                it->zombie->setY(it->targetY);
+                m_zombies.push_back(std::move(it->zombie));
+                it = m_risingZombies.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
         for (int r = 0; r < 5; ++r) {
             for (int c = 0; c < 9; ++c) {
                 if (m_grid[r][c] && !m_grid[r][c]->isDead()) {
                     m_grid[r][c]->update(subDt, m_projectiles, m_suns);
+
+                    if (m_grid[r][c]->getName() == "Gravebuster") {
+                        Gravebuster* gb = dynamic_cast<Gravebuster*>(m_grid[r][c].get());
+                        if (gb) {
+                            for (auto& g : m_graves) {
+                                if (!g.isDestroyed && g.row == r && g.col == c) {
+                                    if (gb->isFinished() || gb->getEatProgress() >= 1.0f) {
+                                        g.isDestroyed = true;
+                                        float cellX = 140.0f + (g.col == 0 ? 0.0f : 80.0f + (g.col - 1) * 70.0f);
+                                        float cellY = 80.0f + g.row * 100.0f;
+                                        createGraveCrumbleParticles(cellX + 35.0f, cellY + 75.0f);
+                                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
+                                        Texture2D texSun = res.GetTexture("SUN");
+                                        if (texSun.id == 0) texSun = res.GetTexture("Sun");
+                                        m_suns.emplace_back(cellX + 25.0f, cellY + 15.0f, texSun);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // Update zombies
         for (auto& z : m_zombies) {
             if (!z->isFinished()) {
                 z->update(subDt);
             }
         }
 
-        // Update projectiles
         for (auto& p : m_projectiles) {
             p.update(subDt);
         }
 
-        // Update lawn mowers
         for (auto& mower : m_lawnMowers) {
             mower.update(subDt);
         }
 
-        // Update sun items
         for (auto& s : m_suns) {
             s.update(subDt);
             if (s.hasArrived()) {
@@ -1054,66 +1286,60 @@ void Level1::update(float dt) {
             }
         }
 
-        // Update particle / splat / crumb effects
         for (auto& eff : m_effects) {
             if (!eff.active) continue;
             eff.timing(subDt);
         }
 
-        // Clean up inactive projectiles, suns, finished zombies, and particle effects
-        m_projectiles.erase(std::remove_if(m_projectiles.begin(), m_projectiles.end(),
-            [](const Projectile& p) { return !p.isActive(); }), m_projectiles.end());
-
-        m_suns.erase(std::remove_if(m_suns.begin(), m_suns.end(),
-            [](const SunItem& s) { return !s.isActive(); }), m_suns.end());
-
-        m_zombies.erase(std::remove_if(m_zombies.begin(), m_zombies.end(),
-            [](const std::unique_ptr<Zombie>& z) { return z->isFinished(); }), m_zombies.end());
-
-        m_effects.erase(std::remove_if(m_effects.begin(), m_effects.end(),
-            [](const ParticleEffect& e) { return !e.isActive(); }), m_effects.end());
-
-        // Update collisions per sub-step
         updateCollisions(subDt);
     }
 
-    // Check win condition
-    if (m_currentWave >= m_maxWaves) {
-        bool anyZombieAlive = false;
-        for (const auto& z : m_zombies) {
-            if (!z->isDead()) {
-                anyZombieAlive = true;
-                break;
-            }
-        }
-        if (!anyZombieAlive) {
-            m_levelWon = true;
-        }
+    // Despawn Dead Zombies & Inactive Projectiles
+    m_zombies.erase(
+        std::remove_if(m_zombies.begin(), m_zombies.end(),
+            [](const std::unique_ptr<Zombie>& z) { return z->isFinished(); }),
+        m_zombies.end()
+    );
+
+    m_projectiles.erase(
+        std::remove_if(m_projectiles.begin(), m_projectiles.end(),
+            [](const Projectile& p) { return !p.isActive(); }),
+        m_projectiles.end()
+    );
+
+    m_suns.erase(
+        std::remove_if(m_suns.begin(), m_suns.end(),
+            [](SunItem& s) { return !s.isActive() || s.hasArrived(); }),
+        m_suns.end()
+    );
+
+    m_effects.erase(
+        std::remove_if(m_effects.begin(), m_effects.end(),
+            [](const ParticleEffect& eff) { return !eff.active; }),
+        m_effects.end()
+    );
+
+    if (m_currentWave >= m_maxWaves && m_zombies.empty() && m_risingZombies.empty() && !m_levelWon && !m_levelLost) {
+        m_levelWon = true;
     }
 }
 
-void Level1::draw() {
+void Level4::draw() {
     BeginTextureMode(targetScreen);
     ClearBackground(RAYWHITE);
 
-    // 1. Draw Background cropped at {m_cameraCropX, 0, 900, 600}
-    Texture2D bgTex = res.GetBackground();
-    if (bgTex.id != 0) {
+    // 1. Draw Night Front Lawn Background (background2.jpg)
+    if (m_texBgNight.id != 0) {
         DrawTexturePro(
-            bgTex,
+            m_texBgNight,
             { m_cameraCropX, 0.0f, 900.0f, 600.0f },
             { 0.0f, 0.0f, 800.0f, 600.0f },
-            { 0.0f, 0.0f },
+            Vector2{ 0.0f, 0.0f },
             0.0f,
             WHITE
         );
     } else {
-        // Fallback lawn grid rendering
-        for (int y = 0; y < 600; y += 80) {
-            for (int x = 0; x < 800; x += 80) {
-                DrawRectangle(x, y, 80, 80, ((x/80 + y/80) % 2 == 0) ? GREEN : DARKGREEN);
-            }
-        }
+        DrawRectangle(0, 0, 800, 600, DARKBLUE);
     }
 
     Vector2 mousePos = GetVirtualMousePosition();
@@ -1135,39 +1361,107 @@ void Level1::draw() {
         }
         m_seedBank.draw(res, mousePos);
     } else if (m_phase == LevelPhase::ReadySetPlant) {
-        // Draw SeedBank
+        // Draw Row-by-Row graves rising from underground
+        for (int r = 0; r < 5; ++r) {
+            for (const auto& g : m_graves) {
+                if (g.row == r && !g.isDestroyed) {
+                    float gx = 140.0f + (g.col == 0 ? 0.0f : 80.0f + (g.col - 1) * 70.0f) - 6.0f;
+                    float gy = 80.0f + g.row * 100.0f + 6.0f;
+                    float introYOffset = (1.0f - std::min(1.0f, g.introRiseTimer)) * 80.0f;
+
+                    if (m_texTombstones.id != 0) {
+                        Rectangle srcTomb = { (float)g.frameCol * 86.0f, (float)g.frameRow * 91.0f, 86.0f, 91.0f };
+                        DrawTexturePro(m_texTombstones, srcTomb, { gx, gy + introYOffset, 86.0f, 91.0f }, { 0, 0 }, 0.0f, WHITE);
+                    }
+
+                    if (m_texMounds.id != 0) {
+                        Rectangle srcMound = { (float)g.frameCol * 86.0f, (float)g.frameRow * 91.0f, 86.0f, 91.0f };
+                        DrawTexturePro(m_texMounds, srcMound, { gx, gy + introYOffset, 86.0f, 91.0f }, { 0, 0 }, 0.0f, WHITE);
+                    }
+                }
+            }
+        }
+        for (const auto& eff : m_effects) {
+            eff.draw();
+        }
         m_seedBank.draw(res, mousePos);
-        // Draw "READY... SET... PLANT!" animated banner centered on screen
         m_readySetPlantAnim.Draw(400.0f, 300.0f, 1.0f);
     } else {
-        // 2. Draw hover highlight cell on lawn grid
+        // Grid hover highlight
         int hoverRow, hoverCol;
         if (getGridCell(mousePos, hoverRow, hoverCol)) {
             float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
             float cellY = 80.0f + hoverRow * 100.0f;
             float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
             float cellH = 100.0f;
-            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+            bool isGrave = isCellBlockedByGrave(hoverRow, hoverCol);
+            std::string selType = m_seedBank.getSelectedPlantType();
+            bool isValid = (selType == "Gravebuster") ? isGrave : !isGrave;
+            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, isValid ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(RED, 0.6f));
         }
 
-        // 3. Draw Entities Row-by-Row from Top (Row 0, Y lowest) to Bottom (Row 4, Y highest)
-        // This ensures entities in lower rows (higher Y) always render on top of entities above them.
+        // Draw Row-by-Row from Top (Row 0) to Bottom (Row 4) for proper depth
         for (int r = 0; r < 5; ++r) {
-            // A. LawnMower in row r
+            // A. LawnMower
             for (const auto& mower : m_lawnMowers) {
                 if (mower.getRow() == r) {
                     mower.draw();
                 }
             }
 
-            // B. Plants in row r
+            // B. Tombstone Slabs in Row r (with horizontal rumble shake animation, cracking, and Gravebuster sinking)
+            for (const auto& g : m_graves) {
+                if (g.row == r && !g.isDestroyed) {
+                    float gx = 140.0f + (g.col == 0 ? 0.0f : 80.0f + (g.col - 1) * 70.0f) - 6.0f;
+                    float gy = 80.0f + g.row * 100.0f + 6.0f;
+
+                    float shakeOffset = (g.shakeTimer > 0.0f) ? (sinf(g.shakeTimer * 60.0f) * 3.5f) : 0.0f;
+                    
+                    float gbProgress = 0.0f;
+                    Plant* p = m_grid[g.row][g.col].get();
+                    if (p && p->getName() == "Gravebuster") {
+                        Gravebuster* gb = dynamic_cast<Gravebuster*>(p);
+                        if (gb) gbProgress = gb->getEatProgress();
+                    }
+
+                    int drawRow = g.frameRow;
+                    if (gbProgress > 0.66f) {
+                        drawRow = 3;
+                    } else if (gbProgress > 0.33f) {
+                        drawRow = 2;
+                    } else if (gbProgress > 0.0f) {
+                        drawRow = 1;
+                    } else if (g.shakeTimer > 0.0f) {
+                        drawRow = (g.shakeTimer < 0.4f) ? 2 : 1;
+                    }
+
+                    if (m_texTombstones.id != 0) {
+                        Rectangle srcTomb = { (float)g.frameCol * 86.0f, (float)drawRow * 91.0f, 86.0f, 91.0f };
+                        DrawTexturePro(m_texTombstones, srcTomb, { gx + shakeOffset, gy, 86.0f, 91.0f }, { 0, 0 }, 0.0f, WHITE);
+                    }
+
+                    if (m_texMounds.id != 0) {
+                        Rectangle srcMound = { (float)g.frameCol * 86.0f, (float)g.frameRow * 91.0f, 86.0f, 91.0f };
+                        DrawTexturePro(m_texMounds, srcMound, { gx + shakeOffset, gy, 86.0f, 91.0f }, { 0, 0 }, 0.0f, WHITE);
+                    }
+                }
+            }
+
+            // C. Rising Zombies in Row r
+            for (const auto& rz : m_risingZombies) {
+                if (rz.row == r) {
+                    rz.zombie->draw();
+                }
+            }
+
+            // D. Plants in Row r (Gravebuster drawn OVER the grave slab and mound base!)
             for (int c = 0; c < 9; ++c) {
                 if (m_grid[r][c] && !m_grid[r][c]->isDead()) {
                     m_grid[r][c]->draw();
                 }
             }
 
-            // C. Zombies in row r
+            // E. Active Walking Zombies in Row r
             for (const auto& z : m_zombies) {
                 if (!z->isFinished()) {
                     int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
@@ -1178,41 +1472,27 @@ void Level1::draw() {
             }
         }
 
-        // Draw any zombies whose row is outside 0..4 (fallback safety)
-        for (const auto& z : m_zombies) {
-            if (!z->isFinished()) {
-                int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
-                if (zRow < 0 || zRow > 4) {
-                    z->draw();
-                }
-            }
+        // Draw Fog layer over rightmost columns (if fog level)
+        if (m_hasFog) {
+            drawFog();
         }
 
-        // 4. Draw Top SeedBank & Plant Seed Packets UI
+        // Draw Top SeedBank & FlagMeter UI
         m_seedBank.draw(res, mousePos);
-
-        // 5. Draw Bottom-Right FlagMeter Progress Bar
         drawProgressBar();
-
-        // 6. Draw Speed & Pause Controls
         drawSpeedControls();
 
-        // 7. Draw Projectiles (drawn on top of SeedBank for high lobbed arcs)
+        // Projectiles (rendered above SeedBank for high lobbed arcs!), particles, suns
         for (const auto& p : m_projectiles) {
             p.draw();
         }
-
-        // 8. Draw Particle & Splat Effects
         for (const auto& eff : m_effects) {
             eff.draw();
         }
-
-        // 9. Draw Sun Items
         for (const auto& s : m_suns) {
             s.draw();
         }
 
-        // 10. Draw Win / Loss Overlays
         if (m_levelWon) {
             drawWinScreen();
         } else if (m_levelLost) {
@@ -1220,22 +1500,19 @@ void Level1::draw() {
         }
     }
 
-    // 11. Draw top-right "Menu" stone button (680, 0, 110, 36) in all phases
+    // In-game pause menu button & dialog
     Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
     bool menuHovered = CheckCollisionPointRec(mousePos, menuBtnRect);
     bool menuPressed = menuHovered && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
     if (m_inGameMenu) {
         m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
     }
-
-    // 12. Draw in-game pause menu dialog if open (on top of all phases)
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }
 
     EndTextureMode();
 
-    // 13. Draw stretched to screen
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -1249,14 +1526,13 @@ void Level1::draw() {
     EndDrawing();
 }
 
-void Level1::drawProgressBar() {
+void Level4::drawProgressBar() {
     Texture2D texMeter = res.GetTexture("FLAGMETER");
     Texture2D texBadge = res.GetTexture("FLAGMETERLEVELPROGRESS");
     Texture2D texParts = res.GetTexture("FLAGMETERPARTS");
 
     if (texMeter.id == 0) return;
 
-    // Progress computation (0.0 to 1.0)
     float waveProgress = (float)m_currentWave / (float)std::max(1, m_maxWaves);
     if (m_currentWave < m_maxWaves) {
         float waveFraction = std::clamp((22.0f - m_waveTimer) / 22.0f, 0.0f, 1.0f);
@@ -1267,61 +1543,45 @@ void Level1::drawProgressBar() {
     float barX = 625.0f;
     float barY = 572.0f;
 
-    // 1. Draw level text to the left: "Level 1-1", "Level 1-2", "Level 1-3"
-    std::string levelStr = "Level 1-" + std::to_string(m_levelNumber);
-    DrawText(levelStr.c_str(), (int)(barX - 82.0f), (int)(barY + 5.0f), 18, Color{ 235, 200, 45, 255 });
+    // 1. Level text: "Level 2-1"
+    DrawText("Level 2-1", (int)(barX - 82.0f), (int)(barY + 5.0f), 18, Color{ 140, 180, 255, 255 });
 
-    // 2. Draw Progress Bar Frame (0, 0, 158, 25)
-    Rectangle srcFrame = { 0.0f, 0.0f, 158.0f, 25.0f };
-    DrawTextureRec(texMeter, srcFrame, { barX, barY }, WHITE);
+    // 2. Progress Bar Frame
+    DrawTextureRec(texMeter, { 0.0f, 0.0f, 158.0f, 25.0f }, { barX, barY }, WHITE);
 
-    // 3. Draw Green Progress Fill (filling from right to left)
-    // Slot width = 149 (from x=6 to x=155)
+    // 3. Green Progress Fill
     float maxFillWidth = 149.0f;
     float currentFillWidth = maxFillWidth * waveProgress;
     if (currentFillWidth > 0.0f) {
-        Rectangle srcFill = { 155.0f - currentFillWidth, 27.0f, currentFillWidth, 24.0f };
-        Vector2 destFillPos = { barX + 155.0f - currentFillWidth, barY };
-        DrawTextureRec(texMeter, srcFill, destFillPos, WHITE);
+        DrawTextureRec(texMeter, { 155.0f - currentFillWidth, 27.0f, currentFillWidth, 24.0f }, { barX + 155.0f - currentFillWidth, barY }, WHITE);
     }
 
-    // 4. Draw "LEVEL PROGRESS" badge in the lower middle slot
+    // 4. "LEVEL PROGRESS" badge
     if (texBadge.id != 0) {
         DrawTextureRec(texBadge, { 0.0f, 0.0f, (float)texBadge.width, (float)texBadge.height }, { barX + 36.0f, barY + 13.0f }, WHITE);
     }
 
-    // 5. Draw Red Flags at wave milestones
+    // 5. Red Flags at wave 5 and wave 8
     if (texParts.id != 0) {
-        std::vector<float> flagFractions;
-        if (m_levelNumber == 3) {
-            flagFractions = { 0.50f, 1.0f }; // Flag 1 at wave 5, Flag 2 at wave 10
-        } else {
-            flagFractions = { 1.0f };        // Final wave only
-        }
-
+        std::vector<float> flagFractions = { 5.0f / 8.0f, 1.0f };
         for (float frac : flagFractions) {
             float flagX = barX + 155.0f - maxFillWidth * frac - 8.0f;
             flagX = std::max(barX + 6.0f, flagX);
 
-            // Flag pole
-            Rectangle srcPole = { 25.0f, 0.0f, 25.0f, 25.0f };
-            DrawTextureRec(texParts, srcPole, { flagX, barY - 2.0f }, WHITE);
+            DrawTextureRec(texParts, { 25.0f, 0.0f, 25.0f, 25.0f }, { flagX, barY - 2.0f }, WHITE);
 
-            // Red flag (raised when near/reached that wave fraction)
             float flagOffsetY = (waveProgress >= frac - 0.05f) ? -6.0f : -2.0f;
-            Rectangle srcFlag = { 0.0f, 0.0f, 25.0f, 25.0f };
-            DrawTextureRec(texParts, srcFlag, { flagX, barY + flagOffsetY }, WHITE);
+            DrawTextureRec(texParts, { 0.0f, 0.0f, 25.0f, 25.0f }, { flagX, barY + flagOffsetY }, WHITE);
         }
 
-        // 6. Draw Zombie Head Slider Marker
+        // 6. Zombie Head Slider Marker
         float headX = barX + 155.0f - currentFillWidth - 11.0f;
         headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
-        Rectangle srcHead = { 50.0f, 0.0f, 25.0f, 25.0f };
-        DrawTextureRec(texParts, srcHead, { headX, barY - 2.0f }, WHITE);
+        DrawTextureRec(texParts, { 50.0f, 0.0f, 25.0f, 25.0f }, { headX, barY - 2.0f }, WHITE);
     }
 }
 
-void Level1::drawSpeedControls() {
+void Level4::drawSpeedControls() {
     Vector2 mousePos = GetVirtualMousePosition();
     Rectangle pauseBtn = { 668.0f, 538.0f, 26.0f, 26.0f };
     Rectangle speedBtn = { 698.0f, 538.0f, 85.0f, 26.0f };
@@ -1329,76 +1589,71 @@ void Level1::drawSpeedControls() {
     bool pauseHover = CheckCollisionPointRec(mousePos, pauseBtn);
     bool speedHover = CheckCollisionPointRec(mousePos, speedBtn);
 
-    // 1. Draw Pause Button
     DrawRectangleRounded(pauseBtn, 0.25f, 4, pauseHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
     DrawRectangleRoundedLines(pauseBtn, 0.25f, 4, 1.5f, pauseHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+
     if (m_isSpeedPaused) {
-        DrawTriangle({ pauseBtn.x + 8.0f, pauseBtn.y + 6.0f },
-                     { pauseBtn.x + 8.0f, pauseBtn.y + pauseBtn.height - 6.0f },
-                     { pauseBtn.x + pauseBtn.width - 7.0f, pauseBtn.y + pauseBtn.height / 2.0f },
-                     Color{ 240, 240, 255, 255 });
+        DrawTriangle({ 677, 544 }, { 677, 558 }, { 688, 551 }, GREEN);
     } else {
-        DrawRectangleRec({ pauseBtn.x + 7.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
-        DrawRectangleRec({ pauseBtn.x + 15.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+        DrawRectangle(675, 544, 4, 14, RAYWHITE);
+        DrawRectangle(683, 544, 4, 14, RAYWHITE);
     }
 
-    // 2. Draw Speed Button
     DrawRectangleRounded(speedBtn, 0.25f, 4, speedHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
     DrawRectangleRoundedLines(speedBtn, 0.25f, 4, 1.5f, speedHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
-    DrawTriangle({ speedBtn.x + 8.0f, speedBtn.y + 7.0f },
-                 { speedBtn.x + 8.0f, speedBtn.y + speedBtn.height - 7.0f },
-                 { speedBtn.x + 19.0f, speedBtn.y + speedBtn.height / 2.0f },
-                 Color{ 220, 235, 255, 255 });
 
-    char speedBuf[16];
-    snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
-    DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
+    char speedText[16];
+    snprintf(speedText, sizeof(speedText), "> %.0fx", m_gameSpeed);
+    Color speedColor = (m_gameSpeed == 1.0f) ? RAYWHITE : (m_gameSpeed == 2.0f ? YELLOW : (m_gameSpeed == 4.0f ? ORANGE : RED));
+    DrawText(speedText, 715, 543, 16, speedColor);
 }
 
-void Level1::drawWinScreen() {
+void Level4::drawWinScreen() {
     float overlayAlpha = std::clamp(m_winTimer * 1.5f, 0.0f, 0.75f);
     DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(BLACK, overlayAlpha));
 
+    Texture2D texRays = res.GetTexture("AWARDRAYS");
+    if (texRays.id != 0) {
+        float rayScale = std::min(1.0f, m_winTimer * 1.2f);
+        float rayW = (float)texRays.width * rayScale;
+        float rayH = (float)texRays.height * rayScale;
+        DrawTexturePro(
+            texRays,
+            { 0.0f, 0.0f, (float)texRays.width, (float)texRays.height },
+            { 400.0f, 250.0f, rayW, rayH },
+            { rayW / 2.0f, rayH / 2.0f },
+            m_awardRaysRotation,
+            ColorAlpha(WHITE, std::min(1.0f, m_winTimer * 2.0f))
+        );
+    }
+
     Texture2D texTrophy = res.GetTexture("TROPHY_HI_RES");
-    if (texTrophy.id == 0) texTrophy = res.GetTexture("TROPHY");
+    if (texTrophy.id == 0) texTrophy = res.GetTexture("Trophy_hi_res");
 
-    float centerX = 400.0f;
-    float centerY = m_awardY;
-
-    // Draw rotating sun rays behind trophy
-    Texture2D texRaysImg = res.GetTexture("AWARDRAYS");
-    if (texRaysImg.id != 0) {
-        Rectangle srcRays = { 0, 0, (float)texRaysImg.width, (float)texRaysImg.height };
-        Rectangle destRays = { centerX, centerY, 320.0f, 320.0f };
-        Vector2 originRays = { 160.0f, 160.0f };
-        DrawTexturePro(texRaysImg, srcRays, destRays, originRays, m_awardRaysRotation, ColorAlpha(WHITE, 0.85f));
-    }
-
-    // Draw Trophy
     if (texTrophy.id != 0) {
-        Rectangle srcTrophy = { 0, 0, (float)texTrophy.width, (float)texTrophy.height };
-        Rectangle destTrophy = { centerX, centerY, 160.0f, 160.0f };
-        Vector2 originTrophy = { 80.0f, 80.0f };
-        DrawTexturePro(texTrophy, srcTrophy, destTrophy, originTrophy, 0.0f, WHITE);
+        DrawTexturePro(
+            texTrophy,
+            { 0.0f, 0.0f, (float)texTrophy.width, (float)texTrophy.height },
+            { 400.0f, m_awardY, (float)texTrophy.width, (float)texTrophy.height },
+            { (float)texTrophy.width / 2.0f, (float)texTrophy.height / 2.0f },
+            0.0f,
+            WHITE
+        );
     }
 
-    // Draw Award Banner and text when trophy lands
-    if (m_winTimer >= 1.0f) {
-        float bannerAlpha = std::clamp((m_winTimer - 1.0f) * 2.0f, 0.0f, 1.0f);
-        DrawRectangleRec({ 200, 360, 400, 150 }, ColorAlpha(Color{ 20, 25, 40, 255 }, bannerAlpha * 0.90f));
-        DrawRectangleLinesEx({ 200, 360, 400, 150 }, 3.0f, ColorAlpha(GOLD, bannerAlpha));
-        DrawText("LEVEL COMPLETED!", 260, 385, 28, ColorAlpha(GOLD, bannerAlpha));
-        DrawText("You defeated all zombies and saved your lawn!", 225, 428, 17, ColorAlpha(WHITE, bannerAlpha));
-        DrawText("Click anywhere or press ENTER to continue", 230, 465, 16, ColorAlpha(LIGHTGRAY, bannerAlpha));
+    if (m_winTimer >= 1.2f) {
+        float textAlpha = std::clamp((m_winTimer - 1.2f) * 2.5f, 0.0f, 1.0f);
+        DrawRectangleRec({ 220, 390, 360, 95 }, ColorAlpha(BLACK, textAlpha * 0.8f));
+        DrawRectangleLinesEx({ 220, 390, 360, 95 }, 2.0f, ColorAlpha(GOLD, textAlpha));
+        DrawText("NIGHT STAGE COMPLETED!", 245, 405, 22, ColorAlpha(GOLD, textAlpha));
+        DrawText("Click anywhere to continue", 280, 445, 17, ColorAlpha(RAYWHITE, textAlpha));
     }
 }
 
-void Level1::drawLoseScreen() {
-    // 1. Fade to dark red / black vignette
+void Level4::drawLoseScreen() {
     float overlayAlpha = std::clamp(m_loseTimer * 1.8f, 0.0f, 0.88f);
     DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(Color{ 25, 0, 0, 255 }, overlayAlpha));
 
-    // 2. Draw "THE ZOMBIES ATE YOUR BRAINS!" graphic with zoom-in ease-out
     Texture2D texZombiesWon = res.GetTexture("ZOMBIESWON");
     if (texZombiesWon.id != 0) {
         float zoomProgress = std::clamp((m_loseTimer - 0.4f) * 1.8f, 0.0f, 1.0f);
@@ -1419,7 +1674,6 @@ void Level1::drawLoseScreen() {
         DrawText("THE ZOMBIES ATE YOUR BRAINS!", 190, 220, 26, RED);
     }
 
-    // 3. Prompt when defeat animation concludes
     if (m_loseTimer >= 1.6f) {
         float textAlpha = std::clamp((m_loseTimer - 1.6f) * 2.0f, 0.0f, 1.0f);
         DrawRectangleRec({ 245, 470, 310, 44 }, ColorAlpha(BLACK, textAlpha * 0.75f));
@@ -1428,7 +1682,71 @@ void Level1::drawLoseScreen() {
     }
 }
 
-void Level1::run() {
+void Level4::drawFog() {
+    if (!m_hasFog) return;
+
+    // 1. Solid opaque atmospheric darkness & fog backing (Completely hides zombies/lawn beneath it!)
+    // Smooth fade from 0% alpha at m_fogStartX to 100% full opacity at m_fogStartX + 50px
+    DrawRectangleGradientH(
+        (int)(m_fogStartX - 30.0f), -50,
+        60, 700,
+        Color{ 16, 20, 36, 0 }, Color{ 16, 20, 36, 255 }
+    );
+    // Draw with generous overspill to the right and top/bottom
+    DrawRectangle(
+        (int)(m_fogStartX + 30.0f), -50,
+        (int)(900.0f - (m_fogStartX + 30.0f)), 700,
+        Color{ 16, 20, 36, 255 }
+    );
+
+    // 2. Rolling PopCap Fog Cloud Textures (Full, uncropped, generously overlapping)
+    Texture2D texSoft = res.GetTexture("FOG_SOFTWARE");
+    if (texSoft.id == 0) texSoft = res.GetTexture("fog_software");
+
+    if (texSoft.id != 0) {
+        // fog_software.png has 3 uncropped cloud frames (189x144 each)
+        for (int r = 0; r < 7; ++r) {
+            float rowY = -25.0f + r * 95.0f;
+            float driftY = cosf(m_fogTimer * 0.9f + (float)r * 1.1f) * 8.0f;
+
+            // Draw clouds across columns with generous overspill past 850px
+            for (float colX = m_fogStartX - 25.0f; colX <= 850.0f; colX += 115.0f) {
+                int cloudIdx = ((int)((colX + (float)r * 70.0f) / 115.0f) % 3 + 3) % 3;
+                float driftX = sinf(m_fogTimer * 0.7f + (float)r * 1.4f + colX * 0.05f) * 14.0f;
+
+                Rectangle srcCloud = { (float)cloudIdx * 189.0f, 0.0f, 189.0f, 144.0f };
+                Rectangle destCloud = { colX + driftX, rowY + driftY, 215.0f, 155.0f };
+
+                DrawTexturePro(texSoft, srcCloud, destCloud, { 0, 0 }, 0.0f, Color{ 230, 238, 255, 255 });
+            }
+        }
+    } else if (m_texFog.id != 0) {
+        for (int r = 0; r < 6; ++r) {
+            float rowY = -20.0f + r * 105.0f;
+            float driftX = sinf(m_fogTimer * 0.8f + (float)r * 1.3f) * 16.0f;
+            float driftY = cosf(m_fogTimer * 1.1f + (float)r * 0.9f) * 6.0f;
+
+            for (float colX = m_fogStartX - 30.0f; colX <= 850.0f; colX += 200.0f) {
+                Rectangle srcRect = { 0.0f, 0.0f, (float)m_texFog.width * 0.35f, (float)m_texFog.height };
+                Rectangle destRect = { colX + driftX, rowY + driftY, 260.0f, 160.0f };
+                DrawTexturePro(m_texFog, srcRect, destRect, { 0, 0 }, 0.0f, Color{ 220, 230, 250, 255 });
+            }
+        }
+    } else {
+        // Fallback procedural fog
+        for (int r = 0; r < 6; ++r) {
+            float rowY = 50.0f + r * 100.0f;
+            float driftX = sinf(m_fogTimer + (float)r) * 12.0f;
+            DrawRectangleGradientH(
+                (int)(m_fogStartX + driftX - 40.0f), (int)rowY,
+                (int)(900.0f - m_fogStartX + 40.0f), 110,
+                ColorAlpha(LIGHTGRAY, 0.0f), ColorAlpha(LIGHTGRAY, 1.0f)
+            );
+        }
+    }
+}
+
+void Level4::run() {
     SetUIInteractionEnabled(true);
     AudioManager::GetInstance().PlayMusic(MusicTrack::None);
     while (!WindowShouldClose()) {
