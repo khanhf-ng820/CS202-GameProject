@@ -28,6 +28,8 @@ LevelSelectMenu::LevelSelectMenu(Resources& res)
     m_specialFrame    = res.GetTexture("LEVELSELECT_LEVELPANELSPECIALFRAME");
     m_specialFrameRip = res.GetTexture("LEVELSELECT_LEVELPANELSPECIALFRAME_RIP");
     m_cloudyFrame     = res.GetTexture("LEVELSELECT_LEVELPANELCLOUDYFRAME");
+    m_groundDay       = res.GetTexture("ALMANAC_GROUNDDAY");
+    m_groundNight     = res.GetTexture("ALMANAC_GROUNDNIGHT");
 
     m_btnIndex    = res.GetTexture("ALMANAC_INDEXBUTTON");
     m_btnIndexHl  = res.GetTexture("ALMANAC_INDEXBUTTONHIGHLIGHT");
@@ -211,7 +213,30 @@ void LevelSelectMenu::drawLevelCards(Vector2 mousePos) {
         float cardX = startX + (float)i * spacing;
         Color tint = cards[i].active ? WHITE : Color{ 160, 160, 160, 255 };
 
-        // 1. Draw LevelSelect_LevelPanelFrame.png (Base Body)
+        // 1. Draw Ground Texture in rectangular upper window (Layer 1)
+        Texture2D groundTex = (m_stageMode == LevelStageMode::Day) ? m_groundDay : m_groundNight;
+        if (groundTex.id != 0) {
+            float holeX = 120.0f * (cardW / 1118.0f);
+            float holeY = 118.0f * (cardW / 1118.0f);
+            float holeW = 872.0f * (cardW / 1118.0f);
+            float holeH = 464.0f * (cardW / 1118.0f);
+            Rectangle groundRect = {
+                cardX + holeX - 1.0f,
+                cardY + specH - overlap + holeY - 1.0f,
+                holeW + 2.0f,
+                holeH + 2.0f
+            };
+            DrawTexturePro(
+                groundTex,
+                Rectangle{ 0.0f, 0.0f, (float)groundTex.width, (float)groundTex.height },
+                groundRect,
+                Vector2{ 0.0f, 0.0f },
+                0.0f,
+                tint
+            );
+        }
+
+        // 2. Draw LevelSelect_LevelPanelFrame.png (Base Body - Layer 2)
         Rectangle panelRect = { cardX, cardY + specH - overlap, cardW, panH };
         if (m_panelFrame.id != 0) {
             DrawTexturePro(
@@ -224,7 +249,7 @@ void LevelSelectMenu::drawLevelCards(Vector2 mousePos) {
             );
         }
 
-        // 2. Draw LevelSelect_LevelPanelSpecialFrame(_Rip).png (Top Cap connected seamlessly)
+        // 3. Draw LevelSelect_LevelPanelSpecialFrame(_Rip).png (Top Cap connected seamlessly)
         Rectangle specialRect = { cardX + dx, cardY, specW, specH };
         Texture2D topCapTex = cards[i].active ? m_specialFrame : m_specialFrameRip;
         if (topCapTex.id != 0) {

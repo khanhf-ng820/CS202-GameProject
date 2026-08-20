@@ -58,6 +58,8 @@ private:
     Texture2D m_specialFrame;
     Texture2D m_specialFrameRip;
     Texture2D m_cloudyFrame;
+    Texture2D m_groundDay;
+    Texture2D m_groundNight;
 
     // UI Buttons (Back / Play)
     Texture2D m_btnIndex;
