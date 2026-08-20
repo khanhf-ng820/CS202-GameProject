@@ -1,4 +1,5 @@
 #include "FirePea.h"
+#include "AudioManager.h"
 
 FirePea::FirePea(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 175, "FirePea") {
@@ -27,6 +28,7 @@ void FirePea::update(float deltaTime, std::vector<Projectile>& outProjectiles, s
         Projectile p(m_x + 60, m_y + 15, 450.0f, tex);
         p.setFire(true);
         outProjectiles.push_back(p);
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/firepea.ogg"));
         did_shoot = true;
     }
 

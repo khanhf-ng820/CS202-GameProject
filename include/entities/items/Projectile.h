@@ -15,6 +15,7 @@ private:
     bool m_isSnow;
     bool m_isFire = false;
     bool m_isMelon = false;
+    bool m_isButter = false;
     bool m_isLobbed;
     float m_range;
     float m_maxHeight;
@@ -61,6 +62,8 @@ public:
     bool isFire() const { return m_isFire; }
     bool isMelon() const { return m_isMelon; }
     void setMelon(bool is) { m_isMelon = is; }
+    bool isButter() const { return m_isButter; }
+    void setButter(bool is) { m_isButter = is; }
     bool isLobbed() const { return m_isLobbed; }
     void setFire(bool is) {
         if (is) {

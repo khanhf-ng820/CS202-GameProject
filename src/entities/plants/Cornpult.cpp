@@ -1,4 +1,5 @@
 #include "Cornpult.h"
+#include "AudioManager.h"
 #include <cstdlib>
 #include <cmath>
 #include <algorithm>
@@ -73,7 +74,10 @@ void Cornpult::update(float deltaTime, std::vector<Projectile>& outProjectiles, 
         const float launchSpeed = std::max(300.0f, ComputeLobbedArcLength(travelDistance, 150.0f)) * 0.5f;
         int dmg = isButter ? 40 : 20;
 
-        outProjectiles.push_back(Projectile(m_x + 90, m_y - 60, launchSpeed, tex, isButter, true, 1.0f, dmg, &res, travelDistance));
+        Projectile cornProj(m_x + 90, m_y - 60, launchSpeed, tex, isButter, true, 1.0f, dmg, &res, travelDistance);
+        cornProj.setButter(isButter);
+        outProjectiles.push_back(cornProj);
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(isButter ? "assets/sounds/kernelpult2.ogg" : "assets/sounds/kernelpult.ogg"));
         did_shoot = true;
     }
 

@@ -46,6 +46,8 @@ void AudioManager::PlayMusic(MusicTrack track) {
         soundPath = res.GetAssetPath("assets/sounds/shop.ogg");
     } else if (track == MusicTrack::Vasebreaker) {
         soundPath = res.GetAssetPath("assets/sounds/moongrains.ogg");
+    } else if (track == MusicTrack::DayLevel) {
+        soundPath = res.GetAssetPath("assets/sounds/grasswalk.ogg");
     }
 
     if (!soundPath.empty()) {
@@ -89,12 +91,88 @@ void AudioManager::SetSoundVolume(float volume) {
     }
 }
 
+#include <cmath>
+#include <cstdlib>
+#include <cstring>
+#include <algorithm>
+
+namespace {
+Sound LoadSoundTrimmed(const char* fileName, float thresholdRatio = 0.02f) {
+    Wave wave = LoadWave(fileName);
+    if (wave.data == nullptr || wave.frameCount == 0) {
+        return LoadSound(fileName);
+    }
+
+    int firstSample = 0;
+    int channels = (int)wave.channels;
+    if (channels <= 0) channels = 1;
+
+    if (wave.sampleSize == 16) {
+        short* samples = (short*)wave.data;
+        short threshold = (short)(32767.0f * thresholdRatio);
+        for (unsigned int f = 0; f < wave.frameCount; ++f) {
+            for (int c = 0; c < channels; ++c) {
+                if (std::abs((int)samples[f * channels + c]) > threshold) {
+                    firstSample = (int)f;
+                    goto found;
+                }
+            }
+        }
+    } else if (wave.sampleSize == 32) {
+        float* samples = (float*)wave.data;
+        for (unsigned int f = 0; f < wave.frameCount; ++f) {
+            for (int c = 0; c < channels; ++c) {
+                if (std::fabs(samples[f * channels + c]) > thresholdRatio) {
+                    firstSample = (int)f;
+                    goto found;
+                }
+            }
+        }
+    } else if (wave.sampleSize == 8) {
+        unsigned char* samples = (unsigned char*)wave.data;
+        int threshold = (int)(127.0f * thresholdRatio);
+        for (unsigned int f = 0; f < wave.frameCount; ++f) {
+            for (int c = 0; c < channels; ++c) {
+                if (std::abs((int)samples[f * channels + c] - 128) > threshold) {
+                    firstSample = (int)f;
+                    goto found;
+                }
+            }
+        }
+    }
+
+found:
+    if (firstSample > 0 && firstSample < (int)wave.frameCount) {
+        Wave trimmed;
+        trimmed.frameCount = wave.frameCount - (unsigned int)firstSample;
+        trimmed.sampleRate = wave.sampleRate;
+        trimmed.sampleSize = wave.sampleSize;
+        trimmed.channels = wave.channels;
+
+        unsigned int bytesPerFrame = (unsigned int)wave.channels * (wave.sampleSize / 8);
+        unsigned int dataSize = trimmed.frameCount * bytesPerFrame;
+        trimmed.data = MemAlloc(dataSize);
+        if (trimmed.data != nullptr) {
+            memcpy(trimmed.data, (unsigned char*)wave.data + ((size_t)firstSample * bytesPerFrame), dataSize);
+            Sound sound = LoadSoundFromWave(trimmed);
+            UnloadWave(trimmed);
+            UnloadWave(wave);
+            return sound;
+        }
+    }
+
+    Sound sound = LoadSoundFromWave(wave);
+    UnloadWave(wave);
+    return sound;
+}
+}
+
 void AudioManager::PlaySoundEffect(const std::string& soundPath) {
     if (!m_isAudioInit || soundPath.empty()) return;
     auto it = m_sounds.find(soundPath);
     if (it == m_sounds.end()) {
         if (FileExists(soundPath.c_str())) {
-            Sound sound = LoadSound(soundPath.c_str());
+            Sound sound = LoadSoundTrimmed(soundPath.c_str());
             if (sound.stream.buffer != nullptr) {
                 ::SetSoundVolume(sound, m_sfxVolume);
                 m_sounds[soundPath] = sound;

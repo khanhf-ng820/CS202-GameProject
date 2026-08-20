@@ -7,7 +7,8 @@ enum class MusicTrack {
     None,
     MainMenu,
     ShopMenu,
-    Vasebreaker
+    Vasebreaker,
+    DayLevel
 };
 
 class AudioManager {

@@ -9,6 +9,7 @@
 #include "Projectile.h"
 #include "SunItem.h"
 #include "InGameMenu.h"
+#include "Reanimation.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -16,6 +17,7 @@
 enum class LevelPhase {
     SeedSelection,
     PanToLawn,
+    ReadySetPlant,
     ActiveWave
 };
 
@@ -41,6 +43,10 @@ private:
     float m_cameraCropX = 500.0f;
     float m_panTimer = 0.0f;
     float m_panDuration = 2.5f;
+
+    // Intro "READY... SET... PLANT!" animation
+    Reanimation m_readySetPlantAnim;
+    float m_readySetPlantTimer = 0.0f;
 
     // 5x9 Lawn Grid for plant placement
     std::unique_ptr<Plant> m_grid[5][9];
@@ -82,4 +88,5 @@ private:
     void createFireSplat(float x, float y);
     void createEatingParticle(float x, float y);
     void updateCollisions(float dt);
+    void drawProgressBar();
 };

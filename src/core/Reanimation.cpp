@@ -667,3 +667,20 @@ Rectangle Reanimation::GetTrackBounds(const std::string& trackName, float x, flo
     return {0, 0, 0, 0};  // Track not found
 }
 
+bool Reanimation::GetTrackTransform(const std::string& trackName, float& outX, float& outY, float& outRotDeg) const {
+    int currentFrame = GetCurrentFrame();
+    for (const auto& track : m_def.tracks) {
+        if (track.name == trackName) {
+            if (currentFrame >= 0 && currentFrame < (int)track.keyframes.size()) {
+                ReanimKeyframe kf = GetInterpolatedKeyframe(track, m_currentFrameFloat, m_currentAnimIndex);
+                outX = kf.x;
+                outY = kf.y;
+                outRotDeg = kf.kx;
+                return true;
+            }
+            break;
+        }
+    }
+    return false;
+}
+

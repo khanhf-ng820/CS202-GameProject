@@ -1,4 +1,5 @@
 #include "NewspaperZombie.h"
+#include "AudioManager.h"
 #include "rlgl.h"
 #include <algorithm>
 
@@ -25,6 +26,9 @@ void NewspaperZombie::takeDamage(float damage) {
         m_anim.SetBaseAnimation("anim_gasp");
         m_anim.OverrideTrackImage("anim_head1", "ZOMBIE_PAPER_MADHEAD");
         m_anim.OverrideTrackImage("anim_head_look", "ZOMBIE_PAPER_MADHEAD");
+
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/newspaper_rip.ogg"));
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(GetRandomValue(0, 1) ? "assets/sounds/newspaper_rarrgh.ogg" : "assets/sounds/newspaper_rarrgh2.ogg"));
 
         Resources& res = Resources::GetInstance();
         

@@ -1,4 +1,5 @@
 #include "Melonpult.h"
+#include "AudioManager.h"
 
 namespace {
 float ComputeLobbedArcLength(float range, float maxHeight) {
@@ -69,6 +70,7 @@ void Melonpult::update(float deltaTime, std::vector<Projectile>& outProjectiles,
         Projectile melonProj(m_x + 90, m_y - 60, launchSpeed, tex, false, true, 1.0f, 80, &res, travelDistance); // Parabolic trajectory
         melonProj.setMelon(true);
         outProjectiles.push_back(melonProj);
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/throw.ogg"));
         did_shoot = true;
     }
 

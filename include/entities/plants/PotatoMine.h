@@ -15,7 +15,7 @@ private:
     float m_armTimer = 0.0f;
     float m_explodeTimer = 0.0f;
     bool m_hasDealtDamage = false;
-    static constexpr float ARM_DELAY = 14.0f; // Seconds before the mine becomes active
+    static constexpr float ARM_DELAY = 3.0f; // Seconds before the mine becomes active
 
 public:
     PotatoMine(Resources& res, int x, int y);

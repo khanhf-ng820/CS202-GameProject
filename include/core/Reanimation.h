@@ -47,6 +47,7 @@ public:
     // Get the bounding rectangle of a named track at the current frame,
     // given the draw position and scale. Returns {0,0,0,0} if track not found/hidden.
     Rectangle GetTrackBounds(const std::string& trackName, float x, float y, float scale) const;
+    bool GetTrackTransform(const std::string& trackName, float& outX, float& outY, float& outRotDeg) const;
 
 private:
     void PopulateAnimations();

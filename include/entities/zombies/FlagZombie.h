@@ -11,6 +11,7 @@ public:
     void draw() override;
 
 private:
+    Reanimation m_flagAnim;
     std::vector<FallingPart> m_fallingParts;
     bool m_hasSpawnedDeathParts = false;
     bool m_hasLostArm = false;
