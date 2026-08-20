@@ -420,8 +420,8 @@ void MainMenu::draw() {
 
     // --- Draw current active user name on the WoodSign plaque (Green color, placed inside plaque) ---
     std::string activeUser = ProfileManager::GetInstance().GetActiveUserName();
-    Rectangle userShadowRect = { 27.0f, 126.0f, 287.0f, 36.0f };
-    Rectangle userTextRect   = { 25.0f, 124.0f, 287.0f, 36.0f };
+    Rectangle userShadowRect = { 27.0f, 78.0f, 287.0f, 36.0f };
+    Rectangle userTextRect   = { 25.0f, 76.0f, 287.0f, 36.0f };
     m_font.DrawTextCentered(activeUser.c_str(), userShadowRect, 0.85f, ColorAlpha(BLACK, 0.8f));
     m_font.DrawTextCentered(activeUser.c_str(), userTextRect, 0.85f, Color{ 100, 255, 100, 255 });
 
