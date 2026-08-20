@@ -2,6 +2,7 @@
 #include "UIHelpers.h"
 #include "AudioManager.h"
 #include <algorithm>
+#include <random>
 #include <cmath>
 
 VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
@@ -20,21 +21,35 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     m_previewPlantAnim.SetResources(peaDef, res);
     m_previewPlantAnim.SetBaseAnimation("anim_idle");
     m_previewPlantAnim.SetAnimation("anim_head_idle");
+    m_previewPlantAnim.SetTrackVisible("idle_headleaf_farthest", false);
+    m_previewPlantAnim.SetTrackVisible("idle_headleaf_3rdfarthest", false);
+    m_previewPlantAnim.SetTrackVisible("idle_headleaf_nearest", false);
+    m_previewPlantAnim.SetTrackVisible("idle_headleaf_tip_top", false);
+    m_previewPlantAnim.SetTrackVisible("PeaShooter_eyebrow", false);
 
-    // Preload textures
-    std::string potPath = res.GetAssetPath("assets/images/Scary_Pot.png");
-    res.LoadFile(potPath);
-    std::string chunksPath = res.GetAssetPath("assets/particles/vase_chunks.png");
-    res.LoadFile(chunksPath);
-    std::string repeaterCardPath = res.GetAssetPath("assets/PlantSeedPackets/REPEATER.png");
-    res.LoadFile(repeaterCardPath);
+    // Preload textures & reanims
+    res.LoadFile(res.GetAssetPath("assets/images/Scary_Pot.png"));
+    res.LoadFile(res.GetAssetPath("assets/particles/vase_chunks.png"));
+    res.LoadFile(res.GetAssetPath("assets/PlantSeedPackets/PeaShooter.png"));
+    res.LoadFile(res.GetAssetPath("assets/PlantSeedPackets/REPEATER.png"));
+    res.LoadFile(res.GetAssetPath("assets/PlantSeedPackets/SNOWPEA.png"));
+    res.LoadFile(res.GetAssetPath("assets/PlantSeedPackets/WALLNUT.png"));
+    res.LoadFile(res.GetAssetPath("assets/images/ProjectilePea.png"));
+    res.LoadFile(res.GetAssetPath("assets/images/ProjectileSnowPea.png"));
+
+    // Preload sounds
+    res.GetAssetPath("assets/sounds/groan.ogg");
+    res.GetAssetPath("assets/sounds/vase_breaking.ogg");
+    res.GetAssetPath("assets/sounds/seedlift.ogg");
+    res.GetAssetPath("assets/sounds/plant.ogg");
+    res.GetAssetPath("assets/sounds/tap.ogg");
 
     // Populate initial vases
     spawnVases();
 }
 
 void VasebreakerLevel::spawnVases() {
-    // Clear all cells
+    // Clear all cells and active entities
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             m_vases[r][c].reset();
@@ -45,8 +60,32 @@ void VasebreakerLevel::spawnVases() {
     m_selectedPacketIndex = -1;
     m_projectiles.clear();
     m_shards.clear();
+    m_zombies.clear();
 
-    // Populate columns 6, 7, 8 across all 5 rows
+    // Classic Introductory Pool for the 13 Brown Vases:
+    // 7 Plants (4x PeaShooter, 2x SnowPea, 1x Wallnut)
+    // 6 Zombies (5x ZombieNormal, 1x ConeheadZombie)
+    std::vector<VaseContent> brownPool = {
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "SnowPea" },
+        { VaseContentKind::Plant,  "SnowPea" },
+        { VaseContentKind::Plant,  "Wallnut" }
+    };
+
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(brownPool.begin(), brownPool.end(), g);
+
+    // Populate columns 6, 7, 8 across all 5 rows (15 vases total)
     for (int r = 0; r < 5; ++r) {
         for (int c = 6; c < 9; ++c) {
             float cellX = 140.0f + (c == 0 ? 0.0f : 80.0f + (c - 1) * 70.0f);
@@ -59,9 +98,13 @@ void VasebreakerLevel::spawnVases() {
             float vaseY = centerY - 50.0f;
 
             if ((r == 1 && c == 7) || (r == 3 && c == 7)) {
-                m_vases[r][c] = std::make_unique<GreenVase>(r, c, vaseX, vaseY);
+                // 2 Guaranteed Green Vases containing Repeater
+                m_vases[r][c] = std::make_unique<GreenVase>(r, c, vaseX, vaseY, VaseContent{ VaseContentKind::Plant, "Repeater" });
             } else {
-                m_vases[r][c] = std::make_unique<BrownVase>(r, c, vaseX, vaseY);
+                // 13 Brown Vases with randomized shuffled contents
+                VaseContent content = brownPool.back();
+                brownPool.pop_back();
+                m_vases[r][c] = std::make_unique<BrownVase>(r, c, vaseX, vaseY, content);
             }
         }
     }
@@ -71,6 +114,10 @@ void VasebreakerLevel::breakVase(int row, int col) {
     if (row < 0 || row >= 5 || col < 0 || col >= 9 || !m_vases[row][col]) return;
 
     VaseType vType = m_vases[row][col]->getType();
+    VaseContent content = m_vases[row][col]->getContent();
+    float vaseX = m_vases[row][col]->getX();
+    float vaseY = m_vases[row][col]->getY();
+
     m_vases[row][col]->destroy();
 
     // Play shattering sound effect
@@ -79,8 +126,8 @@ void VasebreakerLevel::breakVase(int row, int col) {
 
     // Determine shard texture row (0 for Brown Mystery Vase, 1 for Green Leaf Vase)
     int shardRow = (vType == VaseType::Green) ? 1 : 0;
-    float cx = m_vases[row][col]->getX() + 40.0f;
-    float cy = m_vases[row][col]->getY() + 50.0f;
+    float cx = vaseX + 40.0f;
+    float cy = vaseY + 50.0f;
     float groundY = cy + 35.0f;
 
     // Spawn 16 ceramic shards
@@ -95,15 +142,16 @@ void VasebreakerLevel::breakVase(int row, int col) {
         shard.rotation = (float)GetRandomValue(0, 360);
         shard.rotSpeed = (float)GetRandomValue(-720, 720);
         shard.groundY = groundY + (float)GetRandomValue(-8, 8);
-        shard.maxLifetime = (float)GetRandomValue(70, 95) / 100.0f; // 0.70s to 0.95s
+        shard.maxLifetime = (float)GetRandomValue(70, 95) / 100.0f;
         shard.lifetime = shard.maxLifetime;
         shard.frameCol = GetRandomValue(0, 8);
         shard.frameRow = shardRow;
         m_shards.push_back(shard);
     }
 
-    // If a Green Vase is destroyed, spawn and drop a "Repeater" plant seed packet card
-    if (vType == VaseType::Green) {
+    // Process Vase Content:
+    if (content.kind == VaseContentKind::Plant) {
+        // Spawn and drop a plant seed packet card
         DroppedSeedPacket packet;
         packet.width = 50.0f;
         packet.height = 70.0f;
@@ -112,8 +160,32 @@ void VasebreakerLevel::breakVase(int row, int col) {
         packet.y = packet.startY;
         packet.groundY = cy - packet.height / 2.0f + 10.0f;
         packet.vy = -120.0f; // slight upward pop
-        packet.plantType = "Repeater";
+        packet.plantType = content.name;
         m_droppedPackets.push_back(packet);
+    } else if (content.kind == VaseContentKind::Zombie) {
+        // Spawn zombie at the broken vase's tile coordinates
+        float spawnY = 45.0f + row * 100.0f;
+        if (content.name == "ConeheadZombie") {
+            m_zombies.push_back(std::make_unique<ConeheadZombie>(res, vaseX, spawnY));
+        } else {
+            m_zombies.push_back(std::make_unique<ZombieNormal>(res, vaseX, spawnY));
+        }
+
+        // Play zombie emergence groan sound
+        std::string groanSound = res.GetAssetPath("assets/sounds/groan.ogg");
+        AudioManager::GetInstance().PlaySoundEffect(groanSound);
+    }
+}
+
+void VasebreakerLevel::createPlant(const std::string& type, int row, int col, int pixelX, int pixelY) {
+    if (type == "PeaShooter") {
+        m_plants[row][col] = std::make_unique<PeaShooter>(res, pixelX, pixelY);
+    } else if (type == "Repeater") {
+        m_plants[row][col] = std::make_unique<Repeater>(res, pixelX, pixelY);
+    } else if (type == "SnowPea") {
+        m_plants[row][col] = std::make_unique<SnowPea>(res, pixelX, pixelY);
+    } else if (type == "Wallnut") {
+        m_plants[row][col] = std::make_unique<Wallnut>(res, pixelX, pixelY);
     }
 }
 
@@ -165,6 +237,32 @@ void VasebreakerLevel::update(float dt) {
                     // Select card for planting
                     m_selectedPacketIndex = i;
                     AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/seedlift.ogg"));
+
+                    // Update preview plant animation to match the selected plant type
+                    std::string pType = m_droppedPackets[i].plantType;
+                    std::string animFile = "PeaShooter.reanim";
+                    if (pType == "SnowPea") animFile = "SnowPea.reanim";
+                    else if (pType == "Wallnut") animFile = "Wallnut.reanim";
+
+                    std::string reanimPath = res.GetAssetPath("assets/reanim/" + animFile);
+                    ReanimDefinition pDef = res.LoadReanim(reanimPath);
+                    m_previewPlantAnim.SetResources(pDef, res);
+                    m_previewPlantAnim.SetBaseAnimation("anim_idle");
+                    m_previewPlantAnim.SetAnimation((pType == "Wallnut") ? "anim_idle" : "anim_head_idle");
+
+                    if (pType == "PeaShooter") {
+                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_farthest", false);
+                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_3rdfarthest", false);
+                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_nearest", false);
+                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_tip_top", false);
+                        m_previewPlantAnim.SetTrackVisible("PeaShooter_eyebrow", false);
+                    } else if (pType == "Repeater") {
+                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_farthest", true);
+                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_3rdfarthest", true);
+                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_nearest", true);
+                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_tip_top", true);
+                        m_previewPlantAnim.SetTrackVisible("PeaShooter_eyebrow", true);
+                    }
                 }
                 handledCardClick = true;
                 break;
@@ -172,7 +270,7 @@ void VasebreakerLevel::update(float dt) {
         }
 
         if (!handledCardClick) {
-            if (m_selectedPacketIndex >= 0) {
+            if (m_selectedPacketIndex >= 0 && m_selectedPacketIndex < (int)m_droppedPackets.size()) {
                 // 2. A card is selected: try placing plant on an empty lawn tile
                 int plantRow, plantCol;
                 if (getGridCell(mousePos, plantRow, plantCol)) {
@@ -181,13 +279,13 @@ void VasebreakerLevel::update(float dt) {
                     if (tileEmpty) {
                         float cellX = 140.0f + (plantCol == 0 ? 0.0f : 80.0f + (plantCol - 1) * 70.0f);
                         float cellY = 80.0f + plantRow * 100.0f;
-                        m_plants[plantRow][plantCol] = std::make_unique<Repeater>(res, (int)cellX, (int)cellY);
+                        std::string plantType = m_droppedPackets[m_selectedPacketIndex].plantType;
+
+                        createPlant(plantType, plantRow, plantCol, (int)cellX, (int)cellY);
                         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant.ogg"));
 
                         // Consume and remove the dropped card
-                        if (m_selectedPacketIndex >= 0 && m_selectedPacketIndex < (int)m_droppedPackets.size()) {
-                            m_droppedPackets.erase(m_droppedPackets.begin() + m_selectedPacketIndex);
-                        }
+                        m_droppedPackets.erase(m_droppedPackets.begin() + m_selectedPacketIndex);
                         m_selectedPacketIndex = -1;
                     }
                     // If tile is occupied by an intact vase or existing plant, ignore placement and keep card selected
@@ -253,13 +351,16 @@ void VasebreakerLevel::update(float dt) {
                     }
                 }
 
-                if (hasZombieInRow) {
-                    if (m_plants[r][c]->getAnim().GetCurrentAnimName() != "anim_shooting") {
-                        m_plants[r][c]->SetAnimation("anim_shooting");
-                    }
-                } else {
-                    if (m_plants[r][c]->getAnim().GetCurrentAnimName() == "anim_shooting") {
-                        m_plants[r][c]->SetAnimation("anim_head_idle");
+                std::string pName = m_plants[r][c]->getName();
+                if (pName != "Wallnut") {
+                    if (hasZombieInRow) {
+                        if (m_plants[r][c]->getAnim().GetCurrentAnimName() != "anim_shooting") {
+                            m_plants[r][c]->SetAnimation("anim_shooting");
+                        }
+                    } else {
+                        if (m_plants[r][c]->getAnim().GetCurrentAnimName() == "anim_shooting") {
+                            m_plants[r][c]->SetAnimation("anim_head_idle");
+                        }
                     }
                 }
 
@@ -287,7 +388,7 @@ void VasebreakerLevel::update(float dt) {
                 int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
                 int pRow = (int)((p.getY() - 80.0f + 50.0f) / 100.0f);
                 if (zRow == pRow && fabsf(p.getX() - (z->getX() + 40.0f)) < 30.0f) {
-                    z->takeDamage(20.0f);
+                    z->takeDamage((float)p.getDamage());
                     p.deactivate();
                     AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/splat.ogg"));
                     break;
@@ -327,7 +428,7 @@ void VasebreakerLevel::update(float dt) {
         m_shards.end()
     );
 
-    // Right-click a tile in a lane to spawn a ZombieNormal
+    // Right-click a tile in a lane to spawn a ZombieNormal (for foundation testing)
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         int row, col;
         if (getGridCell(mousePos, row, col)) {

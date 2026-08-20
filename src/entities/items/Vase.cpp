@@ -1,7 +1,7 @@
 #include "Vase.h"
 
-Vase::Vase(int row, int col, float x, float y, VaseType type)
-    : m_row(row), m_col(col), m_x(x), m_y(y), m_type(type), m_state(VaseState::Intact) {
+Vase::Vase(int row, int col, float x, float y, VaseType type, VaseContent content)
+    : m_row(row), m_col(col), m_x(x), m_y(y), m_type(type), m_state(VaseState::Intact), m_content(content) {
 }
 
 void Vase::draw(Resources& res) const {
@@ -35,10 +35,10 @@ void Vase::draw(Resources& res) const {
     }
 }
 
-BrownVase::BrownVase(int row, int col, float x, float y)
-    : Vase(row, col, x, y, VaseType::Brown) {
+BrownVase::BrownVase(int row, int col, float x, float y, VaseContent content)
+    : Vase(row, col, x, y, VaseType::Brown, content) {
 }
 
-GreenVase::GreenVase(int row, int col, float x, float y)
-    : Vase(row, col, x, y, VaseType::Green) {
+GreenVase::GreenVase(int row, int col, float x, float y, VaseContent content)
+    : Vase(row, col, x, y, VaseType::Green, content) {
 }

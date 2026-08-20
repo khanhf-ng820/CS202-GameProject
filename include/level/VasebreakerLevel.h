@@ -3,15 +3,20 @@
 #include "resources.h"
 #include "Zombie.h"
 #include "ZombieNormal.h"
+#include "ConeheadZombie.h"
 #include "Reanimation.h"
 #include "Vase.h"
 #include "Plant.h"
+#include "PeaShooter.h"
 #include "Repeater.h"
+#include "SnowPea.h"
+#include "Wallnut.h"
 #include "Projectile.h"
 #include "SunItem.h"
 #include <vector>
 #include <memory>
 #include <string>
+#include <cctype>
 
 struct VaseShard {
     float x;
@@ -35,7 +40,7 @@ struct DroppedSeedPacket {
     float vy;
     float width;
     float height;
-    std::string plantType; // e.g. "Repeater"
+    std::string plantType; // e.g. "PeaShooter", "SnowPea", "Wallnut", "Repeater"
 
     bool isClicked(Vector2 mousePos) const {
         return CheckCollisionPointRec(mousePos, { x, y, width, height });
@@ -53,12 +58,15 @@ struct DroppedSeedPacket {
     }
 
     void draw(Resources& res, bool isSelected) const {
-        Texture2D cardTex = res.GetTexture(plantType);
-        if (cardTex.id == 0) cardTex = res.GetTexture("REPEATER");
+        std::string upperType = plantType;
+        for (auto& c : upperType) c = toupper((unsigned char)c);
+        Texture2D cardTex = res.GetTexture(upperType);
+        if (cardTex.id == 0) cardTex = res.GetTexture(plantType);
         if (cardTex.id == 0) {
-            std::string path = res.GetAssetPath("assets/PlantSeedPackets/REPEATER.png");
+            std::string path = res.GetAssetPath("assets/PlantSeedPackets/" + plantType + ".png");
             res.LoadFile(path);
-            cardTex = res.GetTexture("REPEATER");
+            cardTex = res.GetTexture(upperType);
+            if (cardTex.id == 0) cardTex = res.GetTexture(plantType);
         }
 
         // Draw shadow / glow backing
@@ -136,4 +144,5 @@ private:
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     void spawnVases();
     void breakVase(int row, int col);
+    void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
 };
