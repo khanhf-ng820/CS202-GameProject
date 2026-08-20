@@ -155,3 +155,12 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 ## 🖼️ UI Layout Visual Review & Verification Invariant
 
 *   **Generate Test Images for Layout Reviews:** When dealing with or modifying UI layouts, background scenery composition, coordinate adjustments, button sizing, or asset placement, the agent MUST generate a visual test image (e.g., using Python/PIL to composite layers and typography into the artifact `scratch/` directory). Embed this test preview image directly into the implementation plan or response, and proactively ask the user to inspect the preview and provide feedback or approval before or during execution.
+
+---
+
+## ⚡ Reanimation Engine & Hot-Loop Memory Safety Rules
+
+*   **Zero-Allocation Keyframe Interpolation Invariant:** Never return owning containers with heap allocations (such as `std::string` exceeding SSO capacity) by value in per-frame animation loops (`GetInterpolatedKeyframe`). Keyframe interpolation must only compute and copy numeric transform fields (`x`, `y`, `sx`, `sy`, `kx`, `ky`, `f`) with `imageName` left default-constructed (0 heap allocations). Texture image names must always be resolved independently by traversing `track.keyframes`.
+*   **Defensive Keyframe Vector Index Clamping:** When iterating keyframe arrays in `GetLoopStartTime`, `BakeChildRotation`, or custom animation tracks, always clamp `startFrame = std::max(0, startFrame)` and guard `startFrame > endFrame`. Unchecked negative indexing into `track.keyframes` causes heap corruption before the vector buffer allocation.
+*   **De-duplicate Per-Frame Track Overrides:** In 60 FPS update loops (such as mouse hover checks in `MainMenu::update`), never unconditionally insert or erase from `m_trackImageOverrides` map. Check `if (it != m_trackImageOverrides.end() && it->second == newImage) return;` to avoid constant map rehashing and string allocations.
+

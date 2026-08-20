@@ -14,11 +14,20 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     m_malletAnim.SetFrame(14.0f); // Resting upright angle
     m_malletAnim.SetPaused(true);
 
+    // Initialize plant placement preview reanimation
+    std::string peaPath = res.GetAssetPath("assets/reanim/PeaShooter.reanim");
+    ReanimDefinition peaDef = res.LoadReanim(peaPath);
+    m_previewPlantAnim.SetResources(peaDef, res);
+    m_previewPlantAnim.SetBaseAnimation("anim_idle");
+    m_previewPlantAnim.SetAnimation("anim_head_idle");
+
     // Preload textures
     std::string potPath = res.GetAssetPath("assets/images/Scary_Pot.png");
     res.LoadFile(potPath);
     std::string chunksPath = res.GetAssetPath("assets/particles/vase_chunks.png");
     res.LoadFile(chunksPath);
+    std::string repeaterCardPath = res.GetAssetPath("assets/PlantSeedPackets/REPEATER.png");
+    res.LoadFile(repeaterCardPath);
 
     // Populate initial vases
     spawnVases();
@@ -29,8 +38,13 @@ void VasebreakerLevel::spawnVases() {
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             m_vases[r][c].reset();
+            m_plants[r][c].reset();
         }
     }
+    m_droppedPackets.clear();
+    m_selectedPacketIndex = -1;
+    m_projectiles.clear();
+    m_shards.clear();
 
     // Populate columns 6, 7, 8 across all 5 rows
     for (int r = 0; r < 5; ++r) {
@@ -56,6 +70,7 @@ void VasebreakerLevel::spawnVases() {
 void VasebreakerLevel::breakVase(int row, int col) {
     if (row < 0 || row >= 5 || col < 0 || col >= 9 || !m_vases[row][col]) return;
 
+    VaseType vType = m_vases[row][col]->getType();
     m_vases[row][col]->destroy();
 
     // Play shattering sound effect
@@ -63,7 +78,7 @@ void VasebreakerLevel::breakVase(int row, int col) {
     AudioManager::GetInstance().PlaySoundEffect(shatterSound);
 
     // Determine shard texture row (0 for Brown Mystery Vase, 1 for Green Leaf Vase)
-    int shardRow = (m_vases[row][col]->getType() == VaseType::Green) ? 1 : 0;
+    int shardRow = (vType == VaseType::Green) ? 1 : 0;
     float cx = m_vases[row][col]->getX() + 40.0f;
     float cy = m_vases[row][col]->getY() + 50.0f;
     float groundY = cy + 35.0f;
@@ -85,6 +100,20 @@ void VasebreakerLevel::breakVase(int row, int col) {
         shard.frameCol = GetRandomValue(0, 8);
         shard.frameRow = shardRow;
         m_shards.push_back(shard);
+    }
+
+    // If a Green Vase is destroyed, spawn and drop a "Repeater" plant seed packet card
+    if (vType == VaseType::Green) {
+        DroppedSeedPacket packet;
+        packet.width = 50.0f;
+        packet.height = 70.0f;
+        packet.x = cx - packet.width / 2.0f;
+        packet.startY = cy - 40.0f;
+        packet.y = packet.startY;
+        packet.groundY = cy - packet.height / 2.0f + 10.0f;
+        packet.vy = -120.0f; // slight upward pop
+        packet.plantType = "Repeater";
+        m_droppedPackets.push_back(packet);
     }
 }
 
@@ -113,23 +142,75 @@ void VasebreakerLevel::update(float dt) {
 
     Vector2 mousePos = GetVirtualMousePosition();
 
-    // Left-click to trigger mallet strike swing animation
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        m_isSwinging = true;
-        m_malletAnim.SetAnimation("anim_open_pot");
-        m_malletAnim.SetFrame(9.0f); // Start of strike swing
-        m_malletAnim.SetSpeed(2.5f); // Fast responsive swing
-        m_malletAnim.SetPaused(false);
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/swing.ogg"));
+    // Update plant preview animation
+    m_previewPlantAnim.Update(dt);
 
-        // Only target ONE vase at a time that is targetable (Intact)
-        int clickRow, clickCol;
-        if (getGridCell(mousePos, clickRow, clickCol)) {
-            if (m_vases[clickRow][clickCol] && m_vases[clickRow][clickCol]->isTargetable() && m_pendingVaseRow == -1) {
-                m_vases[clickRow][clickCol]->setPendingBreak();
-                m_pendingVaseRow = clickRow;
-                m_pendingVaseCol = clickCol;
-                m_pendingVaseTimer = 0.15f; // Mallet strike impact delay
+    // Update dropped seed packet cards
+    for (auto& packet : m_droppedPackets) {
+        packet.update(dt);
+    }
+
+    // Left-click interaction handling
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        bool handledCardClick = false;
+
+        // 1. Check if clicking on any dropped seed packet card
+        for (int i = 0; i < (int)m_droppedPackets.size(); ++i) {
+            if (m_droppedPackets[i].isClicked(mousePos)) {
+                if (m_selectedPacketIndex == i) {
+                    // Click selected card again -> Deselect card and return to mallet mode
+                    m_selectedPacketIndex = -1;
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
+                } else {
+                    // Select card for planting
+                    m_selectedPacketIndex = i;
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/seedlift.ogg"));
+                }
+                handledCardClick = true;
+                break;
+            }
+        }
+
+        if (!handledCardClick) {
+            if (m_selectedPacketIndex >= 0) {
+                // 2. A card is selected: try placing plant on an empty lawn tile
+                int plantRow, plantCol;
+                if (getGridCell(mousePos, plantRow, plantCol)) {
+                    bool tileEmpty = (!m_plants[plantRow][plantCol]) &&
+                                     (!m_vases[plantRow][plantCol] || m_vases[plantRow][plantCol]->isDestroyed());
+                    if (tileEmpty) {
+                        float cellX = 140.0f + (plantCol == 0 ? 0.0f : 80.0f + (plantCol - 1) * 70.0f);
+                        float cellY = 80.0f + plantRow * 100.0f;
+                        m_plants[plantRow][plantCol] = std::make_unique<Repeater>(res, (int)cellX, (int)cellY);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant.ogg"));
+
+                        // Consume and remove the dropped card
+                        if (m_selectedPacketIndex >= 0 && m_selectedPacketIndex < (int)m_droppedPackets.size()) {
+                            m_droppedPackets.erase(m_droppedPackets.begin() + m_selectedPacketIndex);
+                        }
+                        m_selectedPacketIndex = -1;
+                    }
+                    // If tile is occupied by an intact vase or existing plant, ignore placement and keep card selected
+                }
+            } else {
+                // 3. No card selected: standard mallet swing & vase smashing
+                m_isSwinging = true;
+                m_malletAnim.SetAnimation("anim_open_pot");
+                m_malletAnim.SetFrame(9.0f); // Start of strike swing
+                m_malletAnim.SetSpeed(2.5f); // Fast responsive swing
+                m_malletAnim.SetPaused(false);
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/swing.ogg"));
+
+                // Target at most ONE vase that is targetable (Intact)
+                int clickRow, clickCol;
+                if (getGridCell(mousePos, clickRow, clickCol)) {
+                    if (m_vases[clickRow][clickCol] && m_vases[clickRow][clickCol]->isTargetable() && m_pendingVaseRow == -1) {
+                        m_vases[clickRow][clickCol]->setPendingBreak();
+                        m_pendingVaseRow = clickRow;
+                        m_pendingVaseCol = clickCol;
+                        m_pendingVaseTimer = 0.15f; // Mallet strike impact delay
+                    }
+                }
             }
         }
     }
@@ -154,6 +235,73 @@ void VasebreakerLevel::update(float dt) {
             m_pendingVaseTimer = 0.0f;
         }
     }
+
+    // Update active placed plants & targeting logic
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            if (m_plants[r][c] && !m_plants[r][c]->isDead()) {
+                bool hasZombieInRow = false;
+                float plantX = (float)m_plants[r][c]->getX();
+
+                for (const auto& z : m_zombies) {
+                    if (!z->isDead()) {
+                        int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                        if (zRow == r && z->getX() >= plantX - 20.0f && z->getX() <= 800.0f) {
+                            hasZombieInRow = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (hasZombieInRow) {
+                    if (m_plants[r][c]->getAnim().GetCurrentAnimName() != "anim_shooting") {
+                        m_plants[r][c]->SetAnimation("anim_shooting");
+                    }
+                } else {
+                    if (m_plants[r][c]->getAnim().GetCurrentAnimName() == "anim_shooting") {
+                        m_plants[r][c]->SetAnimation("anim_head_idle");
+                    }
+                }
+
+                m_plants[r][c]->update(dt, m_projectiles, m_suns);
+            }
+        }
+    }
+
+    // Clean up dead plants
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            if (m_plants[r][c] && m_plants[r][c]->isDead()) {
+                m_plants[r][c].reset();
+            }
+        }
+    }
+
+    // Update projectiles & projectile-zombie collisions
+    for (auto& p : m_projectiles) {
+        p.update(dt);
+        if (!p.isActive()) continue;
+
+        for (auto& z : m_zombies) {
+            if (!z->isDead()) {
+                int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                int pRow = (int)((p.getY() - 80.0f + 50.0f) / 100.0f);
+                if (zRow == pRow && fabsf(p.getX() - (z->getX() + 40.0f)) < 30.0f) {
+                    z->takeDamage(20.0f);
+                    p.deactivate();
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/splat.ogg"));
+                    break;
+                }
+            }
+        }
+    }
+
+    // Clean up inactive projectiles
+    m_projectiles.erase(
+        std::remove_if(m_projectiles.begin(), m_projectiles.end(),
+            [](const Projectile& p) { return !p.isActive(); }),
+        m_projectiles.end()
+    );
 
     // Update active shards
     for (auto& shard : m_shards) {
@@ -187,13 +335,24 @@ void VasebreakerLevel::update(float dt) {
         }
     }
 
-    // Update active zombies
+    // Update active zombies and zombie-eating-plant interactions
     for (auto& z : m_zombies) {
         if (!z->isFinished()) {
             z->update(dt);
-            // Check loss condition: living zombie advances past the lawn limit into the house
-            if (!z->isDead() && z->getX() < 160.0f) {
-                m_levelLost = true;
+            if (!z->isDead()) {
+                int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                for (int c = 0; c < 9; ++c) {
+                    if (m_plants[zRow][c] && !m_plants[zRow][c]->isDead()) {
+                        float plantX = (float)m_plants[zRow][c]->getX();
+                        if (fabsf(z->getX() - plantX) < 40.0f) {
+                            m_plants[zRow][c]->takeDamage(50.0f * dt);
+                        }
+                    }
+                }
+                // Check loss condition: living zombie reaches house limit
+                if (z->getX() < 160.0f) {
+                    m_levelLost = true;
+                }
             }
         }
     }
@@ -245,10 +404,27 @@ void VasebreakerLevel::draw() {
         float cellY = 80.0f + hoverRow * 100.0f;
         float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
         float cellH = 100.0f;
-        DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+
+        if (m_selectedPacketIndex >= 0) {
+            bool tileEmpty = (!m_plants[hoverRow][hoverCol]) &&
+                             (!m_vases[hoverRow][hoverCol] || m_vases[hoverRow][hoverCol]->isDestroyed());
+            Color outlineColor = tileEmpty ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(RED, 0.6f);
+            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, outlineColor);
+        } else {
+            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+        }
     }
 
-    // 3. Draw active intact & pending vases
+    // 3. Draw active placed plants
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            if (m_plants[r][c] && !m_plants[r][c]->isDead()) {
+                m_plants[r][c]->draw();
+            }
+        }
+    }
+
+    // 4. Draw active intact & pending vases
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             if (m_vases[r][c] && !m_vases[r][c]->isDestroyed()) {
@@ -257,7 +433,12 @@ void VasebreakerLevel::draw() {
         }
     }
 
-    // 4. Draw ceramic shards
+    // 5. Draw dropped seed packet cards (z-index in front of vases)
+    for (int i = 0; i < (int)m_droppedPackets.size(); ++i) {
+        m_droppedPackets[i].draw(res, m_selectedPacketIndex == i);
+    }
+
+    // 6. Draw ceramic shards
     Texture2D chunksTex = res.GetTexture("VASE_CHUNKS");
     if (chunksTex.id == 0) chunksTex = res.GetTexture("vase_chunks");
     if (chunksTex.id == 0) {
@@ -292,14 +473,19 @@ void VasebreakerLevel::draw() {
         }
     }
 
-    // 5. Draw active zombies
+    // 7. Draw active zombies
     for (const auto& z : m_zombies) {
         if (!z->isFinished()) {
             z->draw();
         }
     }
 
-    // 6. Draw Game Over / Loss overlay if triggered
+    // 8. Draw active projectiles
+    for (const auto& p : m_projectiles) {
+        p.draw();
+    }
+
+    // 9. Draw Game Over / Loss overlay if triggered
     if (m_levelLost) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
@@ -308,16 +494,22 @@ void VasebreakerLevel::draw() {
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     }
 
-    // 7. Draw Mallet cursor at virtual mouse position (Option 1A: -42.0f, -6.0f)
-    m_malletAnim.Draw(mousePos.x - 42.0f, mousePos.y - 6.0f, 1.0f);
+    // 10. Draw Cursor
+    if (m_selectedPacketIndex >= 0) {
+        // Translucent plant preview following mouse cursor
+        m_previewPlantAnim.Draw(mousePos.x - 30.0f, mousePos.y - 40.0f, 1.0f, ColorAlpha(WHITE, 0.65f));
+    } else {
+        // Wooden Mallet cursor at virtual mouse position (Option 1A: -42.0f, -6.0f)
+        m_malletAnim.Draw(mousePos.x - 42.0f, mousePos.y - 6.0f, 1.0f);
+    }
 
-    // 8. Draw debug red dot showing exact virtual cursor coordinates
+    // 11. Draw debug red dot showing exact virtual cursor coordinates
     DrawCircle((int)mousePos.x, (int)mousePos.y, 4.0f, RED);
     DrawCircleLines((int)mousePos.x, (int)mousePos.y, 4.0f, WHITE);
 
     EndTextureMode();
 
-    // 9. Draw targetScreen stretched to actual window dimensions
+    // 12. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
