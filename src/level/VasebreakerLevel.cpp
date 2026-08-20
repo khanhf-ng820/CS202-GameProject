@@ -341,14 +341,51 @@ void VasebreakerLevel::update(float dt) {
             z->update(dt);
             if (!z->isDead()) {
                 int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
-                for (int c = 0; c < 9; ++c) {
-                    if (m_plants[zRow][c] && !m_plants[zRow][c]->isDead()) {
-                        float plantX = (float)m_plants[zRow][c]->getX();
-                        if (fabsf(z->getX() - plantX) < 40.0f) {
-                            m_plants[zRow][c]->takeDamage(50.0f * dt);
+                bool foundPlantToEat = false;
+
+                if (zRow >= 0 && zRow < 5) {
+                    for (int c = 0; c < 9; ++c) {
+                        Plant* p = m_plants[zRow][c].get();
+                        if (p && !p->isDead()) {
+                            float plantX = (float)p->getX();
+                            if (z->getX() >= plantX - 20.0f && z->getX() <= plantX + 45.0f) {
+                                foundPlantToEat = true;
+                                z->setEating(true);
+                                if (z->getAnim().GetCurrentAnimName() != "anim_eat") {
+                                    z->getAnim().SetAnimation("anim_eat");
+                                }
+
+                                p->takeDamage((float)z->getDamage() * dt);
+
+                                // Periodic chomp sound effect while eating
+                                z->addEatTimer(dt);
+                                if (z->getEatTimer() >= 0.35f) {
+                                    z->resetEatTimer();
+                                    int chompChoice = GetRandomValue(0, 1);
+                                    std::string chompSfx = (chompChoice == 0) ? "assets/sounds/chomp.ogg" : "assets/sounds/chomp2.ogg";
+                                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(chompSfx));
+                                }
+
+                                if (p->isDead()) {
+                                    m_plants[zRow][c].reset();
+                                    z->setEating(false);
+                                    z->resetEatTimer();
+                                    z->getAnim().SetAnimation("anim_walk");
+                                }
+                                break;
+                            }
                         }
                     }
                 }
+
+                if (!foundPlantToEat) {
+                    if (z->isEating() || z->getAnim().GetCurrentAnimName() == "anim_eat") {
+                        z->setEating(false);
+                        z->resetEatTimer();
+                        z->getAnim().SetAnimation("anim_walk");
+                    }
+                }
+
                 // Check loss condition: living zombie reaches house limit
                 if (z->getX() < 160.0f) {
                     m_levelLost = true;
