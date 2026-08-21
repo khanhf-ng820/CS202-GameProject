@@ -81,9 +81,17 @@ void VasebreakerLevel::spawnVases() {
         { VaseContentKind::Plant,  "Wallnut" }
     };
 
+    // High-Power Defense Pool for the 2 Green Vases:
+    // 1x Repeater, 1x SnowPea (shuffled randomly across green vases)
+    std::vector<VaseContent> greenPool = {
+        { VaseContentKind::Plant, "Repeater" },
+        { VaseContentKind::Plant, "SnowPea" }
+    };
+
     std::random_device rd;
     std::mt19937 g(rd());
     std::shuffle(brownPool.begin(), brownPool.end(), g);
+    std::shuffle(greenPool.begin(), greenPool.end(), g);
 
     // Populate columns 6, 7, 8 across all 5 rows (15 vases total)
     for (int r = 0; r < 5; ++r) {
@@ -98,8 +106,10 @@ void VasebreakerLevel::spawnVases() {
             float vaseY = centerY - 50.0f;
 
             if ((r == 1 && c == 7) || (r == 3 && c == 7)) {
-                // 2 Guaranteed Green Vases containing Repeater
-                m_vases[r][c] = std::make_unique<GreenVase>(r, c, vaseX, vaseY, VaseContent{ VaseContentKind::Plant, "Repeater" });
+                // 2 Guaranteed Green Vases containing shuffled high-tier defense plants
+                VaseContent content = greenPool.back();
+                greenPool.pop_back();
+                m_vases[r][c] = std::make_unique<GreenVase>(r, c, vaseX, vaseY, content);
             } else {
                 // 13 Brown Vases with randomized shuffled contents
                 VaseContent content = brownPool.back();

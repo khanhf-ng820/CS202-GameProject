@@ -53,6 +53,24 @@ LevelSelectMenu::LevelSelectMenu(Resources& res)
     if (FileExists(briannePng.c_str()) && FileExists(brianneTxt.c_str())) {
         m_brianneLoaded = m_brianneFont.Load(briannePng, brianneTxt);
     }
+
+    std::string zPath = res.GetAssetPath("assets/reanim/Zombie.reanim");
+    if (FileExists(zPath.c_str())) {
+        ReanimDefinition zDef = res.LoadReanim(zPath);
+        m_zombiePreview.SetResources(zDef, res);
+        m_zombiePreview.SetAnimation("anim_walk");
+        m_zombiePreview.SetFrame(0.0f);
+        m_zombiePreview.SetTrackVisible("anim_bucket", false);
+        m_zombiePreview.SetTrackVisible("anim_cone", false);
+        m_zombiePreview.SetTrackVisible("anim_screendoor", false);
+        m_zombiePreview.SetTrackVisible("Zombie_duckytube", false);
+        m_zombiePreview.SetTrackVisible("Zombie_mustache", false);
+        m_zombiePreview.SetTrackVisible("Zombie_innerarm_screendoor", false);
+        m_zombiePreview.SetTrackVisible("Zombie_innerarm_screendoor_hand", false);
+        m_zombiePreview.SetTrackVisible("Zombie_outerarm_screendoor", false);
+        m_zombiePreview.SetTrackVisible("Zombie_flaghand", false);
+        m_zombiePreview.SetTrackVisible("Zombie_outerarm_hand", true);
+    }
 }
 
 bool LevelSelectMenu::isStageHovered(Vector2 mousePos, Rectangle screenRect, const std::string& texName, float scale) {
@@ -245,6 +263,7 @@ void LevelSelectMenu::drawLevelCards(Vector2 mousePos) {
                 holeW + 2.0f,
                 holeH + 2.0f
             };
+            // Layer 1: Ground Texture in rectangular upper window
             DrawTexturePro(
                 groundTex,
                 Rectangle{ 0.0f, 0.0f, (float)groundTex.width, (float)groundTex.height },
@@ -253,9 +272,15 @@ void LevelSelectMenu::drawLevelCards(Vector2 mousePos) {
                 0.0f,
                 tint
             );
+
+            // Layer 2: Still Normal Zombie Preview
+            float zScale = 0.65f;
+            float zDrawX = cardX + 106.92f - 43.0f * zScale;
+            float zDrawY = (cardY + specH - overlap + holeY + holeH / 2.0f) - 66.0f * zScale;
+            m_zombiePreview.Draw(zDrawX, zDrawY, zScale, tint);
         }
 
-        // 2. Draw LevelSelect_LevelPanelFrame.png (Base Body - Layer 2)
+        // Layer 3: LevelSelect_LevelPanelFrame.png (Base Body Frame Overlay)
         Rectangle panelRect = { cardX, cardY + specH - overlap, cardW, panH };
         if (m_panelFrame.id != 0) {
             DrawTexturePro(

@@ -1,6 +1,7 @@
 #pragma once
 #include "raylib.h"
 #include "resources.h"
+#include "Reanimation.h"
 #include "BitmapFont.h"
 #include <string>
 #include <vector>
@@ -81,6 +82,8 @@ private:
 
     BitmapFont m_brianneFont;
     bool m_brianneLoaded = false;
+
+    Reanimation m_zombiePreview;
 
     // Helper functions
     bool isStageHovered(Vector2 mousePos, Rectangle screenRect, const std::string& texName, float scale);
