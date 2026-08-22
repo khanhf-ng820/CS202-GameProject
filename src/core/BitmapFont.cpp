@@ -304,7 +304,10 @@ bool BitmapFont::Load(const std::string& pngPath, const std::string& txtPath) {
     // Build the kerning map
     size_t kernCount = std::min(kerningPairs.size(), kerningValues.size());
     for (size_t i = 0; i < kernCount; ++i) {
-        m_kerning[kerningPairs[i]] = kerningValues[i];
+        if (kerningPairs[i].length() >= 2) {
+            uint16_t key = ((uint16_t)(uint8_t)kerningPairs[i][0] << 8) | (uint16_t)(uint8_t)kerningPairs[i][1];
+            m_kerning[key] = kerningValues[i];
+        }
     }
 
     std::cout << "BitmapFont: Loaded " << m_glyphs.size() << " glyphs, "
@@ -343,8 +346,8 @@ int BitmapFont::MeasureText(const char* text, float scale) const {
 
         // Apply kerning if there's a next character
         if (i + 1 < len) {
-            std::string pair = {ch, text[i + 1]};
-            auto kit = m_kerning.find(pair);
+            uint16_t key = ((uint16_t)(uint8_t)ch << 8) | (uint16_t)(uint8_t)text[i + 1];
+            auto kit = m_kerning.find(key);
             if (kit != m_kerning.end()) {
                 totalWidth += (float)kit->second;
             }
@@ -385,8 +388,8 @@ void BitmapFont::DrawText(const char* text, float x, float y, float scale, Color
 
         // Apply kerning
         if (i + 1 < len) {
-            std::string pair = {ch, text[i + 1]};
-            auto kit = m_kerning.find(pair);
+            uint16_t key = ((uint16_t)(uint8_t)ch << 8) | (uint16_t)(uint8_t)text[i + 1];
+            auto kit = m_kerning.find(key);
             if (kit != m_kerning.end()) {
                 cursorX += (float)kit->second * scale;
             }
@@ -465,8 +468,8 @@ void BitmapFont::DrawTextRotated(const char* text, Vector2 center, float angleDe
         cursorX += (float)glyph.advanceWidth * scale;
 
         if (i + 1 < len) {
-            std::string pair = {ch, text[i + 1]};
-            auto kit = m_kerning.find(pair);
+            uint16_t key = ((uint16_t)(uint8_t)ch << 8) | (uint16_t)(uint8_t)text[i + 1];
+            auto kit = m_kerning.find(key);
             if (kit != m_kerning.end()) {
                 cursorX += (float)kit->second * scale;
             }

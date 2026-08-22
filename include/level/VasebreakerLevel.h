@@ -42,6 +42,7 @@ struct DroppedSeedPacket {
     float width;
     float height;
     std::string plantType; // e.g. "PeaShooter", "SnowPea", "Wallnut", "Repeater"
+    mutable Texture2D cachedTex = {0};
 
     bool isClicked(Vector2 mousePos) const {
         return CheckCollisionPointRec(mousePos, { x, y, width, height });
@@ -59,15 +60,17 @@ struct DroppedSeedPacket {
     }
 
     void draw(Resources& res, bool isSelected) const {
-        std::string upperType = plantType;
-        for (auto& c : upperType) c = toupper((unsigned char)c);
-        Texture2D cardTex = res.GetTexture(upperType);
-        if (cardTex.id == 0) cardTex = res.GetTexture(plantType);
-        if (cardTex.id == 0) {
-            std::string path = res.GetAssetPath("assets/PlantSeedPackets/" + plantType + ".png");
-            res.LoadFile(path);
-            cardTex = res.GetTexture(upperType);
-            if (cardTex.id == 0) cardTex = res.GetTexture(plantType);
+        if (cachedTex.id == 0) {
+            std::string upperType = plantType;
+            for (auto& c : upperType) c = toupper((unsigned char)c);
+            cachedTex = res.GetTexture(upperType);
+            if (cachedTex.id == 0) cachedTex = res.GetTexture(plantType);
+            if (cachedTex.id == 0) {
+                std::string path = res.GetAssetPath("assets/PlantSeedPackets/" + plantType + ".png");
+                res.LoadFile(path);
+                cachedTex = res.GetTexture(upperType);
+                if (cachedTex.id == 0) cachedTex = res.GetTexture(plantType);
+            }
         }
 
         // Draw shadow / glow backing
@@ -77,10 +80,10 @@ struct DroppedSeedPacket {
             DrawRectangleRec({ x - 2.0f, y - 2.0f, width + 4.0f, height + 4.0f }, ColorAlpha(GREEN, 0.4f));
         }
 
-        if (cardTex.id != 0) {
-            Rectangle srcRec = { 0.0f, 0.0f, (float)cardTex.width, (float)cardTex.height };
+        if (cachedTex.id != 0) {
+            Rectangle srcRec = { 0.0f, 0.0f, (float)cachedTex.width, (float)cachedTex.height };
             Rectangle destRec = { x, y, width, height };
-            DrawTexturePro(cardTex, srcRec, destRec, { 0.0f, 0.0f }, 0.0f, WHITE);
+            DrawTexturePro(cachedTex, srcRec, destRec, { 0.0f, 0.0f }, 0.0f, WHITE);
         } else {
             DrawRectangleRec({ x, y, width, height }, DARKGREEN);
             DrawText(plantType.c_str(), (int)x + 2, (int)y + 20, 10, WHITE);
@@ -104,6 +107,8 @@ public:
 private:
     Resources& res;
     RenderTexture2D targetScreen;
+    Texture2D m_bgTex = {0};
+    Texture2D m_chunksTex = {0};
 
     // In-game Pause Menu
     std::unique_ptr<InGameMenu> m_inGameMenu;

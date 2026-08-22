@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 
 namespace {
     // Helper to extract tag value from a string
@@ -218,16 +219,22 @@ void Resources::UnloadAll() {
 }
 
 Texture2D Resources::GetTexture(const std::string& name) const {
-    std::string key = name;
-    // Strip IMAGE_REANIM_
-    if (key.rfind("IMAGE_REANIM_", 0) == 0) {
-        key = key.substr(13);
+    const char* start = name.c_str();
+    if (strncmp(start, "IMAGE_REANIM_", 13) == 0) {
+        start += 13;
+    } else if (strncmp(start, "IMAGE_", 6) == 0) {
+        start += 6;
     }
-    // Strip IMAGE_
-    else if (key.rfind("IMAGE_", 0) == 0) {
-        key = key.substr(6);
+
+    char upperKey[128];
+    size_t i = 0;
+    while (start[i] != '\0' && i < 127) {
+        upperKey[i] = toupper((unsigned char)start[i]);
+        i++;
     }
-    key = ToUpper(key);
+    upperKey[i] = '\0';
+
+    std::string key(upperKey);
 
     // Redirect background images to their transparent versions if they exist
     if (key == "SELECTORSCREEN_BG_LEFT" || key == "SELECTORSCREEN_BG_CENTER" || key == "SELECTORSCREEN_BG_RIGHT" || key == "OPTIONS_MENUBACK") {

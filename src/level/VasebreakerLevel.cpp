@@ -573,17 +573,18 @@ void VasebreakerLevel::draw() {
     ClearBackground(RAYWHITE);
 
     // 1. Draw Nighttime Front Lawn Background (background2.jpg)
-    Texture2D bgTex = res.GetTexture("BACKGROUND2");
-    if (bgTex.id == 0) bgTex = res.GetTexture("background2");
-    if (bgTex.id == 0) {
-        std::string bgPath = res.GetAssetPath("assets/images/background2.jpg");
-        res.LoadFile(bgPath);
-        bgTex = res.GetTexture("BACKGROUND2");
+    if (m_bgTex.id == 0) {
+        m_bgTex = res.GetTexture("BACKGROUND2");
+        if (m_bgTex.id == 0) m_bgTex = res.GetTexture("background2");
+        if (m_bgTex.id == 0) {
+            std::string bgPath = res.GetAssetPath("assets/images/background2.jpg");
+            res.LoadFile(bgPath);
+            m_bgTex = res.GetTexture("BACKGROUND2");
+        }
     }
-
-    if (bgTex.id != 0) {
+    if (m_bgTex.id != 0) {
         DrawTexturePro(
-            bgTex,
+            m_bgTex,
             { 90.0f, 0.0f, 900.0f, 600.0f },
             { 0.0f, 0.0f, 800.0f, 600.0f },
             { 0.0f, 0.0f },
@@ -642,16 +643,18 @@ void VasebreakerLevel::draw() {
     }
 
     // 6. Draw ceramic shards
-    Texture2D chunksTex = res.GetTexture("VASE_CHUNKS");
-    if (chunksTex.id == 0) chunksTex = res.GetTexture("vase_chunks");
-    if (chunksTex.id == 0) {
-        std::string chunksPath = res.GetAssetPath("assets/particles/vase_chunks.png");
-        res.LoadFile(chunksPath);
-        chunksTex = res.GetTexture("VASE_CHUNKS");
-        if (chunksTex.id == 0) chunksTex = res.GetTexture("vase_chunks");
+    if (m_chunksTex.id == 0) {
+        m_chunksTex = res.GetTexture("VASE_CHUNKS");
+        if (m_chunksTex.id == 0) m_chunksTex = res.GetTexture("vase_chunks");
+        if (m_chunksTex.id == 0) {
+            std::string chunksPath = res.GetAssetPath("assets/particles/vase_chunks.png");
+            res.LoadFile(chunksPath);
+            m_chunksTex = res.GetTexture("VASE_CHUNKS");
+            if (m_chunksTex.id == 0) m_chunksTex = res.GetTexture("vase_chunks");
+        }
     }
 
-    if (chunksTex.id != 0) {
+    if (m_chunksTex.id != 0) {
         for (const auto& shard : m_shards) {
             float alpha = 1.0f;
             if (shard.lifetime < 0.3f) {
@@ -672,7 +675,7 @@ void VasebreakerLevel::draw() {
                 28.0f
             };
             Vector2 origin = { 14.0f, 14.0f };
-            DrawTexturePro(chunksTex, srcRec, destRec, origin, shard.rotation, tint);
+            DrawTexturePro(m_chunksTex, srcRec, destRec, origin, shard.rotation, tint);
         }
     }
 

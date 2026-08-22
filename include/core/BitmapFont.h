@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include <string>
 #include <unordered_map>
+#include <cstdint>
 
 // ---------------------------------------------------------------------------
 // BitmapFont — loads and renders a PopCap-style bitmap font
@@ -39,6 +40,6 @@ private:
     };
 
     std::unordered_map<char, GlyphInfo> m_glyphs;
-    std::unordered_map<std::string, int> m_kerning;  // 2-char key -> kern value
+    std::unordered_map<uint16_t, int> m_kerning;  // 2-char key packed into uint16_t -> kern value
     int m_glyphHeight = 0;  // Native glyph height from atlas (computed dynamically upon load)
 };
