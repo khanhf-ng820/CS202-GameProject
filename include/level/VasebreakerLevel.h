@@ -13,6 +13,7 @@
 #include "Wallnut.h"
 #include "Projectile.h"
 #include "SunItem.h"
+#include "InGameMenu.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -104,6 +105,10 @@ private:
     Resources& res;
     RenderTexture2D targetScreen;
 
+    // In-game Pause Menu
+    std::unique_ptr<InGameMenu> m_inGameMenu;
+    bool m_exitToMainMenu = false;
+
     // Mallet cursor animation state
     Reanimation m_malletAnim;
     bool m_isSwinging = false;
@@ -145,4 +150,5 @@ private:
     void spawnVases();
     void breakVase(int row, int col);
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
+    void restartLevel();
 };

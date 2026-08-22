@@ -7,6 +7,9 @@
 
 VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
+    // Initialize in-game pause menu
+    m_inGameMenu = std::make_unique<InGameMenu>(res);
+
     // Load and initialize the mallet cursor reanimation
     std::string hammerPath = res.GetAssetPath("assets/reanim/Hammer.reanim");
     ReanimDefinition hammerDef = res.LoadReanim(hammerPath);
@@ -46,6 +49,21 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
 
     // Populate initial vases
     spawnVases();
+}
+
+void VasebreakerLevel::restartLevel() {
+    m_levelWon = false;
+    m_levelLost = false;
+    m_isSwinging = false;
+    m_pendingVaseRow = -1;
+    m_pendingVaseCol = -1;
+    m_pendingVaseTimer = 0.0f;
+    m_malletAnim.SetAnimation("anim_open_pot");
+    m_malletAnim.SetFrame(14.0f);
+    m_malletAnim.SetPaused(true);
+    spawnVases();
+    if (m_inGameMenu) m_inGameMenu->close();
+    HideCursor();
 }
 
 void VasebreakerLevel::spawnVases() {
@@ -220,9 +238,46 @@ bool VasebreakerLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) c
 }
 
 void VasebreakerLevel::update(float dt) {
-    if (m_levelLost || m_levelWon) return;
+    // 0. Update in-game pause menu if open (pauses game loop simulation)
+    if (m_inGameMenu && m_inGameMenu->isOpen()) {
+        if (IsCursorHidden()) ShowCursor();
+
+        InGameMenuAction action = m_inGameMenu->update(dt);
+        if (action == InGameMenuAction::RestartLevel) {
+            restartLevel();
+        } else if (action == InGameMenuAction::MainMenu) {
+            m_exitToMainMenu = true;
+            ShowCursor();
+        }
+        return;
+    } else {
+        if (!IsCursorHidden() && !m_levelLost && !m_levelWon) {
+            HideCursor();
+        }
+    }
+
+    // Toggle menu via ESC key when playing
+    if (!m_levelWon && !m_levelLost && IsKeyPressed(KEY_ESCAPE)) {
+        if (m_inGameMenu) {
+            m_inGameMenu->open();
+            ShowCursor();
+        }
+        return;
+    }
 
     Vector2 mousePos = GetVirtualMousePosition();
+
+    // Check click on top-right Menu button
+    Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
+    if (!m_levelWon && !m_levelLost && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, menuBtnRect)) {
+        if (m_inGameMenu) {
+            m_inGameMenu->open();
+            ShowCursor();
+        }
+        return;
+    }
+
+    if (m_levelLost || m_levelWon) return;
 
     // Update plant preview animation
     m_previewPlantAnim.Update(dt);
@@ -438,7 +493,7 @@ void VasebreakerLevel::update(float dt) {
         m_shards.end()
     );
 
-    // Right-click a tile in a lane to spawn a ZombieNormal (for foundation testing)
+    // Right-click a tile in a lane to spawn a ZombieNormal (for testing)
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
         int row, col;
         if (getGridCell(mousePos, row, col)) {
@@ -633,7 +688,15 @@ void VasebreakerLevel::draw() {
         p.draw();
     }
 
-    // 9. Draw Game Over / Loss overlay if triggered
+    // 9. Draw top-right "Menu" stone button (680, 0, 110, 36)
+    Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
+    bool menuHovered = CheckCollisionPointRec(mousePos, menuBtnRect);
+    bool menuPressed = menuHovered && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    if (m_inGameMenu) {
+        m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
+    }
+
+    // 10. Draw Game Over / Loss overlay if triggered
     if (m_levelLost) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
@@ -642,22 +705,29 @@ void VasebreakerLevel::draw() {
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     }
 
-    // 10. Draw Cursor
-    if (m_selectedPacketIndex >= 0) {
-        // Translucent plant preview following mouse cursor
-        m_previewPlantAnim.Draw(mousePos.x - 30.0f, mousePos.y - 40.0f, 1.0f, ColorAlpha(WHITE, 0.65f));
-    } else {
-        // Wooden Mallet cursor at virtual mouse position (Option 1A: -42.0f, -6.0f)
-        m_malletAnim.Draw(mousePos.x - 42.0f, mousePos.y - 6.0f, 1.0f);
+    // 11. Draw Cursor (only when in-game menu is not open)
+    if (!m_inGameMenu || !m_inGameMenu->isOpen()) {
+        if (m_selectedPacketIndex >= 0) {
+            // Translucent plant preview following mouse cursor
+            m_previewPlantAnim.Draw(mousePos.x - 30.0f, mousePos.y - 40.0f, 1.0f, ColorAlpha(WHITE, 0.65f));
+        } else {
+            // Wooden Mallet cursor at virtual mouse position (Option 1A: -42.0f, -6.0f)
+            m_malletAnim.Draw(mousePos.x - 42.0f, mousePos.y - 6.0f, 1.0f);
+        }
+
+        // Draw debug red dot showing exact virtual cursor coordinates
+        DrawCircle((int)mousePos.x, (int)mousePos.y, 4.0f, RED);
+        DrawCircleLines((int)mousePos.x, (int)mousePos.y, 4.0f, WHITE);
     }
 
-    // 11. Draw debug red dot showing exact virtual cursor coordinates
-    DrawCircle((int)mousePos.x, (int)mousePos.y, 4.0f, RED);
-    DrawCircleLines((int)mousePos.x, (int)mousePos.y, 4.0f, WHITE);
+    // 12. Draw in-game pause menu dialog if open (on top of everything)
+    if (m_inGameMenu && m_inGameMenu->isOpen()) {
+        m_inGameMenu->draw();
+    }
 
     EndTextureMode();
 
-    // 12. Draw targetScreen stretched to actual window dimensions
+    // 13. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -686,7 +756,7 @@ void VasebreakerLevel::run() {
         update(dt);
         draw();
 
-        if (IsKeyPressed(KEY_ESCAPE)) {
+        if (m_exitToMainMenu || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
             break;
         }
     }
