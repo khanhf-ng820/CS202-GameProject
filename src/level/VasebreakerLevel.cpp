@@ -80,22 +80,44 @@ void VasebreakerLevel::spawnVases() {
     m_shards.clear();
     m_zombies.clear();
 
-    // Classic Introductory Pool for the 13 Brown Vases:
-    // 7 Plants (4x PeaShooter, 2x SnowPea, 1x Wallnut)
-    // 6 Zombies (5x ZombieNormal, 1x ConeheadZombie)
+    // Classic Balanced Pool for the 33 Brown Vases:
+    // 18 Plants (8x PeaShooter, 4x Repeater, 3x SnowPea, 3x Wallnut)
+    // 15 Zombies (9x ZombieNormal, 4x ConeheadZombie, 2x BucketheadZombie)
     std::vector<VaseContent> brownPool = {
+        // Zombies (15)
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Zombie, "BucketheadZombie" },
+        { VaseContentKind::Zombie, "BucketheadZombie" },
+        // Plants (18)
         { VaseContentKind::Plant,  "PeaShooter" },
         { VaseContentKind::Plant,  "PeaShooter" },
         { VaseContentKind::Plant,  "PeaShooter" },
         { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "Repeater" },
+        { VaseContentKind::Plant,  "Repeater" },
+        { VaseContentKind::Plant,  "Repeater" },
+        { VaseContentKind::Plant,  "Repeater" },
         { VaseContentKind::Plant,  "SnowPea" },
         { VaseContentKind::Plant,  "SnowPea" },
+        { VaseContentKind::Plant,  "SnowPea" },
+        { VaseContentKind::Plant,  "Wallnut" },
+        { VaseContentKind::Plant,  "Wallnut" },
         { VaseContentKind::Plant,  "Wallnut" }
     };
 
@@ -111,9 +133,9 @@ void VasebreakerLevel::spawnVases() {
     std::shuffle(brownPool.begin(), brownPool.end(), g);
     std::shuffle(greenPool.begin(), greenPool.end(), g);
 
-    // Populate columns 6, 7, 8 across all 5 rows (15 vases total)
+    // Populate the last 7 columns (columns 2 through 8) across all 5 rows (35 vases total)
     for (int r = 0; r < 5; ++r) {
-        for (int c = 6; c < 9; ++c) {
+        for (int c = 2; c < 9; ++c) {
             float cellX = 140.0f + (c == 0 ? 0.0f : 80.0f + (c - 1) * 70.0f);
             float cellY = 80.0f + r * 100.0f;
             float cellW = (c == 0) ? 80.0f : 70.0f;
@@ -123,13 +145,13 @@ void VasebreakerLevel::spawnVases() {
             float vaseX = centerX - 40.0f;
             float vaseY = centerY - 50.0f;
 
-            if ((r == 1 && c == 7) || (r == 3 && c == 7)) {
-                // 2 Guaranteed Green Vases containing shuffled high-tier defense plants
+            if ((r == 1 && c == 5) || (r == 3 && c == 5)) {
+                // 2 Guaranteed Green Vases at (1, 5) and (3, 5)
                 VaseContent content = greenPool.back();
                 greenPool.pop_back();
                 m_vases[r][c] = std::make_unique<GreenVase>(r, c, vaseX, vaseY, content);
             } else {
-                // 13 Brown Vases with randomized shuffled contents
+                // 33 Brown Vases with randomized shuffled contents
                 VaseContent content = brownPool.back();
                 brownPool.pop_back();
                 m_vases[r][c] = std::make_unique<BrownVase>(r, c, vaseX, vaseY, content);
@@ -193,7 +215,9 @@ void VasebreakerLevel::breakVase(int row, int col) {
     } else if (content.kind == VaseContentKind::Zombie) {
         // Spawn zombie at the broken vase's tile coordinates
         float spawnY = 45.0f + row * 100.0f;
-        if (content.name == "ConeheadZombie") {
+        if (content.name == "BucketheadZombie") {
+            m_zombies.push_back(std::make_unique<BucketheadZombie>(res, vaseX, spawnY));
+        } else if (content.name == "ConeheadZombie") {
             m_zombies.push_back(std::make_unique<ConeheadZombie>(res, vaseX, spawnY));
         } else {
             m_zombies.push_back(std::make_unique<ZombieNormal>(res, vaseX, spawnY));

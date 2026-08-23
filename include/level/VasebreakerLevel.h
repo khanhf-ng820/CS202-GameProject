@@ -4,6 +4,7 @@
 #include "Zombie.h"
 #include "ZombieNormal.h"
 #include "ConeheadZombie.h"
+#include "BucketheadZombie.h"
 #include "Reanimation.h"
 #include "Vase.h"
 #include "Plant.h"
