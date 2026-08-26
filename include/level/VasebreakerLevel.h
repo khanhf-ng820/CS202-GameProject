@@ -15,6 +15,7 @@
 #include "Projectile.h"
 #include "SunItem.h"
 #include "InGameMenu.h"
+#include "BitmapFont.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -110,6 +111,7 @@ private:
     RenderTexture2D targetScreen;
     Texture2D m_bgTex = {0};
     Texture2D m_chunksTex = {0};
+    BitmapFont m_font;
 
     // In-game Pause Menu
     std::unique_ptr<InGameMenu> m_inGameMenu;

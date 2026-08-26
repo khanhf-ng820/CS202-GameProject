@@ -47,6 +47,11 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.GetAssetPath("assets/sounds/plant.ogg");
     res.GetAssetPath("assets/sounds/tap.ogg");
 
+    // Load House of Terror 28 bitmap font
+    std::string fontPng = res.GetAssetPath("assets/data/HouseofTerror28.png");
+    std::string fontTxt = res.GetAssetPath("assets/data/HouseofTerror28.txt");
+    m_font.Load(fontPng, fontTxt);
+
     // Populate initial vases
     spawnVases();
 }
@@ -723,7 +728,15 @@ void VasebreakerLevel::draw() {
         m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
     }
 
-    // 10. Draw Game Over / Loss overlay if triggered
+    // 10. Draw "Vasebreaker Level" label at the bottom-right corner
+    const char* labelText = "Vasebreaker Level";
+    float fontScale = 0.65f;
+    int textWidth = m_font.MeasureText(labelText, fontScale);
+    float labelX = 785.0f - (float)textWidth;
+    float labelY = 566.0f;
+    m_font.DrawText(labelText, labelX, labelY, fontScale, Color{ 235, 200, 45, 255 });
+
+    // 11. Draw Game Over / Loss overlay if triggered
     if (m_levelLost) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
