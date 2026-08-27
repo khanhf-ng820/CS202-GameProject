@@ -5,6 +5,7 @@
 BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
     m_inGameMenu = std::make_unique<InGameMenu>(res);
+    m_font.Load(res.GetAssetPath("assets/data/HouseofTerror28.png"), res.GetAssetPath("assets/data/HouseofTerror28.txt"));
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             m_grid[r][c] = nullptr;
@@ -485,7 +486,10 @@ void BowlingLevel::draw() {
         drawCard(m_heldPlantType, cursorCardRect);
     }
 
-    // 10. Draw Win / Loss Overlays (identical to Level 1)
+    // 10. Draw Bottom-Right FlagMeter Progress Bar & "Wall-nut Bowling" Label
+    drawProgressBar();
+
+    // 11. Draw Win / Loss Overlays (identical to Level 1)
     if (m_levelWon) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
@@ -500,14 +504,14 @@ void BowlingLevel::draw() {
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     }
 
-    // 11. Draw in-game pause menu dialog if open
+    // 12. Draw in-game pause menu dialog if open
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }
 
     EndTextureMode();
 
-    // 12. Draw targetScreen stretched to actual window dimensions
+    // 13. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -519,6 +523,98 @@ void BowlingLevel::draw() {
         WHITE
     );
     EndDrawing();
+}
+
+void BowlingLevel::drawProgressBar() {
+    Texture2D texMeter = res.GetTexture("FLAGMETER");
+    if (texMeter.id == 0) {
+        std::string path = res.GetAssetPath("assets/images/FlagMeter.png");
+        res.LoadFile(path);
+        texMeter = res.GetTexture("FLAGMETER");
+    }
+
+    Texture2D texBadge = res.GetTexture("FLAGMETERLEVELPROGRESS");
+    if (texBadge.id == 0) {
+        std::string path = res.GetAssetPath("assets/images/FlagMeterLevelProgress.png");
+        res.LoadFile(path);
+        texBadge = res.GetTexture("FLAGMETERLEVELPROGRESS");
+    }
+
+    Texture2D texParts = res.GetTexture("FLAGMETERPARTS");
+    if (texParts.id == 0) {
+        std::string path = res.GetAssetPath("assets/images/FlagMeterParts.png");
+        res.LoadFile(path);
+        texParts = res.GetTexture("FLAGMETERPARTS");
+    }
+
+    if (texMeter.id == 0) return;
+
+    // Progress computation (0.0 to 1.0)
+    float waveProgress = 0.0f;
+    if (m_currentWave == 0) {
+        float waveFraction = std::clamp((5.0f - m_waveTimer) / 5.0f, 0.0f, 1.0f);
+        waveProgress = (0.0f + waveFraction) / (float)std::max(1, m_maxWaves);
+    } else if (m_currentWave < m_maxWaves) {
+        float waveFraction = std::clamp((22.0f - m_waveTimer) / 22.0f, 0.0f, 1.0f);
+        waveProgress = ((float)m_currentWave + waveFraction) / (float)m_maxWaves;
+    } else {
+        waveProgress = 1.0f;
+    }
+    waveProgress = std::clamp(waveProgress, 0.0f, 1.0f);
+
+    float barX = 625.0f;
+    float barY = 572.0f;
+
+    // 1. Draw "Wall-nut Bowling" label to the left with House of Terror font
+    float labelScale = 0.65f;
+    int textW = m_font.MeasureText("Wall-nut Bowling", labelScale);
+    float textX = barX - (float)textW - 10.0f;
+    float textY = barY + 3.0f;
+
+    // Drop shadow
+    m_font.DrawText("Wall-nut Bowling", textX + 2.0f, textY + 2.0f, labelScale, Color{ 0, 0, 0, 255 });
+    // Golden yellow text
+    m_font.DrawText("Wall-nut Bowling", textX, textY, labelScale, Color{ 235, 200, 45, 255 });
+
+    // 2. Draw Progress Bar Frame (0, 0, 158, 25)
+    Rectangle srcFrame = { 0.0f, 0.0f, 158.0f, 25.0f };
+    DrawTextureRec(texMeter, srcFrame, { barX, barY }, WHITE);
+
+    // 3. Draw Green Progress Fill (filling from right to left)
+    float maxFillWidth = 149.0f;
+    float currentFillWidth = maxFillWidth * waveProgress;
+    if (currentFillWidth > 0.0f) {
+        Rectangle srcFill = { 155.0f - currentFillWidth, 27.0f, currentFillWidth, 24.0f };
+        Vector2 destFillPos = { barX + 155.0f - currentFillWidth, barY };
+        DrawTextureRec(texMeter, srcFill, destFillPos, WHITE);
+    }
+
+    // 4. Draw "LEVEL PROGRESS" badge in the lower middle slot
+    if (texBadge.id != 0) {
+        DrawTextureRec(texBadge, { 0.0f, 0.0f, (float)texBadge.width, (float)texBadge.height }, { barX + 36.0f, barY + 13.0f }, WHITE);
+    }
+
+    // 5. Draw Red Flag at final wave milestone (1.0f)
+    if (texParts.id != 0) {
+        float frac = 1.0f;
+        float flagX = barX + 155.0f - maxFillWidth * frac - 8.0f;
+        flagX = std::max(barX + 6.0f, flagX);
+
+        // Flag pole
+        Rectangle srcPole = { 25.0f, 0.0f, 25.0f, 25.0f };
+        DrawTextureRec(texParts, srcPole, { flagX, barY - 2.0f }, WHITE);
+
+        // Red flag (raised when near/reached final wave fraction)
+        float flagOffsetY = (waveProgress >= frac - 0.05f) ? -6.0f : -2.0f;
+        Rectangle srcFlag = { 0.0f, 0.0f, 25.0f, 25.0f };
+        DrawTextureRec(texParts, srcFlag, { flagX, barY + flagOffsetY }, WHITE);
+
+        // 6. Draw Zombie Head Slider Marker
+        float headX = barX + 155.0f - currentFillWidth - 11.0f;
+        headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
+        Rectangle srcHead = { 50.0f, 0.0f, 25.0f, 25.0f };
+        DrawTextureRec(texParts, srcHead, { headX, barY - 2.0f }, WHITE);
+    }
 }
 
 void BowlingLevel::run() {

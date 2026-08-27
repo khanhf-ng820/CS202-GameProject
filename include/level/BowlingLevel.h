@@ -18,6 +18,7 @@
 
 #include "BowlingNut.h"
 #include "InGameMenu.h"
+#include "BitmapFont.h"
 
 struct BowlingCard {
     float x;
@@ -71,7 +72,11 @@ private:
     // In-game pause menu
     std::unique_ptr<InGameMenu> m_inGameMenu;
 
+    // Bitmap font for level label
+    BitmapFont m_font;
+
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     void spawnNextWave();
+    void drawProgressBar();
 };
 
