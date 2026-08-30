@@ -76,7 +76,6 @@ void SeedSelectMenu::initCatalog(Resources& res) {
         { "Melonpult",   300, "MELONPULT" },
         { "Torchwood",   175, "TORCHWOOD" },
         { "Chomper",     150, "CHOMPER" },
-        { "FirePea",     175, "PEASHOOTER" },
         { "IceShroom",   75,  "ICESHROOM" },
         { "Gravebuster", 75,  "GRAVEBUSTER" },
         { "Garlic",      50,  "GARLIC" },

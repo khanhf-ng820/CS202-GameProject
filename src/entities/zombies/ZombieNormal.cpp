@@ -3,7 +3,7 @@
 #include <algorithm>
 
 ZombieNormal::ZombieNormal(Resources& res, float x, float y)
-    : Zombie(res, x, y, 200, 8.0f, 100, "ZombieNormal") {
+    : Zombie(res, x, y, 200, 5.33f, 100, "ZombieNormal") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
@@ -50,6 +50,7 @@ void ZombieNormal::takeDamage(float damage) {
 
 void ZombieNormal::update(float deltaTime) {
     if (m_isDevoured) return;
+    updateSlow(deltaTime);
 
     if (m_isSquashed) {
         m_squashTimer += deltaTime;
@@ -65,7 +66,8 @@ void ZombieNormal::update(float deltaTime) {
         return;
     }
 
-    m_anim.Update(deltaTime);
+    float animDt = m_isSlowed ? (deltaTime * 0.5f) : deltaTime;
+    m_anim.Update(animDt);
 
     if (m_hp <= 0) {
         m_deathTimer += deltaTime;
@@ -156,7 +158,8 @@ void ZombieNormal::update(float deltaTime) {
 
     if (!isDead()) {
         if (currentAnim == "anim_walk" || currentAnim == "anim_walk2" || currentAnim == "anim_slowwalk") {
-            m_x -= m_speed * deltaTime;
+            float moveSpeed = m_isSlowed ? (m_speed * 0.5f) : m_speed;
+            m_x -= moveSpeed * deltaTime;
         }
     }
 
@@ -194,14 +197,15 @@ void ZombieNormal::draw() {
         return;
     }
 
-    m_anim.Draw(m_x, m_y, 1.0f);
+    Color tint = getDrawTint();
+    m_anim.Draw(m_x, m_y, 1.0f, tint);
 
     for (const auto& part : m_fallingParts) {
         if (part.active && part.texture.id != 0) {
             Rectangle source = { 0, 0, (float)part.texture.width, (float)part.texture.height };
             Rectangle dest = { part.x, part.y, (float)part.texture.width, (float)part.texture.height };
             Vector2 origin = { dest.width / 2.0f, dest.height / 2.0f };
-            DrawTexturePro(part.texture, source, dest, origin, part.rotation, WHITE);
+            DrawTexturePro(part.texture, source, dest, origin, part.rotation, tint);
         }
     }
 }

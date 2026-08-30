@@ -3,7 +3,7 @@
 #include <algorithm>
 
 FlagZombie::FlagZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 300, 14.0f, 100, "FlagZombie") {
+    : Zombie(res, x, y, 300, 9.33f, 100, "FlagZombie") {
     getResources(res.GetAssetPath("assets/reanim/Zombie.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
     m_anim.SetAnimation("anim_walk");
@@ -67,6 +67,7 @@ void FlagZombie::takeDamage(float damage) {
 
 void FlagZombie::update(float deltaTime) {
     if (m_isDevoured) return;
+    updateSlow(deltaTime);
 
     if (m_isSquashed) {
         m_squashTimer += deltaTime;
@@ -82,7 +83,8 @@ void FlagZombie::update(float deltaTime) {
         return;
     }
 
-    m_anim.Update(deltaTime);
+    float animDt = m_isSlowed ? (deltaTime * 0.5f) : deltaTime;
+    m_anim.Update(animDt);
 
     if (m_hp <= 0) {
         m_deathTimer += deltaTime;
@@ -150,9 +152,11 @@ void FlagZombie::update(float deltaTime) {
     }
 
     if (!isDead()) {
-        m_flagAnim.Update(deltaTime);
+        float animDt = m_isSlowed ? (deltaTime * 0.5f) : deltaTime;
+        m_flagAnim.Update(animDt);
         if (currentAnim == "anim_walk" || currentAnim == "anim_walk2" || currentAnim == "anim_slowwalk") {
-            m_x -= m_speed * deltaTime;
+            float moveSpeed = m_isSlowed ? (m_speed * 0.5f) : m_speed;
+            m_x -= moveSpeed * deltaTime;
         }
     }
 
@@ -189,15 +193,16 @@ void FlagZombie::draw() {
         return;
     }
 
-    m_anim.Draw(m_x, m_y, 1.0f);
+    Color tint = getDrawTint();
+    m_anim.Draw(m_x, m_y, 1.0f, tint);
     if (!isDead()) {
         float handX = -9.2f, handY = 50.1f, handRot = 0.0f;
         if (m_anim.GetTrackTransform("Zombie_flaghand", handX, handY, handRot)) {
             float dx = handX - (-9.2f);
             float dy = handY - 50.1f;
-            m_flagAnim.Draw(m_x + dx, m_y + dy, 1.0f);
+            m_flagAnim.Draw(m_x + dx, m_y + dy, 1.0f, tint);
         } else {
-            m_flagAnim.Draw(m_x, m_y, 1.0f);
+            m_flagAnim.Draw(m_x, m_y, 1.0f, tint);
         }
     }
 
@@ -206,7 +211,7 @@ void FlagZombie::draw() {
             Rectangle source = { 0, 0, (float)part.texture.width, (float)part.texture.height };
             Rectangle dest = { part.x, part.y, (float)part.texture.width, (float)part.texture.height };
             Vector2 origin = { dest.width / 2.0f, dest.height / 2.0f };
-            DrawTexturePro(part.texture, source, dest, origin, part.rotation, WHITE);
+            DrawTexturePro(part.texture, source, dest, origin, part.rotation, tint);
         }
     }
 }

@@ -3,7 +3,7 @@
 #include <algorithm>
 
 FootballZombie::FootballZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 1670, 20.0f, 100, "FootballZombie") {
+    : Zombie(res, x, y, 1670, 13.33f, 100, "FootballZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie_football.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
@@ -62,6 +62,7 @@ void FootballZombie::takeDamage(float damage) {
 
 void FootballZombie::update(float deltaTime) {
     if (m_isDevoured) return;
+    updateSlow(deltaTime);
 
     if (m_isSquashed) {
         m_squashTimer += deltaTime;
@@ -76,6 +77,9 @@ void FootballZombie::update(float deltaTime) {
         }
         return;
     }
+
+    float animDt = m_isSlowed ? (deltaTime * 0.5f) : deltaTime;
+    m_anim.Update(animDt);
 
     if (!m_hasLostHelmet) {
         if (m_hp <= 730) {
@@ -172,7 +176,8 @@ void FootballZombie::update(float deltaTime) {
 
     if (!isDead()) {
         if (currentAnim == "anim_walk" || currentAnim == "anim_walk2" || currentAnim == "anim_slowwalk") {
-            m_x -= m_speed * deltaTime;
+            float moveSpeed = m_isSlowed ? (m_speed * 0.5f) : m_speed;
+            m_x -= moveSpeed * deltaTime;
         }
     }
 
@@ -209,14 +214,15 @@ void FootballZombie::draw() {
         return;
     }
 
-    m_anim.Draw(m_x, m_y, 1.0f);
+    Color tint = getDrawTint();
+    m_anim.Draw(m_x, m_y, 1.0f, tint);
 
     for (const auto& part : m_fallingParts) {
         if (part.active && part.texture.id != 0) {
             Rectangle source = { 0, 0, (float)part.texture.width, (float)part.texture.height };
             Rectangle dest = { part.x, part.y, (float)part.texture.width, (float)part.texture.height };
             Vector2 origin = { dest.width / 2.0f, dest.height / 2.0f };
-            DrawTexturePro(part.texture, source, dest, origin, part.rotation, WHITE);
+            DrawTexturePro(part.texture, source, dest, origin, part.rotation, tint);
         }
     }
 }

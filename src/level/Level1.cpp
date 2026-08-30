@@ -422,6 +422,10 @@ void Level1::updateCollisions(float dt) {
                     }
 
                     z->takeDamage(p.getDamage());
+                    if (p.isSnow()) {
+                        z->applySlow(3.0f);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/frozen.ogg"));
+                    }
                     
                     // Splash damage for Melonpult to nearby zombies
                     if (p.isMelon()) {

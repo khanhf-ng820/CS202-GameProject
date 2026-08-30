@@ -4,7 +4,7 @@
 #include <algorithm>
 
 NewspaperZombie::NewspaperZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 350.0f, 8.0f, 100, "NewspaperZombie") {
+    : Zombie(res, x, y, 350.0f, 5.33f, 100, "NewspaperZombie") {
     
     getResources(res.GetAssetPath("assets/reanim/Zombie_paper.reanim"));
     m_anim.SetBaseAnimation("anim_walk");
@@ -97,6 +97,7 @@ void NewspaperZombie::takeDamage(float damage) {
 
 void NewspaperZombie::update(float deltaTime) {
     if (m_isDevoured) return;
+    updateSlow(deltaTime);
 
     if (m_isSquashed) {
         m_squashTimer += deltaTime;
@@ -112,7 +113,8 @@ void NewspaperZombie::update(float deltaTime) {
         return;
     }
 
-    m_anim.Update(deltaTime);
+    float animDt = m_isSlowed ? (deltaTime * 0.5f) : deltaTime;
+    m_anim.Update(animDt);
 
     if (m_hp <= 0) {
         m_deathTimer += deltaTime;
@@ -195,14 +197,15 @@ void NewspaperZombie::update(float deltaTime) {
         if (m_isGasping) {
             if (m_anim.GetCurrentFrame() >= m_anim.GetEndFrame() - 2) {
                 m_isGasping = false;
-                m_speed = 20.0f;
+                m_speed = 13.33f;
                 m_anim.SetAnimation("anim_walk_nopaper");
                 m_anim.SetBaseAnimation("anim_walk_nopaper");
                 m_anim.SetSpeed(2.5f);
             }
         } else {
             if (currentAnim == "anim_walk" || currentAnim == "anim_walk_nopaper") {
-                m_x -= m_speed * deltaTime;
+                float moveSpeed = m_isSlowed ? (m_speed * 0.5f) : m_speed;
+                m_x -= moveSpeed * deltaTime;
             }
         }
     }
@@ -240,14 +243,15 @@ void NewspaperZombie::draw() {
         return;
     }
 
-    m_anim.Draw(m_x, m_y, 1.0f);
+    Color tint = getDrawTint();
+    m_anim.Draw(m_x, m_y, 1.0f, tint);
 
     for (const auto& part : m_fallingParts) {
         if (part.active && part.texture.id != 0) {
             Rectangle source = { 0, 0, (float)part.texture.width, (float)part.texture.height };
             Rectangle dest = { part.x, part.y, (float)part.texture.width, (float)part.texture.height };
             Vector2 origin = { dest.width / 2.0f, dest.height / 2.0f };
-            DrawTexturePro(part.texture, source, dest, origin, part.rotation, WHITE);
+            DrawTexturePro(part.texture, source, dest, origin, part.rotation, tint);
         }
     }
 }

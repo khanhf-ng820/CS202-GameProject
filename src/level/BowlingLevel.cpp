@@ -7,6 +7,13 @@ BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
     m_inGameMenu = std::make_unique<InGameMenu>(res);
     m_font.Load(res.GetAssetPath("assets/data/HouseofTerror28.png"), res.GetAssetPath("assets/data/HouseofTerror28.txt"));
+
+    ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
+    m_readySetPlantAnim.SetResources(readyDef, res);
+    m_readySetPlantTimer = 0.0f;
+    m_readySetPlantDone = false;
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));
+
     initLawnMowers();
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
@@ -26,7 +33,7 @@ void BowlingLevel::initLawnMowers() {
 
 void BowlingLevel::restartLevel() {
     m_currentWave = 0;
-    m_waveTimer = 5.0f;
+    m_waveTimer = 2.0f;
     m_finalWaveAnnounced = false;
     m_levelWon = false;
     m_levelLost = false;
@@ -49,6 +56,11 @@ void BowlingLevel::restartLevel() {
     m_cardSpawnTimer = 0.0f;
     m_isHoldingCard = false;
     m_heldPlantType = "";
+
+    m_readySetPlantTimer = 0.0f;
+    m_readySetPlantDone = false;
+    m_readySetPlantAnim.SetFrame(0.0f);
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));
 
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
@@ -87,32 +99,76 @@ void BowlingLevel::spawnNextWave() {
 
     if (m_currentWave == 1) {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 40.0f, laneY(0)));
     } else if (m_currentWave == 2) {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(3)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 30.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 60.0f, laneY(4)));
     } else if (m_currentWave == 3) {
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 30.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 50.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 80.0f, laneY(0)));
     } else if (m_currentWave == 4) {
-        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(1)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
-    } else if (m_currentWave == 5) {
-        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
-        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(2)));
-    } else if (m_currentWave == 6) {
-        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 40.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 70.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 90.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 110.0f, laneY(4)));
+    } else if (m_currentWave == 5) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 30.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 50.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 80.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 100.0f, laneY(4)));
+    } else if (m_currentWave == 6) {
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 40.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 60.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 80.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 100.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 120.0f, laneY(2)));
     } else if (m_currentWave == 7) {
-        // Final wave!
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 30.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 50.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 70.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 90.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 110.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 130.0f, laneY(2)));
+    } else if (m_currentWave == 8) {
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 30.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 50.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 70.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 90.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 110.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 130.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 150.0f, laneY(2)));
+    } else if (m_currentWave == 9) {
+        m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 30.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 50.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 70.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 90.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 110.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 130.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 150.0f, laneY(4)));
+    } else if (m_currentWave == 10) {
+        // Final wave! HUGE WAVE OF ZOMBIES!
         m_finalWaveAnnounced = true;
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(0)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(1)));
-        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 30.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 40.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 50.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 60.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 70.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 80.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 90.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 100.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 110.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 120.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 130.0f, laneY(2)));
     }
 }
 
@@ -124,6 +180,16 @@ void BowlingLevel::update(float dt) {
             restartLevel();
         } else if (action == InGameMenuAction::MainMenu) {
             m_exitToMainMenu = true;
+        }
+        return;
+    }
+
+    if (!m_readySetPlantDone) {
+        m_readySetPlantTimer += dt;
+        m_readySetPlantAnim.Update(dt);
+        if (m_readySetPlantTimer >= 1.9f) {
+            m_readySetPlantDone = true;
+            AudioManager::GetInstance().PlayMusic(MusicTrack::DayLevel);
         }
         return;
     }
@@ -203,12 +269,12 @@ void BowlingLevel::update(float dt) {
 
     float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
 
-    // 0. Wave spawn timer
+    // 0. Wave spawn timer (Aggressive 12.0s interval)
     if (m_currentWave < m_maxWaves) {
         m_waveTimer -= simDt;
         if (m_waveTimer <= 0.0f) {
             spawnNextWave();
-            m_waveTimer = 22.0f;
+            m_waveTimer = 12.0f;
         }
     }
 
@@ -220,27 +286,27 @@ void BowlingLevel::update(float dt) {
         m_currentFrame = (m_currentFrame + 1) % 6;
     }
 
-    // 2. Spawn a Wall-nut card every 3 seconds at right end of conveyor belt (spawnX = 459.0f)
+    // 2. Spawn a Wall-nut card every 3.8 seconds
     float spawnX = 459.0f;
     float leftMinX = 9.0f;
     float cardW = 50.0f;
 
     m_cardSpawnTimer += simDt;
-    if (m_cardSpawnTimer >= 3.0f) {
+    if (m_cardSpawnTimer >= 3.8f) {
         // Only spawn a new card if the conveyor belt has room (last card has moved left of spawn position)
         if (m_cards.empty() || m_cards.back().x < spawnX) {
             int roll = GetRandomValue(1, 100);
             std::string plantType = "Wallnut";
-            if (roll <= 20) {
+            if (roll <= 18) {
                 plantType = "GiantWallnut";
-            } else if (roll <= 40) {
+            } else if (roll <= 38) {
                 plantType = "ExplodeNut";
             }
             m_cards.push_back({ spawnX, plantType });
             m_cardSpawnTimer = 0.0f;
         } else {
-            // Conveyor belt is full; cap timer at 3.0s so a card spawns immediately when space opens up
-            m_cardSpawnTimer = 3.0f;
+            // Conveyor belt is full; cap timer at 3.8s so a card spawns immediately when space opens up
+            m_cardSpawnTimer = 3.8f;
         }
     }
 
@@ -638,7 +704,12 @@ void BowlingLevel::draw() {
         drawLoseScreen();
     }
 
-    // 13. Draw in-game pause menu dialog if open
+    // 13. Draw "READY... SET... PLANT!" intro animation if active
+    if (!m_readySetPlantDone) {
+        m_readySetPlantAnim.Draw(400.0f, 300.0f, 1.0f);
+    }
+
+    // 14. Draw in-game pause menu dialog if open
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }

@@ -43,6 +43,11 @@ private:
     float m_animTimer = 0.0f;
     int m_currentFrame = 0;
 
+    // Intro "READY... SET... PLANT!" animation
+    Reanimation m_readySetPlantAnim;
+    float m_readySetPlantTimer = 0.0f;
+    bool m_readySetPlantDone = false;
+
     std::vector<BowlingCard> m_cards;
     float m_cardSpawnTimer = 0.0f;
 
@@ -59,8 +64,8 @@ private:
 
     // Level progression & wave state
     int m_currentWave = 0;
-    int m_maxWaves = 7;
-    float m_waveTimer = 5.0f; // 5 seconds initial delay before Wave 1
+    int m_maxWaves = 10;
+    float m_waveTimer = 2.0f; // 2 seconds initial delay before Wave 1
     bool m_finalWaveAnnounced = false;
     bool m_levelWon = false;
     bool m_levelLost = false;

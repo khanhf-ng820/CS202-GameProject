@@ -35,7 +35,7 @@ std::vector<std::string> ProfileManager::GetAllPlantTypes() {
     return {
         "PeaShooter", "SunFlower", "CherryBomb", "Wallnut", "PotatoMine",
         "SnowPea", "Chomper", "Repeater", "IceShroom", "Gravebuster",
-        "Squash", "FirePea", "GatlingPea", "Torchwood", "Caltrop",
+        "Squash", "GatlingPea", "Torchwood", "Caltrop",
         "SpikeRock", "Garlic", "Cabbagepult", "Cornpult", "Melonpult",
         "Jalapeno", "BowlingNut"
     };
@@ -45,7 +45,7 @@ std::vector<std::string> ProfileManager::GetDefaultStarterPlants() {
     // All plants in project that are NOT sold in Crazy Dave's shop:
     return {
         "PeaShooter", "SunFlower", "Wallnut", "SnowPea", "Chomper",
-        "Repeater", "FirePea", "Gravebuster", "Caltrop", "BowlingNut"
+        "Repeater", "Gravebuster", "Caltrop", "BowlingNut"
     };
 }
 

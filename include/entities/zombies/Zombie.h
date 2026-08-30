@@ -36,6 +36,9 @@ protected:
     float m_squashTimer{ 0.0f };
     bool m_isDevoured{ false };
 
+    bool m_isSlowed{ false };
+    float m_slowTimer{ 0.0f };
+
 public:
     Zombie(Resources& res, float x, float y, int hp, float speed, int damage, std::string name);
     virtual ~Zombie() {}
@@ -54,6 +57,30 @@ public:
     int getDamage() const { return m_damage; }
     std::string getName() const { return m_name; }
     Reanimation& getAnim() { return m_anim; }
+
+    void applySlow(float duration = 3.0f) {
+        m_isSlowed = true;
+        m_slowTimer = duration;
+    }
+    bool isSlowed() const { return m_isSlowed; }
+    float getSlowTimer() const { return m_slowTimer; }
+
+    void updateSlow(float dt) {
+        if (m_isSlowed) {
+            m_slowTimer -= dt;
+            if (m_slowTimer <= 0.0f) {
+                m_slowTimer = 0.0f;
+                m_isSlowed = false;
+            }
+        }
+    }
+
+    Color getDrawTint() const {
+        if (m_isSlowed) {
+            return Color{ 120, 190, 255, 255 }; // Light ice-blue tint
+        }
+        return WHITE;
+    }
 
     virtual bool isDead() const { return m_hp <= 0; }
     virtual bool isFinished() const {

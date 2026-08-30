@@ -90,7 +90,6 @@ void SeedBank::initFromDeck(const std::vector<std::string>& chosenPlants) {
         { "Melonpult",   { 300, 10.0f, "MELONPULT" } },
         { "Torchwood",   { 175, 10.0f, "TORCHWOOD" } },
         { "Chomper",     { 150, 30.0f, "CHOMPER" } },
-        { "FirePea",     { 175, 10.0f, "PEASHOOTER" } },
         { "IceShroom",   { 75,  50.0f, "ICESHROOM" } },
         { "Gravebuster", { 75,  10.0f, "GRAVEBUSTER" } },
         { "Garlic",      { 50,  10.0f, "GARLIC" } },

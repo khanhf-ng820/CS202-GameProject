@@ -4,7 +4,7 @@
 #include <algorithm>
 
 PoleVaultingZombie::PoleVaultingZombie(Resources& res, float x, float y)
-    : Zombie(res, x, y, 500, 24.0f, 100, "PoleVaultingZombie") {
+    : Zombie(res, x, y, 500, 16.0f, 100, "PoleVaultingZombie") {
     getResources(res.GetAssetPath("assets/reanim/Zombie_polevaulter.reanim"));
     m_anim.SetBaseAnimation("anim_run");
     m_anim.SetAnimation("anim_run");
@@ -52,6 +52,7 @@ void PoleVaultingZombie::takeDamage(float damage) {
 
 void PoleVaultingZombie::update(float deltaTime) {
     if (m_isDevoured) return;
+    updateSlow(deltaTime);
 
     if (m_isSquashed) {
         m_squashTimer += deltaTime;
@@ -67,7 +68,8 @@ void PoleVaultingZombie::update(float deltaTime) {
         return;
     }
 
-    m_anim.Update(deltaTime);
+    float animDt = m_isSlowed ? (deltaTime * 0.5f) : deltaTime;
+    m_anim.Update(animDt);
 
     if (m_hp <= 0) {
         m_deathTimer += deltaTime;
@@ -173,8 +175,7 @@ void PoleVaultingZombie::update(float deltaTime) {
                 if (m_anim.GetCurrentFrame() >= m_anim.GetEndFrame() - 1 || m_anim.GetCurrentFrame() >= 92) {
                     m_isVaulting = false;
                     m_hasVaulted = true;
-                    m_x -= 150.0f;
-                    m_speed = 8.0f;
+                    m_speed = 5.33f;
                     m_anim.SetBaseAnimation("anim_walk");
                     m_anim.SetAnimation("anim_walk");
                     m_anim.SetTrackVisible("Zombie_polevaulter_pole", false);
@@ -183,7 +184,8 @@ void PoleVaultingZombie::update(float deltaTime) {
             }
         } else {
             if (currentAnim == "anim_run" || currentAnim == "anim_walk") {
-                m_x -= m_speed * deltaTime;
+                float moveSpeed = m_isSlowed ? (m_speed * 0.5f) : m_speed;
+                m_x -= moveSpeed * deltaTime;
             }
         }
     }
@@ -221,14 +223,15 @@ void PoleVaultingZombie::draw() {
         return;
     }
 
-    m_anim.Draw(m_x, m_y, 1.0f);
+    Color tint = getDrawTint();
+    m_anim.Draw(m_x, m_y, 1.0f, tint);
 
     for (const auto& part : m_fallingParts) {
         if (part.active && part.texture.id != 0) {
             Rectangle source = { 0, 0, (float)part.texture.width, (float)part.texture.height };
             Rectangle dest = { part.x, part.y, (float)part.texture.width, (float)part.texture.height };
             Vector2 origin = { dest.width / 2.0f, dest.height / 2.0f };
-            DrawTexturePro(part.texture, source, dest, origin, part.rotation, WHITE);
+            DrawTexturePro(part.texture, source, dest, origin, part.rotation, tint);
         }
     }
 }

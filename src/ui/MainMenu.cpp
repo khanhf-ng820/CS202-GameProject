@@ -329,11 +329,6 @@ void MainMenu::draw() {
         }
     }
 
-    // 4. Draw Zombie Hand emerging animation if active
-    if (m_handActive) {
-        m_handAnim.Draw(0, yOffset, REANIM_SCALE);
-    }
-
     // --- Draw bottom-bar buttons (Options / Help / Quit) ---
     float optW = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.width : 81.0f;
     float optH = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.height + 23.0f : 54.0f;
@@ -428,6 +423,11 @@ void MainMenu::draw() {
     // --- Draw UserDialog modal popup if open ---
     if (m_userDialog.IsOpen()) {
         m_userDialog.Draw();
+    }
+
+    // --- Draw Zombie Hand emerging animation on top of all menu elements if active ---
+    if (m_handActive) {
+        m_handAnim.Draw(0, yOffset, REANIM_SCALE);
     }
 }
 

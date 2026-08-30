@@ -566,6 +566,10 @@ void VasebreakerLevel::update(float dt) {
                 int pRow = (int)((p.getY() - 80.0f + 50.0f) / 100.0f);
                 if (zRow == pRow && fabsf(p.getX() - (z->getX() + 40.0f)) < 30.0f) {
                     z->takeDamage((float)p.getDamage());
+                    if (p.isSnow()) {
+                        z->applySlow(3.0f);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/frozen.ogg"));
+                    }
                     p.deactivate();
                     AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/splat.ogg"));
                     break;

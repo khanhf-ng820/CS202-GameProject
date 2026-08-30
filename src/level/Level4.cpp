@@ -560,6 +560,10 @@ void Level4::updateCollisions(float dt) {
                     }
 
                     z->takeDamage(p.getDamage());
+                    if (p.isSnow()) {
+                        z->applySlow(3.0f);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/frozen.ogg"));
+                    }
 
                     if (p.isMelon()) {
                         for (auto& otherZ : m_zombies) {
