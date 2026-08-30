@@ -1,4 +1,5 @@
 #include "SeedBank.h"
+#include "AudioManager.h"
 #include <iostream>
 
 SeedBank::SeedBank(int initialSun)
@@ -112,29 +113,47 @@ void SeedBank::update(float dt, Vector2 mousePos, bool mouseClicked) {
         packet.update(dt);
     }
 
+    Resources& res = Resources::GetInstance();
+
     if (mouseClicked) {
         // Check shovel click
         if (CheckCollisionPointRec(mousePos, m_shovelBounds)) {
             m_isShovelSelected = !m_isShovelSelected;
             m_selectedPacketIndex = -1;
+            if (m_isShovelSelected) {
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/shovel.ogg"));
+            } else {
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
+            }
             return;
         }
 
         // Check packet clicks
-        bool packetClicked = false;
         for (size_t i = 0; i < m_packets.size(); ++i) {
             if (m_packets[i].isClicked(mousePos)) {
                 if (m_packets[i].isReady(m_sunCount)) {
                     if (m_selectedPacketIndex == (int)i) {
                         m_selectedPacketIndex = -1; // Toggle off if clicked again
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
                     } else {
                         m_selectedPacketIndex = (int)i;
                         m_isShovelSelected = false;
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/seedlift.ogg"));
                     }
+                } else {
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buzzer.ogg"));
                 }
-                packetClicked = true;
                 break;
             }
+        }
+    }
+
+    // Right-click deselects card or shovel
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        if (m_selectedPacketIndex != -1 || m_isShovelSelected) {
+            m_selectedPacketIndex = -1;
+            m_isShovelSelected = false;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
         }
     }
 }

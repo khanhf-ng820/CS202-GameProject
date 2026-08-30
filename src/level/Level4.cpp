@@ -1122,33 +1122,44 @@ void Level4::update(float dt) {
             if (m_grid[hoverRow][hoverCol]) {
                 m_grid[hoverRow][hoverCol] = nullptr;
                 m_seedBank.deselect();
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant2.ogg"));
             }
         } else {
             std::string selectedType = m_seedBank.getSelectedPlantType();
-            if (!selectedType.empty() && m_grid[hoverRow][hoverCol] == nullptr) {
-                bool isGrave = isCellBlockedByGrave(hoverRow, hoverCol);
-                bool canPlant = (selectedType == "Gravebuster") ? isGrave : !isGrave;
+            if (!selectedType.empty()) {
+                if (m_grid[hoverRow][hoverCol] == nullptr) {
+                    bool isGrave = isCellBlockedByGrave(hoverRow, hoverCol);
+                    bool canPlant = (selectedType == "Gravebuster") ? isGrave : !isGrave;
 
-                if (canPlant) {
-                    float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
-                    float cellH = 100.0f;
-                    float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
-                    float cellY = 80.0f + hoverRow * 100.0f;
-                    
-                    int px, py;
-                    if (selectedType == "Gravebuster") {
-                        float gx = cellX - 6.0f;
-                        float gy = cellY + 6.0f;
-                        px = (int)(gx - 2.0f);
-                        py = (int)(gy - 28.0f); // Starts higher up above the grave
+                    if (canPlant) {
+                        float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
+                        float cellH = 100.0f;
+                        float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
+                        float cellY = 80.0f + hoverRow * 100.0f;
+                        
+                        int px, py;
+                        if (selectedType == "Gravebuster") {
+                            float gx = cellX - 6.0f;
+                            float gy = cellY + 6.0f;
+                            px = (int)(gx - 2.0f);
+                            py = (int)(gy - 28.0f); // Starts higher up above the grave
+                        } else {
+                            float centerX = cellX + cellW / 2.0f;
+                            float centerY = cellY + cellH / 2.0f;
+                            px = (int)(centerX - 30.0f - 10.0f);
+                            py = (int)(centerY - 35.0f);
+                        }
+                        createPlant(selectedType, hoverRow, hoverCol, px, py);
+                        m_seedBank.consumeSelected();
+
+                        int plantSfxChoice = GetRandomValue(0, 1);
+                        std::string plantSfx = (plantSfxChoice == 0) ? "assets/sounds/plant.ogg" : "assets/sounds/plant2.ogg";
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(plantSfx));
                     } else {
-                        float centerX = cellX + cellW / 2.0f;
-                        float centerY = cellY + cellH / 2.0f;
-                        px = (int)(centerX - 30.0f - 10.0f);
-                        py = (int)(centerY - 35.0f);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buzzer.ogg"));
                     }
-                    createPlant(selectedType, hoverRow, hoverCol, px, py);
-                    m_seedBank.consumeSelected();
+                } else {
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buzzer.ogg"));
                 }
             }
         }
