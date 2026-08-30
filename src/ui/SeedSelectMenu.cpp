@@ -1,5 +1,7 @@
 #include "SeedSelectMenu.h"
 #include "UIHelpers.h"
+#include "ProfileManager.h"
+#include "AudioManager.h"
 #include <algorithm>
 #include <iostream>
 
@@ -48,6 +50,10 @@ SeedSelectMenu::SeedSelectMenu(Resources& res) {
 }
 
 void SeedSelectMenu::initCatalog(Resources& res) {
+    m_availableCards.clear();
+    m_chosenPlants.clear();
+    m_plantCosts.clear();
+
     struct SeedCatalogEntry {
         const char* type;
         int cost;
@@ -89,6 +95,11 @@ void SeedSelectMenu::initCatalog(Resources& res) {
     int index = 0;
 
     for (const auto& entry : entries) {
+        // Only show plants currently unlocked in player's profile
+        if (!ProfileManager::GetInstance().IsPlantUnlocked(entry.type)) {
+            continue;
+        }
+
         int r = index / cols;
         int c = index % cols;
 
@@ -112,6 +123,8 @@ void SeedSelectMenu::initCatalog(Resources& res) {
 bool SeedSelectMenu::update(float dt, Vector2 mousePos, bool mouseClicked) {
     if (!mouseClicked) return false;
 
+    Resources& res = Resources::GetInstance();
+
     // 1. Check top SeedBank slots (unselect plant if clicked in top bar)
     for (size_t i = 0; i < m_chosenPlants.size(); ++i) {
         Rectangle slotRect = { 79.0f + i * 51.0f, 8.0f, 50.0f, 70.0f };
@@ -126,6 +139,7 @@ bool SeedSelectMenu::update(float dt, Vector2 mousePos, bool mouseClicked) {
                     break;
                 }
             }
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
             return false;
         }
     }
@@ -140,11 +154,15 @@ bool SeedSelectMenu::update(float dt, Vector2 mousePos, bool mouseClicked) {
                 if (it != m_chosenPlants.end()) {
                     m_chosenPlants.erase(it);
                 }
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
             } else {
                 // Select (up to max 7 capacity)
                 if (m_chosenPlants.size() < 7) {
                     card.isChosen = true;
                     m_chosenPlants.push_back(card.plantType);
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/seedlift.ogg"));
+                } else {
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buzzer.ogg"));
                 }
             }
             return false;
@@ -152,8 +170,13 @@ bool SeedSelectMenu::update(float dt, Vector2 mousePos, bool mouseClicked) {
     }
 
     // 3. Check confirm button ("LET'S ROCK!")
-    if (!m_chosenPlants.empty() && CheckCollisionPointRec(mousePos, m_confirmBtnBounds)) {
-        return true; // Confirmed!
+    if (CheckCollisionPointRec(mousePos, m_confirmBtnBounds)) {
+        if (!m_chosenPlants.empty()) {
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/pause.ogg"));
+            return true; // Confirmed!
+        } else {
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buzzer.ogg"));
+        }
     }
 
     return false;

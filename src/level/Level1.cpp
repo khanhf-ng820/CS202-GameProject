@@ -969,20 +969,29 @@ void Level1::update(float dt) {
             if (m_grid[hoverRow][hoverCol]) {
                 m_grid[hoverRow][hoverCol] = nullptr;
                 m_seedBank.deselect();
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant2.ogg"));
             }
         } else {
             std::string selectedType = m_seedBank.getSelectedPlantType();
-            if (!selectedType.empty() && m_grid[hoverRow][hoverCol] == nullptr) {
-                float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
-                float cellH = 100.0f;
-                float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
-                float cellY = 80.0f + hoverRow * 100.0f;
-                float centerX = cellX + cellW / 2.0f;
-                float centerY = cellY + cellH / 2.0f;
-                int px = (int)(centerX - 30.0f - 10.0f);
-                int py = (int)(centerY - 35.0f );
-                createPlant(selectedType, hoverRow, hoverCol, px, py);
-                m_seedBank.consumeSelected();
+            if (!selectedType.empty()) {
+                if (m_grid[hoverRow][hoverCol] == nullptr) {
+                    float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
+                    float cellH = 100.0f;
+                    float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
+                    float cellY = 80.0f + hoverRow * 100.0f;
+                    float centerX = cellX + cellW / 2.0f;
+                    float centerY = cellY + cellH / 2.0f;
+                    int px = (int)(centerX - 30.0f - 10.0f);
+                    int py = (int)(centerY - 35.0f );
+                    createPlant(selectedType, hoverRow, hoverCol, px, py);
+                    m_seedBank.consumeSelected();
+
+                    int plantSfxChoice = GetRandomValue(0, 1);
+                    std::string plantSfx = (plantSfxChoice == 0) ? "assets/sounds/plant.ogg" : "assets/sounds/plant2.ogg";
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(plantSfx));
+                } else {
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buzzer.ogg"));
+                }
             }
         }
     }
