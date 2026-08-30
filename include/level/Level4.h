@@ -11,6 +11,7 @@
 #include "InGameMenu.h"
 #include "Reanimation.h"
 #include "LawnMower.h"
+#include "BitmapFont.h"
 #include "Level1.h"
 #include <vector>
 #include <memory>
@@ -51,6 +52,7 @@ protected:
     RenderTexture2D targetScreen;
 
     int m_levelNumber = 4;
+    BitmapFont m_font;
     bool m_hasFog = false;
     float m_fogTimer = 0.0f;
     float m_fogStartX = 480.0f;

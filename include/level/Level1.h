@@ -11,6 +11,7 @@
 #include "InGameMenu.h"
 #include "Reanimation.h"
 #include "LawnMower.h"
+#include "BitmapFont.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -36,6 +37,7 @@ protected:
     Resources& res;
     RenderTexture2D targetScreen;
     int m_levelNumber = 1;
+    BitmapFont m_font;
 
     LevelPhase m_phase;
     SeedSelectMenu m_seedSelectMenu;
