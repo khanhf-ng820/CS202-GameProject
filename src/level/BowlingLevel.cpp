@@ -6,10 +6,20 @@ BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
     m_inGameMenu = std::make_unique<InGameMenu>(res);
     m_font.Load(res.GetAssetPath("assets/data/HouseofTerror28.png"), res.GetAssetPath("assets/data/HouseofTerror28.txt"));
+    initLawnMowers();
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             m_grid[r][c] = nullptr;
         }
+    }
+}
+
+void BowlingLevel::initLawnMowers() {
+    m_lawnMowers.clear();
+    for (int r = 0; r < 5; ++r) {
+        float mowerX = 65.0f;
+        float mowerY = 80.0f + (float)r * 100.0f;
+        m_lawnMowers.emplace_back(res, mowerX, mowerY, r);
     }
 }
 
@@ -26,6 +36,7 @@ void BowlingLevel::restartLevel() {
     m_screamSoundPlayed = false;
     m_loseMusicPlayed = false;
 
+    initLawnMowers();
     m_zombies.clear();
     m_bowlingNuts.clear();
     m_hitDebugTimers.clear();
@@ -302,13 +313,65 @@ void BowlingLevel::update(float dt) {
         m_bowlingNuts.end()
     );
 
-    // 9. Update zombies (right to left movement) and check loss condition
+    // 9. Update lawn mowers
+    for (auto& mower : m_lawnMowers) {
+        mower.update(simDt);
+    }
+
+    // 10. Update zombies (right to left movement) and check mower trigger / loss condition
     for (auto& z : m_zombies) {
         if (!z->isFinished()) {
             z->update(simDt);
-            // Check loss condition: Living Zombie reaches house door (x <= 20.0f)
-            if (!z->isDead() && z->getX() <= 20.0f) {
-                m_levelLost = true;
+
+            int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+
+            // Check if zombie triggers lawnmower on this row
+            for (auto& mower : m_lawnMowers) {
+                if (mower.getRow() == zRow && !mower.isFinished()) {
+                    if (!mower.isTriggered() && z->getX() <= mower.getX() + 30.0f) {
+                        mower.trigger();
+                    }
+                }
+            }
+
+            // Check loss condition: Zombie reaches house door (x <= 20.0f)
+            if (z->getX() <= 20.0f) {
+                bool rowHasMower = false;
+                for (const auto& mower : m_lawnMowers) {
+                    if (mower.getRow() == zRow && !mower.isFinished()) {
+                        rowHasMower = true;
+                        break;
+                    }
+                }
+                if (!rowHasMower) {
+                    m_levelLost = true;
+                }
+            }
+        }
+    }
+
+    // 11. Process moving LawnMowers vs plants and zombies
+    for (auto& mower : m_lawnMowers) {
+        if (!mower.isTriggered() || mower.isFinished()) continue;
+        int mRow = mower.getRow();
+        float mX = mower.getX();
+
+        // Clear plants on this lane as mower rolls through
+        for (int c = 0; c < 9; ++c) {
+            float cellX = 140.0f + (c == 0 ? 0.0f : 80.0f + (c - 1) * 70.0f);
+            if (mX >= cellX && m_grid[mRow][c] != nullptr) {
+                m_grid[mRow][c] = nullptr;
+            }
+        }
+
+        // Crush and eliminate zombies on this lane
+        for (auto& z : m_zombies) {
+            if (z->isDead() || z->isDevoured()) continue;
+            int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+            if (zRow == mRow) {
+                if (std::abs(z->getX() - mX) <= 50.0f || (z->getX() <= mX && z->getX() >= mX - 60.0f)) {
+                    z->takeDamage(1800.0f);
+                }
             }
         }
     }
@@ -331,7 +394,7 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 10. Update placed plants (if any)
+    // 12. Update placed plants (if any)
     std::vector<Projectile> dummyProjectiles;
     std::vector<SunItem> dummySuns;
     for (int r = 0; r < 5; ++r) {
@@ -387,8 +450,16 @@ void BowlingLevel::draw() {
         );
     }
 
-    // 3. Draw placed plants on lawn grid
+    // 3. Draw Entities Row-by-Row from Top (Row 0) to Bottom (Row 4)
     for (int r = 0; r < 5; ++r) {
+        // A. LawnMower in row r
+        for (const auto& mower : m_lawnMowers) {
+            if (mower.getRow() == r) {
+                mower.draw();
+            }
+        }
+
+        // B. Placed plants in row r
         for (int c = 0; c < 9; ++c) {
             if (m_grid[r][c]) {
                 m_grid[r][c]->draw();

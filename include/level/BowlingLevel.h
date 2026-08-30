@@ -19,6 +19,7 @@
 #include "BowlingNut.h"
 #include "InGameMenu.h"
 #include "BitmapFont.h"
+#include "LawnMower.h"
 
 struct BowlingCard {
     float x;
@@ -53,6 +54,9 @@ private:
     std::vector<std::pair<const Zombie*, float>> m_hitDebugTimers;
     bool m_showDebug = true;
 
+    // Lawn mowers on all 5 lanes
+    std::vector<LawnMower> m_lawnMowers;
+
     // Level progression & wave state
     int m_currentWave = 0;
     int m_maxWaves = 7;
@@ -85,6 +89,7 @@ private:
     BitmapFont m_font;
 
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
+    void initLawnMowers();
     void spawnNextWave();
     void drawProgressBar();
     void drawSpeedControls();
