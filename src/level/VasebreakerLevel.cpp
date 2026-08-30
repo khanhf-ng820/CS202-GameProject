@@ -46,6 +46,7 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.GetAssetPath("assets/sounds/seedlift.ogg");
     res.GetAssetPath("assets/sounds/plant.ogg");
     res.GetAssetPath("assets/sounds/tap.ogg");
+    res.GetAssetPath("assets/sounds/winmusic.ogg");
 
     // Load House of Terror 28 bitmap font
     std::string fontPng = res.GetAssetPath("assets/data/HouseofTerror28.png");
@@ -59,6 +60,7 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
 void VasebreakerLevel::restartLevel() {
     m_levelWon = false;
     m_levelLost = false;
+    m_winMusicPlayed = false;
     m_isSwinging = false;
     m_pendingVaseRow = -1;
     m_pendingVaseCol = -1;
@@ -595,6 +597,38 @@ void VasebreakerLevel::update(float dt) {
             [](const std::unique_ptr<Zombie>& z) { return z->isFinished(); }),
         m_zombies.end()
     );
+
+    // Check win condition: all vases destroyed AND all spawned zombies eliminated
+    if (!m_levelWon && !m_levelLost && m_pendingVaseRow == -1) {
+        bool allVasesBroken = true;
+        for (int r = 0; r < 5; ++r) {
+            for (int c = 0; c < 9; ++c) {
+                if (m_vases[r][c] && !m_vases[r][c]->isDestroyed()) {
+                    allVasesBroken = false;
+                    break;
+                }
+            }
+            if (!allVasesBroken) break;
+        }
+
+        bool anyZombieAlive = false;
+        for (const auto& z : m_zombies) {
+            if (!z->isDead()) {
+                anyZombieAlive = true;
+                break;
+            }
+        }
+
+        if (allVasesBroken && !anyZombieAlive) {
+            m_levelWon = true;
+            if (!m_winMusicPlayed) {
+                m_winMusicPlayed = true;
+                AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/winmusic.ogg"));
+            }
+            ShowCursor();
+        }
+    }
 }
 
 void VasebreakerLevel::draw() {
@@ -736,8 +770,14 @@ void VasebreakerLevel::draw() {
     float labelY = 566.0f;
     m_font.DrawText(labelText, labelX, labelY, fontScale, Color{ 235, 200, 45, 255 });
 
-    // 11. Draw Game Over / Loss overlay if triggered
-    if (m_levelLost) {
+    // 11. Draw Win / Loss Overlays
+    if (m_levelWon) {
+        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
+        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
+        DrawText("LEVEL COMPLETED!", 260, 240, 28, GOLD);
+        DrawText("You smashed all vases and defeated all zombies!", 215, 290, 16, WHITE);
+        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+    } else if (m_levelLost) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
         DrawText("THE ZOMBIES ATE YOUR BRAINS!", 215, 240, 22, RED);
@@ -745,7 +785,7 @@ void VasebreakerLevel::draw() {
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     }
 
-    // 11. Draw Cursor (only when in-game menu is not open)
+    // 12. Draw Cursor (only when in-game menu is not open)
     if (!m_inGameMenu || !m_inGameMenu->isOpen()) {
         if (m_selectedPacketIndex >= 0) {
             // Translucent plant preview following mouse cursor
@@ -760,14 +800,14 @@ void VasebreakerLevel::draw() {
         DrawCircleLines((int)mousePos.x, (int)mousePos.y, 4.0f, WHITE);
     }
 
-    // 12. Draw in-game pause menu dialog if open (on top of everything)
+    // 13. Draw in-game pause menu dialog if open (on top of everything)
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }
 
     EndTextureMode();
 
-    // 13. Draw targetScreen stretched to actual window dimensions
+    // 14. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -796,7 +836,7 @@ void VasebreakerLevel::run() {
         update(dt);
         draw();
 
-        if (m_exitToMainMenu || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
+        if (m_exitToMainMenu || (m_levelWon && IsKeyPressed(KEY_ENTER)) || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
             break;
         }
     }

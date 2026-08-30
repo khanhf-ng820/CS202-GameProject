@@ -152,6 +152,7 @@ private:
     // Game state
     bool m_levelWon = false;
     bool m_levelLost = false;
+    bool m_winMusicPlayed = false;
 
     // Helper functions
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
