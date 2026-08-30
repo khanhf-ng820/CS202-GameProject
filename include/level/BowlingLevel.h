@@ -62,6 +62,10 @@ private:
     bool m_levelLost = false;
     bool m_exitToMainMenu = false;
 
+    // Speed & Pause controls
+    float m_gameSpeed = 1.0f;
+    bool m_isSpeedPaused = false;
+
     // Grid state for placed plants
     std::unique_ptr<Plant> m_grid[5][9];
 
@@ -78,5 +82,6 @@ private:
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     void spawnNextWave();
     void drawProgressBar();
+    void drawSpeedControls();
 };
 

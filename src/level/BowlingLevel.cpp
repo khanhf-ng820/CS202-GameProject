@@ -20,6 +20,8 @@ void BowlingLevel::restartLevel() {
     m_levelWon = false;
     m_levelLost = false;
     m_exitToMainMenu = false;
+    m_gameSpeed = 1.0f;
+    m_isSpeedPaused = false;
 
     m_zombies.clear();
     m_bowlingNuts.clear();
@@ -122,11 +124,34 @@ void BowlingLevel::update(float dt) {
         return;
     }
 
+    // Handle Speed & Pause Buttons
+    Rectangle pauseBtn = { 668.0f, 538.0f, 26.0f, 26.0f };
+    Rectangle speedBtn = { 698.0f, 538.0f, 85.0f, 26.0f };
+
+    if (!m_levelWon && !m_levelLost) {
+        if (IsKeyPressed(KEY_SPACE) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, pauseBtn))) {
+            m_isSpeedPaused = !m_isSpeedPaused;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/pause.ogg"));
+            return;
+        }
+
+        if (IsKeyPressed(KEY_F) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, speedBtn))) {
+            if (m_gameSpeed == 1.0f) m_gameSpeed = 2.0f;
+            else if (m_gameSpeed == 2.0f) m_gameSpeed = 4.0f;
+            else if (m_gameSpeed == 4.0f) m_gameSpeed = 8.0f;
+            else m_gameSpeed = 1.0f;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buttonclick.ogg"));
+            return;
+        }
+    }
+
     if (m_levelWon || m_levelLost) return;
+
+    float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
 
     // 0. Wave spawn timer
     if (m_currentWave < m_maxWaves) {
-        m_waveTimer -= dt;
+        m_waveTimer -= simDt;
         if (m_waveTimer <= 0.0f) {
             spawnNextWave();
             m_waveTimer = 22.0f;
@@ -134,7 +159,7 @@ void BowlingLevel::update(float dt) {
     }
 
     // 1. Advance conveyor belt animation frame (6 rows of 16px each in ConveyorBelt.png)
-    m_animTimer += dt;
+    m_animTimer += simDt;
     float frameDuration = 0.08f; // ~12.5 FPS animation speed
     if (m_animTimer >= frameDuration) {
         m_animTimer -= frameDuration;
@@ -146,7 +171,7 @@ void BowlingLevel::update(float dt) {
     float leftMinX = 9.0f;
     float cardW = 50.0f;
 
-    m_cardSpawnTimer += dt;
+    m_cardSpawnTimer += simDt;
     if (m_cardSpawnTimer >= 3.0f) {
         // Only spawn a new card if the conveyor belt has room (last card has moved left of spawn position)
         if (m_cards.empty() || m_cards.back().x < spawnX) {
@@ -170,7 +195,7 @@ void BowlingLevel::update(float dt) {
     for (size_t i = 0; i < m_cards.size(); ++i) {
         float targetX = (i == 0) ? leftMinX : (m_cards[i - 1].x + cardW);
         if (m_cards[i].x > targetX) {
-            m_cards[i].x -= cardSpeed * dt;
+            m_cards[i].x -= cardSpeed * simDt;
             if (m_cards[i].x < targetX) {
                 m_cards[i].x = targetX;
             }
@@ -193,7 +218,7 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 5. Handle card pickup from conveyor belt (when not currently holding a card)
+    // 6. Handle card pickup from conveyor belt (when not currently holding a card)
     if (!m_isHoldingCard && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         for (size_t i = 0; i < m_cards.size(); ++i) {
             Rectangle cardRect = { m_cards[i].x, 8.0f, 50.0f, 70.0f };
@@ -207,7 +232,7 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 6. Handle plant placement on lawn grid (when holding a card)
+    // 7. Handle plant placement on lawn grid (when holding a card)
     // Note: Deselecting is disabled per requirements — player MUST place the card!
     if (m_isHoldingCard && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         int r, c;
@@ -232,14 +257,14 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 7. Update rolling bowling nuts & handle zombie collisions + boundary bouncing
+    // 8. Update rolling bowling nuts & handle zombie collisions + boundary bouncing
     for (auto& nut : m_bowlingNuts) {
-        nut->update(dt, m_zombies, m_hitDebugTimers, res);
+        nut->update(simDt, m_zombies, m_hitDebugTimers, res);
     }
 
     // Update hit debug timers (decrement and cleanup)
     for (auto& item : m_hitDebugTimers) {
-        item.second -= dt;
+        item.second -= simDt;
     }
     m_hitDebugTimers.erase(
         std::remove_if(m_hitDebugTimers.begin(), m_hitDebugTimers.end(),
@@ -254,10 +279,10 @@ void BowlingLevel::update(float dt) {
         m_bowlingNuts.end()
     );
 
-    // 8. Update zombies (right to left movement) and check loss condition
+    // 9. Update zombies (right to left movement) and check loss condition
     for (auto& z : m_zombies) {
         if (!z->isFinished()) {
-            z->update(dt);
+            z->update(simDt);
             // Check loss condition: Living Zombie reaches house (x < 160.0f)
             if (!z->isDead() && z->getX() < 160.0f) {
                 m_levelLost = true;
@@ -283,13 +308,13 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 9. Update placed plants (if any)
+    // 10. Update placed plants (if any)
     std::vector<Projectile> dummyProjectiles;
     std::vector<SunItem> dummySuns;
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
-            if (m_grid[r][c]) {
-                m_grid[r][c]->update(dt, dummyProjectiles, dummySuns);
+            if (m_grid[r][c] && !m_grid[r][c]->isDead()) {
+                m_grid[r][c]->update(simDt, dummyProjectiles, dummySuns);
             }
         }
     }
@@ -486,10 +511,13 @@ void BowlingLevel::draw() {
         drawCard(m_heldPlantType, cursorCardRect);
     }
 
-    // 10. Draw Bottom-Right FlagMeter Progress Bar & "Wall-nut Bowling" Label
+    // 10. Draw Speed & Pause Controls
+    drawSpeedControls();
+
+    // 11. Draw Bottom-Right FlagMeter Progress Bar & "Wall-nut Bowling" Label
     drawProgressBar();
 
-    // 11. Draw Win / Loss Overlays (identical to Level 1)
+    // 12. Draw Win / Loss Overlays (identical to Level 1)
     if (m_levelWon) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
@@ -504,14 +532,14 @@ void BowlingLevel::draw() {
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     }
 
-    // 12. Draw in-game pause menu dialog if open
+    // 13. Draw in-game pause menu dialog if open
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }
 
     EndTextureMode();
 
-    // 13. Draw targetScreen stretched to actual window dimensions
+    // 14. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -523,6 +551,40 @@ void BowlingLevel::draw() {
         WHITE
     );
     EndDrawing();
+}
+
+void BowlingLevel::drawSpeedControls() {
+    Vector2 mousePos = GetVirtualMousePosition();
+    Rectangle pauseBtn = { 668.0f, 538.0f, 26.0f, 26.0f };
+    Rectangle speedBtn = { 698.0f, 538.0f, 85.0f, 26.0f };
+
+    bool pauseHover = CheckCollisionPointRec(mousePos, pauseBtn);
+    bool speedHover = CheckCollisionPointRec(mousePos, speedBtn);
+
+    // 1. Draw Pause Button
+    DrawRectangleRounded(pauseBtn, 0.25f, 4, pauseHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
+    DrawRectangleRoundedLines(pauseBtn, 0.25f, 4, 1.5f, pauseHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    if (m_isSpeedPaused) {
+        DrawTriangle({ pauseBtn.x + 8.0f, pauseBtn.y + 6.0f },
+                     { pauseBtn.x + 8.0f, pauseBtn.y + pauseBtn.height - 6.0f },
+                     { pauseBtn.x + pauseBtn.width - 7.0f, pauseBtn.y + pauseBtn.height / 2.0f },
+                     Color{ 240, 240, 255, 255 });
+    } else {
+        DrawRectangleRec({ pauseBtn.x + 7.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+        DrawRectangleRec({ pauseBtn.x + 15.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+    }
+
+    // 2. Draw Speed Button
+    DrawRectangleRounded(speedBtn, 0.25f, 4, speedHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
+    DrawRectangleRoundedLines(speedBtn, 0.25f, 4, 1.5f, speedHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    DrawTriangle({ speedBtn.x + 8.0f, speedBtn.y + 7.0f },
+                 { speedBtn.x + 8.0f, speedBtn.y + speedBtn.height - 7.0f },
+                 { speedBtn.x + 19.0f, speedBtn.y + speedBtn.height / 2.0f },
+                 Color{ 220, 235, 255, 255 });
+
+    char speedBuf[16];
+    snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
+    DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
 }
 
 void BowlingLevel::drawProgressBar() {

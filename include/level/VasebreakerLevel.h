@@ -120,6 +120,7 @@ private:
     // Mallet cursor animation state
     Reanimation m_malletAnim;
     bool m_isSwinging = false;
+    float m_swingProgress = 0.0f;
 
     // Plant placement cursor preview
     Reanimation m_previewPlantAnim;
@@ -149,10 +150,12 @@ private:
     // Active zombies on the lawn
     std::vector<std::unique_ptr<Zombie>> m_zombies;
 
-    // Game state
+    // Game state & simulation speed
     bool m_levelWon = false;
     bool m_levelLost = false;
     bool m_winMusicPlayed = false;
+    float m_gameSpeed = 1.0f;
+    bool m_isSpeedPaused = false;
 
     // Helper functions
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
@@ -160,4 +163,5 @@ private:
     void breakVase(int row, int col);
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
     void restartLevel();
+    void drawSpeedControls();
 };

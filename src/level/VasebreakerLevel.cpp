@@ -47,6 +47,8 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.GetAssetPath("assets/sounds/plant.ogg");
     res.GetAssetPath("assets/sounds/tap.ogg");
     res.GetAssetPath("assets/sounds/winmusic.ogg");
+    res.GetAssetPath("assets/sounds/pause.ogg");
+    res.GetAssetPath("assets/sounds/buttonclick.ogg");
 
     // Load House of Terror 28 bitmap font
     std::string fontPng = res.GetAssetPath("assets/data/HouseofTerror28.png");
@@ -61,7 +63,10 @@ void VasebreakerLevel::restartLevel() {
     m_levelWon = false;
     m_levelLost = false;
     m_winMusicPlayed = false;
+    m_gameSpeed = 1.0f;
+    m_isSpeedPaused = false;
     m_isSwinging = false;
+    m_swingProgress = 0.0f;
     m_pendingVaseRow = -1;
     m_pendingVaseCol = -1;
     m_pendingVaseTimer = 0.0f;
@@ -308,18 +313,41 @@ void VasebreakerLevel::update(float dt) {
         return;
     }
 
+    // Handle Speed & Pause Controls in playing phase
+    Rectangle pauseBtn = { 668.0f, 566.0f, 26.0f, 26.0f };
+    Rectangle speedBtn = { 698.0f, 566.0f, 85.0f, 26.0f };
+
+    if (!m_levelWon && !m_levelLost) {
+        if (IsKeyPressed(KEY_SPACE) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, pauseBtn))) {
+            m_isSpeedPaused = !m_isSpeedPaused;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/pause.ogg"));
+            return;
+        }
+
+        if (IsKeyPressed(KEY_F) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, speedBtn))) {
+            if (m_gameSpeed == 1.0f)      m_gameSpeed = 2.0f;
+            else if (m_gameSpeed == 2.0f) m_gameSpeed = 4.0f;
+            else if (m_gameSpeed == 4.0f) m_gameSpeed = 8.0f;
+            else                          m_gameSpeed = 1.0f;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buttonclick.ogg"));
+            return;
+        }
+    }
+
     if (m_levelLost || m_levelWon) return;
+
+    float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
 
     // Update plant preview animation
     m_previewPlantAnim.Update(dt);
 
     // Update dropped seed packet cards
     for (auto& packet : m_droppedPackets) {
-        packet.update(dt);
+        packet.update(simDt);
     }
 
-    // Left-click interaction handling
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    // Left-click interaction handling (active when not speed-paused)
+    if (!m_isSpeedPaused && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         bool handledCardClick = false;
 
         // 1. Check if clicking on any dropped seed packet card
@@ -389,10 +417,10 @@ void VasebreakerLevel::update(float dt) {
             } else {
                 // 3. No card selected: standard mallet swing & vase smashing
                 m_isSwinging = true;
+                m_swingProgress = 0.0f;
                 m_malletAnim.SetAnimation("anim_open_pot");
                 m_malletAnim.SetFrame(9.0f); // Start of strike swing
-                m_malletAnim.SetSpeed(2.5f); // Fast responsive swing
-                m_malletAnim.SetPaused(false);
+                m_malletAnim.SetPaused(true); // Manually driven by m_swingProgress to prevent auto-looping
                 AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/swing.ogg"));
 
                 // Target at most ONE vase that is targetable (Intact)
@@ -409,19 +437,23 @@ void VasebreakerLevel::update(float dt) {
         }
     }
 
-    // Process mallet swing animation
+    // Process mallet swing animation deterministically
     if (m_isSwinging) {
-        m_malletAnim.Update(dt);
-        if (m_malletAnim.GetCurrentFrame() >= m_malletAnim.GetEndFrame() - 1 || m_malletAnim.GetCurrentFrame() >= 16) {
+        m_swingProgress += simDt * 30.0f; // 12 fps * 2.5x speed = 30 frames/sec
+        float curFrame = 9.0f + m_swingProgress;
+        if (curFrame >= 16.0f) {
             m_isSwinging = false;
+            m_swingProgress = 0.0f;
             m_malletAnim.SetFrame(14.0f); // Return to resting upright pose
             m_malletAnim.SetPaused(true);
+        } else {
+            m_malletAnim.SetFrame(curFrame);
         }
     }
 
     // Process pending vase strike impact
     if (m_pendingVaseTimer > 0.0f) {
-        m_pendingVaseTimer -= dt;
+        m_pendingVaseTimer -= simDt;
         if (m_pendingVaseTimer <= 0.0f && m_pendingVaseRow >= 0) {
             breakVase(m_pendingVaseRow, m_pendingVaseCol);
             m_pendingVaseRow = -1;
@@ -460,7 +492,7 @@ void VasebreakerLevel::update(float dt) {
                     }
                 }
 
-                m_plants[r][c]->update(dt, m_projectiles, m_suns);
+                m_plants[r][c]->update(simDt, m_projectiles, m_suns);
             }
         }
     }
@@ -476,7 +508,7 @@ void VasebreakerLevel::update(float dt) {
 
     // Update projectiles & projectile-zombie collisions
     for (auto& p : m_projectiles) {
-        p.update(dt);
+        p.update(simDt);
         if (!p.isActive()) continue;
 
         for (auto& z : m_zombies) {
@@ -502,11 +534,11 @@ void VasebreakerLevel::update(float dt) {
 
     // Update active shards
     for (auto& shard : m_shards) {
-        shard.lifetime -= dt;
-        shard.vy += 500.0f * dt; // Gravity
-        shard.x += shard.vx * dt;
-        shard.y += shard.vy * dt;
-        shard.rotation += shard.rotSpeed * dt;
+        shard.lifetime -= simDt;
+        shard.vy += 500.0f * simDt; // Gravity
+        shard.x += shard.vx * simDt;
+        shard.y += shard.vy * simDt;
+        shard.rotation += shard.rotSpeed * simDt;
 
         // Ground bounce
         if (shard.y >= shard.groundY && shard.vy > 0.0f) {
@@ -535,7 +567,7 @@ void VasebreakerLevel::update(float dt) {
     // Update active zombies and zombie-eating-plant interactions
     for (auto& z : m_zombies) {
         if (!z->isFinished()) {
-            z->update(dt);
+            z->update(simDt);
             if (!z->isDead()) {
                 int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
                 bool foundPlantToEat = false;
@@ -552,10 +584,10 @@ void VasebreakerLevel::update(float dt) {
                                     z->getAnim().SetAnimation("anim_eat");
                                 }
 
-                                p->takeDamage((float)z->getDamage() * dt);
+                                p->takeDamage((float)z->getDamage() * simDt);
 
                                 // Periodic chomp sound effect while eating
-                                z->addEatTimer(dt);
+                                z->addEatTimer(simDt);
                                 if (z->getEatTimer() >= 0.35f) {
                                     z->resetEatTimer();
                                     int chompChoice = GetRandomValue(0, 1);
@@ -762,13 +794,16 @@ void VasebreakerLevel::draw() {
         m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
     }
 
-    // 10. Draw "Vasebreaker Level" label at the bottom-right corner
+    // 10. Draw "Vasebreaker Level" label at the bottom-right corner (to the left of pause button)
     const char* labelText = "Vasebreaker Level";
     float fontScale = 0.65f;
     int textWidth = m_font.MeasureText(labelText, fontScale);
-    float labelX = 785.0f - (float)textWidth;
-    float labelY = 566.0f;
+    float labelX = 668.0f - (float)textWidth - 14.0f;
+    float labelY = 568.0f;
     m_font.DrawText(labelText, labelX, labelY, fontScale, Color{ 235, 200, 45, 255 });
+
+    // Draw Speed & Pause controls
+    drawSpeedControls();
 
     // 11. Draw Win / Loss Overlays
     if (m_levelWon) {
@@ -819,6 +854,40 @@ void VasebreakerLevel::draw() {
         WHITE
     );
     EndDrawing();
+}
+
+void VasebreakerLevel::drawSpeedControls() {
+    Vector2 mousePos = GetVirtualMousePosition();
+    Rectangle pauseBtn = { 668.0f, 566.0f, 26.0f, 26.0f };
+    Rectangle speedBtn = { 698.0f, 566.0f, 85.0f, 26.0f };
+
+    bool pauseHover = CheckCollisionPointRec(mousePos, pauseBtn);
+    bool speedHover = CheckCollisionPointRec(mousePos, speedBtn);
+
+    // 1. Draw Pause Button
+    DrawRectangleRounded(pauseBtn, 0.25f, 4, pauseHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
+    DrawRectangleRoundedLines(pauseBtn, 0.25f, 4, 1.5f, pauseHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    if (m_isSpeedPaused) {
+        DrawTriangle({ pauseBtn.x + 8.0f, pauseBtn.y + 6.0f },
+                     { pauseBtn.x + 8.0f, pauseBtn.y + pauseBtn.height - 6.0f },
+                     { pauseBtn.x + pauseBtn.width - 7.0f, pauseBtn.y + pauseBtn.height / 2.0f },
+                     Color{ 240, 240, 255, 255 });
+    } else {
+        DrawRectangleRec({ pauseBtn.x + 7.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+        DrawRectangleRec({ pauseBtn.x + 15.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+    }
+
+    // 2. Draw Speed Button
+    DrawRectangleRounded(speedBtn, 0.25f, 4, speedHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
+    DrawRectangleRoundedLines(speedBtn, 0.25f, 4, 1.5f, speedHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    DrawTriangle({ speedBtn.x + 8.0f, speedBtn.y + 7.0f },
+                 { speedBtn.x + 8.0f, speedBtn.y + speedBtn.height - 7.0f },
+                 { speedBtn.x + 19.0f, speedBtn.y + speedBtn.height / 2.0f },
+                 Color{ 220, 235, 255, 255 });
+
+    char speedBuf[16];
+    snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
+    DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
 }
 
 void VasebreakerLevel::run() {
