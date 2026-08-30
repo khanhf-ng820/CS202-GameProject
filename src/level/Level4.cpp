@@ -1015,7 +1015,6 @@ void Level4::update(float dt) {
         if (IsKeyPressed(KEY_F) || (mouseClicked && CheckCollisionPointRec(mousePos, speedBtn))) {
             if (m_gameSpeed == 1.0f) m_gameSpeed = 2.0f;
             else if (m_gameSpeed == 2.0f) m_gameSpeed = 4.0f;
-            else if (m_gameSpeed == 4.0f) m_gameSpeed = 8.0f;
             else m_gameSpeed = 1.0f;
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buttonclick.ogg"));
             return;
@@ -1613,11 +1612,14 @@ void Level4::drawSpeedControls() {
 
     DrawRectangleRounded(speedBtn, 0.25f, 4, speedHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
     DrawRectangleRoundedLines(speedBtn, 0.25f, 4, 1.5f, speedHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    DrawTriangle({ speedBtn.x + 8.0f, speedBtn.y + 7.0f },
+                 { speedBtn.x + 8.0f, speedBtn.y + speedBtn.height - 7.0f },
+                 { speedBtn.x + 19.0f, speedBtn.y + speedBtn.height / 2.0f },
+                 Color{ 220, 235, 255, 255 });
 
     char speedText[16];
-    snprintf(speedText, sizeof(speedText), "> %.0fx", m_gameSpeed);
-    Color speedColor = (m_gameSpeed == 1.0f) ? RAYWHITE : (m_gameSpeed == 2.0f ? YELLOW : (m_gameSpeed == 4.0f ? ORANGE : RED));
-    DrawText(speedText, 715, 543, 16, speedColor);
+    snprintf(speedText, sizeof(speedText), "%.0fx", m_gameSpeed);
+    DrawText(speedText, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
 }
 
 void Level4::drawWinScreen() {

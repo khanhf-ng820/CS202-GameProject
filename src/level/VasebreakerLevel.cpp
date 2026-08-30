@@ -1,6 +1,7 @@
 #include "VasebreakerLevel.h"
 #include "UIHelpers.h"
 #include "AudioManager.h"
+#include "ProfileManager.h"
 #include <algorithm>
 #include <random>
 #include <cmath>
@@ -40,6 +41,8 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.LoadFile(res.GetAssetPath("assets/images/ProjectilePea.png"));
     res.LoadFile(res.GetAssetPath("assets/images/ProjectileSnowPea.png"));
     res.LoadFile(res.GetAssetPath("assets/reanim/ZombiesWon.jpg"));
+    res.LoadFile(res.GetAssetPath("assets/images/trophy_hi_res.png"));
+    res.LoadFile(res.GetAssetPath("assets/particles/AwardRays.png"));
 
     // Preload sounds
     res.GetAssetPath("assets/sounds/groan.ogg");
@@ -66,6 +69,9 @@ void VasebreakerLevel::restartLevel() {
     m_levelWon = false;
     m_levelLost = false;
     m_winMusicPlayed = false;
+    m_winTimer = 0.0f;
+    m_awardY = -150.0f;
+    m_awardRaysRotation = 0.0f;
     m_loseTimer = 0.0f;
     m_screamSoundPlayed = false;
     m_loseMusicPlayed = false;
@@ -333,7 +339,6 @@ void VasebreakerLevel::update(float dt) {
         if (IsKeyPressed(KEY_F) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, speedBtn))) {
             if (m_gameSpeed == 1.0f)      m_gameSpeed = 2.0f;
             else if (m_gameSpeed == 2.0f) m_gameSpeed = 4.0f;
-            else if (m_gameSpeed == 4.0f) m_gameSpeed = 8.0f;
             else                          m_gameSpeed = 1.0f;
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buttonclick.ogg"));
             return;
@@ -361,7 +366,24 @@ void VasebreakerLevel::update(float dt) {
         return;
     }
 
-    if (m_levelWon) return;
+    if (m_levelWon) {
+        m_winTimer += dt;
+        m_awardRaysRotation += 40.0f * dt;
+        m_awardY = std::min(240.0f, m_awardY + (240.0f - m_awardY) * 6.0f * dt + 200.0f * dt);
+        ShowCursor();
+
+        if (!m_winMusicPlayed) {
+            m_winMusicPlayed = true;
+            ProfileManager::GetInstance().AddCoins(500);
+            AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/winmusic.ogg"));
+        }
+
+        if (m_winTimer >= 1.5f && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE))) {
+            m_exitToMainMenu = true;
+        }
+        return;
+    }
 
     float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
 
@@ -680,12 +702,6 @@ void VasebreakerLevel::update(float dt) {
 
         if (allVasesBroken && !anyZombieAlive) {
             m_levelWon = true;
-            if (!m_winMusicPlayed) {
-                m_winMusicPlayed = true;
-                AudioManager::GetInstance().PlayMusic(MusicTrack::None);
-                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/winmusic.ogg"));
-            }
-            ShowCursor();
         }
     }
 }
@@ -834,11 +850,7 @@ void VasebreakerLevel::draw() {
 
     // 11. Draw Win / Loss Overlays
     if (m_levelWon) {
-        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
-        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
-        DrawText("LEVEL COMPLETED!", 260, 240, 28, GOLD);
-        DrawText("You smashed all vases and defeated all zombies!", 215, 290, 16, WHITE);
-        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+        drawWinScreen();
     } else if (m_levelLost) {
         drawLoseScreen();
     }
@@ -909,8 +921,47 @@ void VasebreakerLevel::drawSpeedControls() {
                  Color{ 220, 235, 255, 255 });
 
     char speedBuf[16];
-    snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
+    snprintf(speedBuf, sizeof(speedBuf), "%.0fx", m_gameSpeed);
     DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
+}
+
+void VasebreakerLevel::drawWinScreen() {
+    float overlayAlpha = std::clamp(m_winTimer * 1.5f, 0.0f, 0.75f);
+    DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(BLACK, overlayAlpha));
+
+    Texture2D texTrophy = res.GetTexture("TROPHY_HI_RES");
+    if (texTrophy.id == 0) texTrophy = res.GetTexture("TROPHY");
+
+    float centerX = 400.0f;
+    float centerY = m_awardY;
+
+    // Draw rotating sun rays behind trophy
+    Texture2D texRaysImg = res.GetTexture("AWARDRAYS");
+    if (texRaysImg.id == 0) texRaysImg = res.GetTexture("AwardRays");
+    if (texRaysImg.id != 0) {
+        Rectangle srcRays = { 0, 0, (float)texRaysImg.width, (float)texRaysImg.height };
+        Rectangle destRays = { centerX, centerY, 320.0f, 320.0f };
+        Vector2 originRays = { 160.0f, 160.0f };
+        DrawTexturePro(texRaysImg, srcRays, destRays, originRays, m_awardRaysRotation, ColorAlpha(WHITE, 0.85f));
+    }
+
+    // Draw Trophy
+    if (texTrophy.id != 0) {
+        Rectangle srcTrophy = { 0, 0, (float)texTrophy.width, (float)texTrophy.height };
+        Rectangle destTrophy = { centerX, centerY, 160.0f, 160.0f };
+        Vector2 originTrophy = { 80.0f, 80.0f };
+        DrawTexturePro(texTrophy, srcTrophy, destTrophy, originTrophy, 0.0f, WHITE);
+    }
+
+    // Draw Award Banner and text when trophy lands
+    if (m_winTimer >= 1.0f) {
+        float bannerAlpha = std::clamp((m_winTimer - 1.0f) * 2.0f, 0.0f, 1.0f);
+        DrawRectangleRec({ 200, 360, 400, 150 }, ColorAlpha(Color{ 20, 25, 40, 255 }, bannerAlpha * 0.90f));
+        DrawRectangleLinesEx({ 200, 360, 400, 150 }, 3.0f, ColorAlpha(GOLD, bannerAlpha));
+        DrawText("LEVEL COMPLETED!", 260, 385, 28, ColorAlpha(GOLD, bannerAlpha));
+        DrawText("You smashed all vases and saved your lawn!", 220, 428, 17, ColorAlpha(WHITE, bannerAlpha));
+        DrawText("Click anywhere or press ENTER to continue", 230, 465, 16, ColorAlpha(LIGHTGRAY, bannerAlpha));
+    }
 }
 
 void VasebreakerLevel::drawLoseScreen() {

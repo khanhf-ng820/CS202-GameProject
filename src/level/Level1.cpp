@@ -845,7 +845,6 @@ void Level1::update(float dt) {
         if (IsKeyPressed(KEY_F) || (mouseClicked && CheckCollisionPointRec(mousePos, speedBtn))) {
             if (m_gameSpeed == 1.0f) m_gameSpeed = 2.0f;
             else if (m_gameSpeed == 2.0f) m_gameSpeed = 4.0f;
-            else if (m_gameSpeed == 4.0f) m_gameSpeed = 8.0f;
             else m_gameSpeed = 1.0f;
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buttonclick.ogg"));
             return;
@@ -1362,7 +1361,7 @@ void Level1::drawSpeedControls() {
                  Color{ 220, 235, 255, 255 });
 
     char speedBuf[16];
-    snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
+    snprintf(speedBuf, sizeof(speedBuf), "%.0fx", m_gameSpeed);
     DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
 }
 

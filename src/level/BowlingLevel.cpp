@@ -1,6 +1,7 @@
 #include "BowlingLevel.h"
 #include "UIHelpers.h"
 #include "AudioManager.h"
+#include "ProfileManager.h"
 
 BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
@@ -35,6 +36,10 @@ void BowlingLevel::restartLevel() {
     m_loseTimer = 0.0f;
     m_screamSoundPlayed = false;
     m_loseMusicPlayed = false;
+    m_winTimer = 0.0f;
+    m_awardY = -100.0f;
+    m_awardRaysRotation = 0.0f;
+    m_winMusicPlayed = false;
 
     initLawnMowers();
     m_zombies.clear();
@@ -152,14 +157,29 @@ void BowlingLevel::update(float dt) {
         if (IsKeyPressed(KEY_F) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, speedBtn))) {
             if (m_gameSpeed == 1.0f) m_gameSpeed = 2.0f;
             else if (m_gameSpeed == 2.0f) m_gameSpeed = 4.0f;
-            else if (m_gameSpeed == 4.0f) m_gameSpeed = 8.0f;
             else m_gameSpeed = 1.0f;
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buttonclick.ogg"));
             return;
         }
     }
 
-    if (m_levelWon) return;
+    if (m_levelWon) {
+        m_winTimer += dt;
+        m_awardRaysRotation += 40.0f * dt;
+        m_awardY = std::min(240.0f, m_awardY + (240.0f - m_awardY) * 6.0f * dt + 200.0f * dt);
+
+        if (!m_winMusicPlayed) {
+            m_winMusicPlayed = true;
+            ProfileManager::GetInstance().AddCoins(500);
+            AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/winmusic.ogg"));
+        }
+
+        if (m_winTimer >= 1.5f && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))) {
+            m_exitToMainMenu = true;
+        }
+        return;
+    }
 
     if (m_levelLost) {
         m_loseTimer += dt;
@@ -613,11 +633,7 @@ void BowlingLevel::draw() {
 
     // 12. Draw Win / Loss Overlays
     if (m_levelWon) {
-        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
-        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
-        DrawText("LEVEL COMPLETED!", 260, 240, 28, GOLD);
-        DrawText("You defeated all zombies!", 270, 290, 18, WHITE);
-        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+        drawWinScreen();
     } else if (m_levelLost) {
         drawLoseScreen();
     }
@@ -673,7 +689,7 @@ void BowlingLevel::drawSpeedControls() {
                  Color{ 220, 235, 255, 255 });
 
     char speedBuf[16];
-    snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
+    snprintf(speedBuf, sizeof(speedBuf), "%.0fx", m_gameSpeed);
     DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
 }
 
@@ -709,6 +725,46 @@ void BowlingLevel::drawLoseScreen() {
         DrawRectangleRec({ 245, 470, 310, 44 }, ColorAlpha(BLACK, textAlpha * 0.75f));
         DrawRectangleLinesEx({ 245, 470, 310, 44 }, 2.0f, ColorAlpha(RED, textAlpha));
         DrawText("Click anywhere to try again", 270, 483, 18, ColorAlpha(RAYWHITE, textAlpha));
+    }
+}
+
+void BowlingLevel::drawWinScreen() {
+    float overlayAlpha = std::clamp(m_winTimer * 1.5f, 0.0f, 0.75f);
+    DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(BLACK, overlayAlpha));
+
+    Texture2D texTrophy = res.GetTexture("TROPHY_HI_RES");
+    if (texTrophy.id == 0) texTrophy = res.GetTexture("TROPHY");
+    if (texTrophy.id == 0) texTrophy = res.GetTexture("Trophy_hi_res");
+
+    float centerX = 400.0f;
+    float centerY = m_awardY;
+
+    // Draw rotating sun rays behind trophy
+    Texture2D texRaysImg = res.GetTexture("AWARDRAYS");
+    if (texRaysImg.id == 0) texRaysImg = res.GetTexture("AwardRays");
+    if (texRaysImg.id != 0) {
+        Rectangle srcRays = { 0, 0, (float)texRaysImg.width, (float)texRaysImg.height };
+        Rectangle destRays = { centerX, centerY, 320.0f, 320.0f };
+        Vector2 originRays = { 160.0f, 160.0f };
+        DrawTexturePro(texRaysImg, srcRays, destRays, originRays, m_awardRaysRotation, ColorAlpha(WHITE, 0.85f));
+    }
+
+    // Draw Trophy
+    if (texTrophy.id != 0) {
+        Rectangle srcTrophy = { 0, 0, (float)texTrophy.width, (float)texTrophy.height };
+        Rectangle destTrophy = { centerX, centerY, 160.0f, 160.0f };
+        Vector2 originTrophy = { 80.0f, 80.0f };
+        DrawTexturePro(texTrophy, srcTrophy, destTrophy, originTrophy, 0.0f, WHITE);
+    }
+
+    // Draw Award Banner and text when trophy lands
+    if (m_winTimer >= 1.0f) {
+        float bannerAlpha = std::clamp((m_winTimer - 1.0f) * 2.0f, 0.0f, 1.0f);
+        DrawRectangleRec({ 200, 360, 400, 150 }, ColorAlpha(Color{ 20, 25, 40, 255 }, bannerAlpha * 0.90f));
+        DrawRectangleLinesEx({ 200, 360, 400, 150 }, 3.0f, ColorAlpha(GOLD, bannerAlpha));
+        DrawText("LEVEL COMPLETED!", 260, 385, 28, ColorAlpha(GOLD, bannerAlpha));
+        DrawText("You defeated all zombies and saved your lawn!", 225, 428, 17, ColorAlpha(WHITE, bannerAlpha));
+        DrawText("Click anywhere or press ENTER to continue", 230, 465, 16, ColorAlpha(LIGHTGRAY, bannerAlpha));
     }
 }
 

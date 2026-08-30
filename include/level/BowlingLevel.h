@@ -75,6 +75,12 @@ private:
     bool m_screamSoundPlayed = false;
     bool m_loseMusicPlayed = false;
 
+    // Victory award presentation
+    float m_winTimer = 0.0f;
+    float m_awardY = -100.0f;
+    float m_awardRaysRotation = 0.0f;
+    bool m_winMusicPlayed = false;
+
     // Grid state for placed plants
     std::unique_ptr<Plant> m_grid[5][9];
 
@@ -94,5 +100,6 @@ private:
     void drawProgressBar();
     void drawSpeedControls();
     void drawLoseScreen();
+    void drawWinScreen();
 };
 
