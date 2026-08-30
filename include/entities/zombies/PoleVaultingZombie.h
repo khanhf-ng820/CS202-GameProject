@@ -15,6 +15,13 @@ public:
     bool isVaulting() const { return m_isVaulting; }
     bool hasVaulted() const { return m_hasVaulted; }
 
+    Rectangle getJumpTriggerBounds() const {
+        return Rectangle{ m_x - 70.0f, m_y + 30.0f, 90.0f, 90.0f };
+    }
+    Rectangle getBodyBounds() const {
+        return Rectangle{ m_x + 20.0f, m_y + 30.0f, 50.0f, 90.0f };
+    }
+
 private:
     bool m_hasVaulted = false;
     bool m_isVaulting = false;

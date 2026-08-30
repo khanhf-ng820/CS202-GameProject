@@ -49,11 +49,12 @@ void NormalBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zo
 
             PoleVaultingZombie* pvz = dynamic_cast<PoleVaultingZombie*>(z.get());
 
-            // 1. First Contact (Vault Trigger): If the Pole-vaulting Zombie still has his pole, vault over rolling nut
+            // 1. First Contact (Forward Proximity Sensor): If the Pole-vaulting Zombie still has his pole, vault early
             if (pvz && !pvz->hasVaulted() && !pvz->isVaulting()) {
-                if (dx >= -50.0f && dx <= 10.0f && fabsf(dy) <= 35.0f) {
+                // Trigger vault when nut is 60-110px ahead of the zombie in the same lane
+                if (dx >= -110.0f && dx <= 10.0f && fabsf(dy) <= 35.0f) {
                     pvz->startVault();
-                    // Nut does not bounce or deal damage; passes directly underneath in a straight line
+                    // Nut does not bounce or deal damage; passes cleanly underneath in a straight line
                     continue;
                 }
             }
