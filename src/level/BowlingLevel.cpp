@@ -5,6 +5,7 @@
 BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
     : res(res), targetScreen(targetScreen) {
     m_inGameMenu = std::make_unique<InGameMenu>(res);
+    m_font.Load(res.GetAssetPath("assets/data/HouseofTerror28.png"), res.GetAssetPath("assets/data/HouseofTerror28.txt"));
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
             m_grid[r][c] = nullptr;
@@ -19,6 +20,11 @@ void BowlingLevel::restartLevel() {
     m_levelWon = false;
     m_levelLost = false;
     m_exitToMainMenu = false;
+    m_gameSpeed = 1.0f;
+    m_isSpeedPaused = false;
+    m_loseTimer = 0.0f;
+    m_screamSoundPlayed = false;
+    m_loseMusicPlayed = false;
 
     m_zombies.clear();
     m_bowlingNuts.clear();
@@ -121,11 +127,54 @@ void BowlingLevel::update(float dt) {
         return;
     }
 
-    if (m_levelWon || m_levelLost) return;
+    // Handle Speed & Pause Buttons
+    Rectangle pauseBtn = { 668.0f, 538.0f, 26.0f, 26.0f };
+    Rectangle speedBtn = { 698.0f, 538.0f, 85.0f, 26.0f };
+
+    if (!m_levelWon && !m_levelLost) {
+        if (IsKeyPressed(KEY_SPACE) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, pauseBtn))) {
+            m_isSpeedPaused = !m_isSpeedPaused;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/pause.ogg"));
+            return;
+        }
+
+        if (IsKeyPressed(KEY_F) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, speedBtn))) {
+            if (m_gameSpeed == 1.0f) m_gameSpeed = 2.0f;
+            else if (m_gameSpeed == 2.0f) m_gameSpeed = 4.0f;
+            else if (m_gameSpeed == 4.0f) m_gameSpeed = 8.0f;
+            else m_gameSpeed = 1.0f;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buttonclick.ogg"));
+            return;
+        }
+    }
+
+    if (m_levelWon) return;
+
+    if (m_levelLost) {
+        m_loseTimer += dt;
+
+        if (!m_screamSoundPlayed) {
+            m_screamSoundPlayed = true;
+            AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/scream.ogg"));
+        }
+
+        if (m_loseTimer >= 0.7f && !m_loseMusicPlayed) {
+            m_loseMusicPlayed = true;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/losemusic.ogg"));
+        }
+
+        if (m_loseTimer >= 2.0f && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_SPACE))) {
+            restartLevel();
+        }
+        return;
+    }
+
+    float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
 
     // 0. Wave spawn timer
     if (m_currentWave < m_maxWaves) {
-        m_waveTimer -= dt;
+        m_waveTimer -= simDt;
         if (m_waveTimer <= 0.0f) {
             spawnNextWave();
             m_waveTimer = 22.0f;
@@ -133,7 +182,7 @@ void BowlingLevel::update(float dt) {
     }
 
     // 1. Advance conveyor belt animation frame (6 rows of 16px each in ConveyorBelt.png)
-    m_animTimer += dt;
+    m_animTimer += simDt;
     float frameDuration = 0.08f; // ~12.5 FPS animation speed
     if (m_animTimer >= frameDuration) {
         m_animTimer -= frameDuration;
@@ -145,7 +194,7 @@ void BowlingLevel::update(float dt) {
     float leftMinX = 9.0f;
     float cardW = 50.0f;
 
-    m_cardSpawnTimer += dt;
+    m_cardSpawnTimer += simDt;
     if (m_cardSpawnTimer >= 3.0f) {
         // Only spawn a new card if the conveyor belt has room (last card has moved left of spawn position)
         if (m_cards.empty() || m_cards.back().x < spawnX) {
@@ -169,7 +218,7 @@ void BowlingLevel::update(float dt) {
     for (size_t i = 0; i < m_cards.size(); ++i) {
         float targetX = (i == 0) ? leftMinX : (m_cards[i - 1].x + cardW);
         if (m_cards[i].x > targetX) {
-            m_cards[i].x -= cardSpeed * dt;
+            m_cards[i].x -= cardSpeed * simDt;
             if (m_cards[i].x < targetX) {
                 m_cards[i].x = targetX;
             }
@@ -192,7 +241,7 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 5. Handle card pickup from conveyor belt (when not currently holding a card)
+    // 6. Handle card pickup from conveyor belt (when not currently holding a card)
     if (!m_isHoldingCard && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         for (size_t i = 0; i < m_cards.size(); ++i) {
             Rectangle cardRect = { m_cards[i].x, 8.0f, 50.0f, 70.0f };
@@ -206,7 +255,7 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 6. Handle plant placement on lawn grid (when holding a card)
+    // 7. Handle plant placement on lawn grid (when holding a card)
     // Note: Deselecting is disabled per requirements — player MUST place the card!
     if (m_isHoldingCard && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         int r, c;
@@ -231,14 +280,14 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 7. Update rolling bowling nuts & handle zombie collisions + boundary bouncing
+    // 8. Update rolling bowling nuts & handle zombie collisions + boundary bouncing
     for (auto& nut : m_bowlingNuts) {
-        nut->update(dt, m_zombies, m_hitDebugTimers, res);
+        nut->update(simDt, m_zombies, m_hitDebugTimers, res);
     }
 
     // Update hit debug timers (decrement and cleanup)
     for (auto& item : m_hitDebugTimers) {
-        item.second -= dt;
+        item.second -= simDt;
     }
     m_hitDebugTimers.erase(
         std::remove_if(m_hitDebugTimers.begin(), m_hitDebugTimers.end(),
@@ -253,12 +302,12 @@ void BowlingLevel::update(float dt) {
         m_bowlingNuts.end()
     );
 
-    // 8. Update zombies (right to left movement) and check loss condition
+    // 9. Update zombies (right to left movement) and check loss condition
     for (auto& z : m_zombies) {
         if (!z->isFinished()) {
-            z->update(dt);
-            // Check loss condition: Living Zombie reaches house (x < 160.0f)
-            if (!z->isDead() && z->getX() < 160.0f) {
+            z->update(simDt);
+            // Check loss condition: Living Zombie reaches house door (x <= 20.0f)
+            if (!z->isDead() && z->getX() <= 20.0f) {
                 m_levelLost = true;
             }
         }
@@ -282,13 +331,13 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    // 9. Update placed plants (if any)
+    // 10. Update placed plants (if any)
     std::vector<Projectile> dummyProjectiles;
     std::vector<SunItem> dummySuns;
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
-            if (m_grid[r][c]) {
-                m_grid[r][c]->update(dt, dummyProjectiles, dummySuns);
+            if (m_grid[r][c] && !m_grid[r][c]->isDead()) {
+                m_grid[r][c]->update(simDt, dummyProjectiles, dummySuns);
             }
         }
     }
@@ -485,7 +534,13 @@ void BowlingLevel::draw() {
         drawCard(m_heldPlantType, cursorCardRect);
     }
 
-    // 10. Draw Win / Loss Overlays (identical to Level 1)
+    // 10. Draw Speed & Pause Controls
+    drawSpeedControls();
+
+    // 11. Draw Bottom-Right FlagMeter Progress Bar & "Wall-nut Bowling" Label
+    drawProgressBar();
+
+    // 12. Draw Win / Loss Overlays
     if (m_levelWon) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
@@ -493,21 +548,17 @@ void BowlingLevel::draw() {
         DrawText("You defeated all zombies!", 270, 290, 18, WHITE);
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     } else if (m_levelLost) {
-        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
-        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
-        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 215, 240, 22, RED);
-        DrawText("Game Over!", 350, 290, 20, WHITE);
-        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+        drawLoseScreen();
     }
 
-    // 11. Draw in-game pause menu dialog if open
+    // 13. Draw in-game pause menu dialog if open
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }
 
     EndTextureMode();
 
-    // 12. Draw targetScreen stretched to actual window dimensions
+    // 14. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -519,6 +570,167 @@ void BowlingLevel::draw() {
         WHITE
     );
     EndDrawing();
+}
+
+void BowlingLevel::drawSpeedControls() {
+    Vector2 mousePos = GetVirtualMousePosition();
+    Rectangle pauseBtn = { 668.0f, 538.0f, 26.0f, 26.0f };
+    Rectangle speedBtn = { 698.0f, 538.0f, 85.0f, 26.0f };
+
+    bool pauseHover = CheckCollisionPointRec(mousePos, pauseBtn);
+    bool speedHover = CheckCollisionPointRec(mousePos, speedBtn);
+
+    // 1. Draw Pause Button
+    DrawRectangleRounded(pauseBtn, 0.25f, 4, pauseHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
+    DrawRectangleRoundedLines(pauseBtn, 0.25f, 4, 1.5f, pauseHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    if (m_isSpeedPaused) {
+        DrawTriangle({ pauseBtn.x + 8.0f, pauseBtn.y + 6.0f },
+                     { pauseBtn.x + 8.0f, pauseBtn.y + pauseBtn.height - 6.0f },
+                     { pauseBtn.x + pauseBtn.width - 7.0f, pauseBtn.y + pauseBtn.height / 2.0f },
+                     Color{ 240, 240, 255, 255 });
+    } else {
+        DrawRectangleRec({ pauseBtn.x + 7.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+        DrawRectangleRec({ pauseBtn.x + 15.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+    }
+
+    // 2. Draw Speed Button
+    DrawRectangleRounded(speedBtn, 0.25f, 4, speedHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
+    DrawRectangleRoundedLines(speedBtn, 0.25f, 4, 1.5f, speedHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    DrawTriangle({ speedBtn.x + 8.0f, speedBtn.y + 7.0f },
+                 { speedBtn.x + 8.0f, speedBtn.y + speedBtn.height - 7.0f },
+                 { speedBtn.x + 19.0f, speedBtn.y + speedBtn.height / 2.0f },
+                 Color{ 220, 235, 255, 255 });
+
+    char speedBuf[16];
+    snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
+    DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
+}
+
+void BowlingLevel::drawLoseScreen() {
+    // 1. Fade to dark red / black vignette
+    float overlayAlpha = std::clamp(m_loseTimer * 1.8f, 0.0f, 0.88f);
+    DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(Color{ 25, 0, 0, 255 }, overlayAlpha));
+
+    // 2. Draw "THE ZOMBIES ATE YOUR BRAINS!" graphic with zoom-in ease-out
+    Texture2D texZombiesWon = res.GetTexture("ZOMBIESWON");
+    if (texZombiesWon.id != 0) {
+        float zoomProgress = std::clamp((m_loseTimer - 0.4f) * 1.8f, 0.0f, 1.0f);
+        float easeZoom = zoomProgress * zoomProgress * (3.0f - 2.0f * zoomProgress);
+        float scale = 0.5f + 0.5f * easeZoom;
+        float w = (float)texZombiesWon.width * scale;
+        float h = (float)texZombiesWon.height * scale;
+
+        DrawTexturePro(
+            texZombiesWon,
+            { 0.0f, 0.0f, (float)texZombiesWon.width, (float)texZombiesWon.height },
+            { 400.0f, 250.0f, w, h },
+            { w / 2.0f, h / 2.0f },
+            0.0f,
+            ColorAlpha(WHITE, std::min(1.0f, (m_loseTimer - 0.3f) * 2.5f))
+        );
+    } else {
+        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 190, 220, 26, RED);
+    }
+
+    // 3. Prompt when defeat animation concludes
+    if (m_loseTimer >= 1.6f) {
+        float textAlpha = std::clamp((m_loseTimer - 1.6f) * 2.0f, 0.0f, 1.0f);
+        DrawRectangleRec({ 245, 470, 310, 44 }, ColorAlpha(BLACK, textAlpha * 0.75f));
+        DrawRectangleLinesEx({ 245, 470, 310, 44 }, 2.0f, ColorAlpha(RED, textAlpha));
+        DrawText("Click anywhere to try again", 270, 483, 18, ColorAlpha(RAYWHITE, textAlpha));
+    }
+}
+
+void BowlingLevel::drawProgressBar() {
+    Texture2D texMeter = res.GetTexture("FLAGMETER");
+    if (texMeter.id == 0) {
+        std::string path = res.GetAssetPath("assets/images/FlagMeter.png");
+        res.LoadFile(path);
+        texMeter = res.GetTexture("FLAGMETER");
+    }
+
+    Texture2D texBadge = res.GetTexture("FLAGMETERLEVELPROGRESS");
+    if (texBadge.id == 0) {
+        std::string path = res.GetAssetPath("assets/images/FlagMeterLevelProgress.png");
+        res.LoadFile(path);
+        texBadge = res.GetTexture("FLAGMETERLEVELPROGRESS");
+    }
+
+    Texture2D texParts = res.GetTexture("FLAGMETERPARTS");
+    if (texParts.id == 0) {
+        std::string path = res.GetAssetPath("assets/images/FlagMeterParts.png");
+        res.LoadFile(path);
+        texParts = res.GetTexture("FLAGMETERPARTS");
+    }
+
+    if (texMeter.id == 0) return;
+
+    // Progress computation (0.0 to 1.0)
+    float waveProgress = 0.0f;
+    if (m_currentWave == 0) {
+        float waveFraction = std::clamp((5.0f - m_waveTimer) / 5.0f, 0.0f, 1.0f);
+        waveProgress = (0.0f + waveFraction) / (float)std::max(1, m_maxWaves);
+    } else if (m_currentWave < m_maxWaves) {
+        float waveFraction = std::clamp((22.0f - m_waveTimer) / 22.0f, 0.0f, 1.0f);
+        waveProgress = ((float)m_currentWave + waveFraction) / (float)m_maxWaves;
+    } else {
+        waveProgress = 1.0f;
+    }
+    waveProgress = std::clamp(waveProgress, 0.0f, 1.0f);
+
+    float barX = 625.0f;
+    float barY = 572.0f;
+
+    // 1. Draw "Wall-nut Bowling" label to the left with House of Terror font
+    float labelScale = 0.58f;
+    int textW = m_font.MeasureText("Wall-nut Bowling", labelScale);
+    float textX = barX - (float)textW - 10.0f;
+    float textY = barY - 6.0f;
+
+    // Drop shadow
+    m_font.DrawText("Wall-nut Bowling", textX + 2.0f, textY + 2.0f, labelScale, Color{ 0, 0, 0, 255 });
+    // Golden yellow text
+    m_font.DrawText("Wall-nut Bowling", textX, textY, labelScale, Color{ 235, 200, 45, 255 });
+
+    // 2. Draw Progress Bar Frame (0, 0, 158, 25)
+    Rectangle srcFrame = { 0.0f, 0.0f, 158.0f, 25.0f };
+    DrawTextureRec(texMeter, srcFrame, { barX, barY }, WHITE);
+
+    // 3. Draw Green Progress Fill (filling from right to left)
+    float maxFillWidth = 149.0f;
+    float currentFillWidth = maxFillWidth * waveProgress;
+    if (currentFillWidth > 0.0f) {
+        Rectangle srcFill = { 155.0f - currentFillWidth, 27.0f, currentFillWidth, 24.0f };
+        Vector2 destFillPos = { barX + 155.0f - currentFillWidth, barY };
+        DrawTextureRec(texMeter, srcFill, destFillPos, WHITE);
+    }
+
+    // 4. Draw "LEVEL PROGRESS" badge in the lower middle slot
+    if (texBadge.id != 0) {
+        DrawTextureRec(texBadge, { 0.0f, 0.0f, (float)texBadge.width, (float)texBadge.height }, { barX + 36.0f, barY + 13.0f }, WHITE);
+    }
+
+    // 5. Draw Red Flag at final wave milestone (1.0f)
+    if (texParts.id != 0) {
+        float frac = 1.0f;
+        float flagX = barX + 155.0f - maxFillWidth * frac - 8.0f;
+        flagX = std::max(barX + 6.0f, flagX);
+
+        // Flag pole (Part 1: x = 25..50)
+        Rectangle srcPole = { 25.0f, 0.0f, 25.0f, 25.0f };
+        DrawTextureRec(texParts, srcPole, { flagX, barY - 2.0f }, WHITE);
+
+        // Red flag (Part 2: x = 50..75) - raised when near/reached final wave fraction
+        float flagOffsetY = (waveProgress >= frac - 0.05f) ? -6.0f : -2.0f;
+        Rectangle srcFlag = { 50.0f, 0.0f, 25.0f, 25.0f };
+        DrawTextureRec(texParts, srcFlag, { flagX, barY + flagOffsetY }, WHITE);
+
+        // 6. Draw Zombie Head Slider Marker (Part 0: x = 0..25)
+        float headX = barX + 155.0f - currentFillWidth - 11.0f;
+        headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
+        Rectangle srcHead = { 0.0f, 0.0f, 25.0f, 25.0f };
+        DrawTextureRec(texParts, srcHead, { headX, barY - 2.0f }, WHITE);
+    }
 }
 
 void BowlingLevel::run() {
@@ -534,7 +746,7 @@ void BowlingLevel::run() {
         update(dt);
         draw();
 
-        if (m_exitToMainMenu || (m_levelWon && IsKeyPressed(KEY_ENTER)) || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
+        if (m_exitToMainMenu || (m_levelWon && IsKeyPressed(KEY_ENTER)) || (m_levelWon && IsKeyPressed(KEY_ESCAPE))) {
             break;
         }
     }

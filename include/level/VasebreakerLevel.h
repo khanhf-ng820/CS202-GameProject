@@ -4,6 +4,7 @@
 #include "Zombie.h"
 #include "ZombieNormal.h"
 #include "ConeheadZombie.h"
+#include "BucketheadZombie.h"
 #include "Reanimation.h"
 #include "Vase.h"
 #include "Plant.h"
@@ -14,6 +15,7 @@
 #include "Projectile.h"
 #include "SunItem.h"
 #include "InGameMenu.h"
+#include "BitmapFont.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -109,6 +111,7 @@ private:
     RenderTexture2D targetScreen;
     Texture2D m_bgTex = {0};
     Texture2D m_chunksTex = {0};
+    BitmapFont m_font;
 
     // In-game Pause Menu
     std::unique_ptr<InGameMenu> m_inGameMenu;
@@ -117,6 +120,7 @@ private:
     // Mallet cursor animation state
     Reanimation m_malletAnim;
     bool m_isSwinging = false;
+    float m_swingProgress = 0.0f;
 
     // Plant placement cursor preview
     Reanimation m_previewPlantAnim;
@@ -146,9 +150,15 @@ private:
     // Active zombies on the lawn
     std::vector<std::unique_ptr<Zombie>> m_zombies;
 
-    // Game state
+    // Game state & simulation speed
     bool m_levelWon = false;
     bool m_levelLost = false;
+    bool m_winMusicPlayed = false;
+    float m_loseTimer = 0.0f;
+    bool m_screamSoundPlayed = false;
+    bool m_loseMusicPlayed = false;
+    float m_gameSpeed = 1.0f;
+    bool m_isSpeedPaused = false;
 
     // Helper functions
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
@@ -156,4 +166,6 @@ private:
     void breakVase(int row, int col);
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
     void restartLevel();
+    void drawSpeedControls();
+    void drawLoseScreen();
 };

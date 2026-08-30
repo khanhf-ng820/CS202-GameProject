@@ -28,161 +28,310 @@ A "Plants Vs. Zombies"-inspired game for CS202 - Programming Systems course.
 
 ## Codebase Architecture and Structure
 
-This repository is a C++20 implementation of a Plants vs. Zombies clone built using the Raylib multimedia framework. It incorporates a custom parsing and rendering engine for PopCap's `.reanim` XML keyframe animation format.
+This project is a C++20 implementation of a Plants vs. Zombies clone engineered using the Raylib multimedia framework. It incorporates a custom parsing, transformation, and rendering engine for PopCap's proprietary `.reanim` XML keyframe animation format, along with custom bitmap font typography, multi-user profile persistence, progressive asset loading, and wave-based level progression.
 
-### Directory Layout and File Overview
+### Directory Layout and Module Organization
+
+The codebase is organized into five modular subdirectories under `include/` and `src/`:
 
 ```
 CS202-PlantsVsZombies/
-├── assets/                  # Game assets (sprites, reanim XMLs, audio, fonts, particles)
-│   ├── data/                # Custom bitmap font definitions and atlases (.png, .txt)
-│   ├── images/              # Static UI textures, background lawn, seed packets
-│   ├── particles/           # Particle effect textures
-│   ├── properties/          # Resource manifest XML (resources.xml)
-│   ├── reanim/              # PopCap .reanim keyframe animation XMLs (PeaShooter, Zombie, etc.)
-│   └── sounds/              # Audio tracks and sound effect files (.ogg)
-├── include/                 # Modular C++ Header files
-│   ├── core/                # Core engine infrastructure
-│   │   ├── AudioManager.h   # Singleton audio manager for music and sound effect dispatch
-│   │   ├── BitmapFont.h     # Custom bitmap font renderer for PopCap UI typography
-│   │   ├── Reanimation.h    # PopCap .reanim keyframe animation player and track manager
-│   │   ├── reanim.h         # Struct definitions for .reanim XML keyframes and tracks
-│   │   └── resources.h      # Centralized resource and asset management (Singleton)
-│   ├── entities/            # In-game object entity models
-│   │   ├── items/           # Projectiles, sun drops, and particle effects
-│   │   │   ├── Projectile.h # Pea, snow pea, fire pea, corn, and melon projectiles
-│   │   │   ├── SunItem.h    # Falling and plant-produced sun currency drops
-│   │   │   └── particle.h   # Particle and splat animation structures
-│   │   ├── plants/          # Plant base class and specialized plant subclasses
-│   │   │   ├── Plant.h      # Abstract base class for all Plant entities
-│   │   │   ├── PeaShooter.h # Standard single pea shooter plant
-│   │   │   ├── SnowPea.h    # Freezing pea shooter plant
-│   │   │   ├── SunFlower.h  # Periodic sun producer plant
-│   │   │   ├── Wallnut.h    # High-HP defensive wall plant
-│   │   │   ├── CherryBomb.h # Area-of-effect instant explosive plant
-│   │   │   ├── Chomper.h    # Melee bite and chew plant
-│   │   │   ├── Jalapeno.h   # Lane-clearing fire explosive plant
-│   │   │   ├── Repeater.h   # Double pea shooter plant
-│   │   │   ├── Torchwood.h  # Fire pea conversion tree plant
-│   │   │   ├── FirePea.h    # Flaming pea shooter plant
-│   │   │   ├── GatlingPea.h # Quad pea barrage shooter plant
-│   │   │   ├── Cornpult.h   # Lobbed butter/kernel catapult plant
-│   │   │   └── Melonpult.h  # Heavy lobbed melon splash catapult plant
-│   │   └── zombies/         # Zombie base class and specialized zombie subclasses
-│   │       ├── Zombie.h     # Abstract base class for all Zombie entities
-│   │       ├── ZombieNormal.h    # Standard browncoat zombie
-│   │       ├── ConeheadZombie.h  # Conehead armored zombie
-│   │       ├── BucketheadZombie.h# Buckethead high-armor zombie
-│   │       └── FlagZombie.h # Wave lead flag zombie
-│   ├── level/               # Gameplay loop, grid management, waves, and collisions
-│   │   └── Level1.h         # Main gameplay level managing grid, waves, and economic state
-│   ├── ui/                  # User interface screens and HUD elements
-│   │   ├── MainMenu.h       # Interactive main menu screen (SelectorScreen.reanim)
-│   │   ├── OptionsMenu.h    # Game settings and options overlay panel
-│   │   ├── ShopMenu.h       # Crazy Dave's Shop interface
-│   │   ├── SeedSelectMenu.h # Pre-level plant loadout selection deck
-│   │   ├── SeedBank.h       # Top HUD sun counter and active seed card deck
-│   │   ├── SeedPacket.h     # Individual plant seed card HUD item with cooldown
-│   │   └── UIHelpers.h      # Virtual resolution scaling and interaction utilities
-│   └── utils/               # Testing and helper utilities
-│       └── testing.h        # Unit testing harness definitions
-├── src/                     # C++ Source implementation files matching include/ domain structure
-│   ├── core/                # Core subsystem implementations (AudioManager, Reanimation, resources)
-│   ├── entities/            # Entity behavior implementations (plants, zombies, items)
-│   ├── level/               # Level state, grid management, and collision logic (Level1.cpp)
-│   ├── ui/                  # UI menu and seed bank implementations
-│   ├── utils/               # Test harness implementations
-│   ├── main.cpp             # Game entry point and main loop execution
-│   ├── Projectile.cpp       # Projectile movement and hit detection
-│   └── particle.cpp         # Particle timing and setter logic
-├── build.sh                 # CMake configure and Release build automation script
-├── remake.sh                # Incremental make script for fast rebuilds
-└── CMakeLists.txt           # Build configuration pinning Raylib, raygui, nlohmann_json
+│   ├── reanim/                      # PopCap .reanim keyframe animation XML definitions
+│   ├── images/                      # Texture atlases, background lawn art, seed cards
+│   ├── fonts/                       # Custom bitmap font descriptors and PNG atlases
+│   ├── particles/                   # Particle effect textures and overlays
+│   └── PlantSeedPackets/            # Seed packet UI graphics for all plant types
+├── include/                         # Header files (.h)
+│   ├── core/                        # Core runtime infrastructure and singletons
+│   │   ├── AudioManager.h           # Centralized music streaming and SFX management
+│   │   ├── BitmapFont.h             # PopCap bitmap font descriptor parser and renderer
+│   │   ├── ProfileManager.h         # Multi-user profile persistence and save management
+│   │   ├── Reanimation.h            # Skeletal animation controller and matrix compositor
+│   │   ├── reanim.h                 # Struct definitions for keyframes, tracks, and ranges
+│   │   └── resources.h              # Centralized asset manager (Meyer's Singleton)
+│   ├── entities/                    # Game objects and entity hierarchies
+│   │   ├── items/                   # Interactive items, projectiles, and environmental objects
+│   │   │   ├── LawnMower.h          # Emergency row-clearing lawn mower entity
+│   │   │   ├── Projectile.h         # Linear and lobbed trajectory projectile entity
+│   │   │   ├── SunItem.h            # Sun currency entity with bezier collection physics
+│   │   │   ├── Vase.h               # Breakable mystery vase entity for Vasebreaker mode
+│   │   │   └── particle.h           # Particle emitter and burst effect structures
+│   │   ├── plants/                  # Plant base class and all 20+ plant subclasses
+│   │   │   ├── Plant.h              # Abstract base class for all plant entities
+│   │   │   ├── PeaShooter.h         # Basic horizontal single-pea shooter
+│   │   │   ├── SnowPea.h            # Freezing projectile shooter with slow debuff
+│   │   │   ├── Repeater.h           # Rapid two-pea burst shooter
+│   │   │   ├── GatlingPea.h         # Quad-pea barrage heavy shooter
+│   │   │   ├── FirePea.h            # Double-damage flaming pea shooter
+│   │   │   ├── SunFlower.h          # Sun generation economic unit
+│   │   │   ├── Wallnut.h            # High-durability defensive shield with visual damage states
+│   │   │   ├── CherryBomb.h         # 3x3 area-of-effect lethal explosive
+│   │   │   ├── Jalapeno.h           # State-driven full-lane incinerator
+│   │   │   ├── Chomper.h            # Melee devourer with extended chewing cooldown
+│   │   │   ├── PotatoMine.h         # Underground contact explosive with arming delay
+│   │   │   ├── Squash.h             # Proximity-triggered smashing entity
+│   │   │   ├── Garlic.h             # Defensive entity that diverts zombies to adjacent rows
+│   │   │   ├── Torchwood.h          # Projectile modifier that ignites peas on pass-through
+│   │   │   ├── SpikeRock.h          # Reinforced ground hazard that punctures tires and armor
+│   │   │   ├── Caltrop.h            # Basic ground spikeweed hazard
+│   │   │   ├── IceShroom.h          # Screen-wide freeze and zombie immobilization
+│   │   │   ├── Gravebuster.h        # Grave consumption utility for night stages
+│   │   │   ├── Cornpult.h           # Lobbed catapult firing corn and stunning butter
+│   │   │   ├── Cabbagepult.h        # Lobbed catapult launching heavy cabbages
+│   │   │   ├── Melonpult.h          # Heavy lobbed catapult with splash damage radius
+│   │   │   └── BowlingNut.h         # Physics-driven rolling Wall-nuts for minigame mode
+│   │   └── zombies/                 # Zombie base class and all 7+ zombie subclasses
+│   │       ├── Zombie.h             # Abstract base class with limb detachment physics
+│   │       ├── ZombieNormal.h       # Standard browncoat zombie
+│   │       ├── FlagZombie.h         # Fast wave leader carrying a flag
+│   │       ├── ConeheadZombie.h     # Traffic cone armored zombie (+370 HP)
+│   │       ├── BucketheadZombie.h   # Steel bucket heavy armored zombie (+1100 HP)
+│   │       ├── FootballZombie.h     # High-speed athlete zombie with heavy helmet
+│   │       ├── NewspaperZombie.h    # Shielded zombie with enraged dash transition
+│   │       └── PoleVaultingZombie.h # Vaulting zombie with plant-jumping traversal
+│   ├── level/                       # Level progression and minigame loops
+│   │   ├── Level1.h                 # Adventure Level 1 base class and game loop
+│   │   ├── Level2.h                 # Adventure Level 2 (Day stage with Coneheads)
+│   │   ├── Level3.h                 # Adventure Level 3 (Day stage with multi-flags)
+│   │   ├── Level4.h                 # Adventure Level 4 (Night stage with Gravestones)
+│   │   ├── Level5.h                 # Adventure Level 5 (Night stage with grave risers)
+│   │   ├── Level6.h                 # Adventure Level 6 (Night climax wave stage)
+│   │   ├── BowlingLevel.h           # Wall-nut Bowling minigame with conveyor belt UI
+│   │   └── VasebreakerLevel.h       # Vasebreaker puzzle mode with mallet interaction
+│   ├── ui/                          # Menus, HUD components, and dialogs
+│   │   ├── AlmanacMenu.h            # Suburban Almanac with live animated preview models
+│   │   ├── HelpMenu.h               # Interactive help and instructions parchment
+│   │   ├── InGameMenu.h             # In-game pause modal with options and restart
+│   │   ├── LevelSelectMenu.h        # Stage progression tree (Day and Night chapters)
+│   │   ├── LoadingScreen.h          # Dirt/grass progressive asset load bar
+│   │   ├── MainMenu.h               # Interactive tombstone menu (SelectorScreen.reanim)
+│   │   ├── OptionsMenu.h            # Settings overlay (volume sliders, resolution presets)
+│   │   ├── QuizMenu.h               # Crazy Dave's trivia quiz with rewards
+│   │   ├── SeedBank.h               # Top HUD bar displaying sun count and selected cards
+│   │   ├── SeedPacket.h             # Seed card cooldown sweeps and drag-and-drop
+│   │   ├── SeedSelectMenu.h         # Pre-level plant deck builder (Loadout screen)
+│   │   ├── ShopMenu.h               # Crazy Dave's Twiddydinkies car trunk shop
+│   │   ├── UIHelpers.h              # Virtual mouse scaling and immediate-mode buttons
+│   │   └── UserDialog.h             # Player profile management dialog
+│   └── utils/                       # Diagnostic and testing utilities
+│       └── testing.h                # Zen Garden animation and hitbox visualizer
+├── src/                             # C++ Source implementation files
+│   ├── core/                        # Implementations for runtime singletons and parsers
+│   ├── entities/                    # Implementations for plants, zombies, and items
+│   ├── level/                       # Implementations for adventure levels and minigames
+│   ├── ui/                          # Implementations for menus and interface elements
+│   ├── utils/                       # Implementations for test harnesses
+│   └── main.cpp                     # Application entry point and top-level render loop
+├── build.sh                         # Full CMake configuration and release build script
+├── remake.sh                        # Fast incremental compile script for existing files
+└── CMakeLists.txt                   # Build specification with Raylib, raygui, and nlohmann_json
 ```
 
 ---
 
-## Core Systems and Technical Architecture
+## Core Subsystems and Engine Architecture
 
-### 1. PopCap Reanim Keyframe Engine
+### 1. PopCap Reanim Keyframe Animation Engine
 
-The animation pipeline (`reanim.h`, `Reanimation.h`, `Reanimation.cpp`) reads PopCap's XML animation format and renders multi-track keyframed characters in real time.
+The animation subsystem (`reanim.h`, `Reanimation.h`, `Reanimation.cpp`, `resources.h`) provides full real-time reconstruction of PopCap's XML skeletal animation format.
 
-* **Keyframe Parsing and Property Inheritance**: The parser processes track keyframes (`<t>`) line by line. Keyframe properties (position, scale, skew, opacity, image swaps) inherit values from preceding keyframes when not explicitly defined in the current keyframe tag.
-* **Hidden Frame Sentinel**: Keyframes marked with `<f>-1</f>` signal that the corresponding track should be hidden during playback.
-* **Dual-Layer Animation Blending**: The engine supports simultaneous playback of a base track sequence (such as a lower-body walking loop) and an upper-body overlay sequence (such as a shooting or biting action).
-* **2D Affine Transformation Matrix**: For each active track at frame $t$, the system computes an affine transformation matrix combining scale ($s_x, s_y$) and skew/rotation ($k_x, k_y$):
+* **Keyframe XML Parsing and Value Inheritance**: The parser reads tracks and keyframes (`<t>`) sequentially. Properties not explicitly modified on a keyframe (such as coordinates $x, y$, scale $s_x, s_y$, rotation $k_x, k_y$, or texture bindings) inherit their values directly from the preceding frame ($N-1$).
+* **Hidden Track Sentinels**: Tracks containing the `<f>-1</f>` frame property are hidden during rendering passes, allowing dynamic attachment and detachment of visual parts (such as hats, shields, or limbs).
+* **2D Affine Transformation Matrix**: For each active track at keyframe $t$, the engine computes an affine transformation matrix combining scale ($s_x, s_y$) and rotation/skew ($k_x, k_y$):
 
 $$\begin{bmatrix} m_{00} & m_{10} \\ m_{01} & m_{11} \end{bmatrix} = \begin{bmatrix} s_x \cos(k_x) & s_x \sin(k_x) \\ -s_y \sin(k_y) & s_y \cos(k_y) \end{bmatrix}$$
 
-* **OpenGL Batch Rendering**: Drawing is executed by pushing track matrices directly to Raylib's internal matrix stack using `rlPushMatrix()`, `rlMultMatrixf()`, `rlDrawRenderBatchActive()`, and `rlPopMatrix()`.
-* **Frame-Exact Debounce Pattern**: Entity firing logic relies on keyframe index checks. When a plant triggers a projectile spawn on frame $N$, it sets a internal `did_shoot` flag, which is cleared on frame $N+1$ to prevent duplicate instantiations within a single animation pass.
+* **OpenGL Matrix Stack Pipeline**: Visual tracks are rendered using Raylib's low-level matrix stack: `rlPushMatrix()`, `rlMultMatrixf()`, `rlDrawRenderBatchActive()`, and `rlPopMatrix()`, ensuring hardware-accelerated composite drawing.
+* **Dual-Layer Animation Blending**: Supports simultaneous playback of a base locomotion track (such as a zombie walking loop) blended with an independent upper-body overlay sequence (such as a biting or eating track).
+* **Frame-Exact Debounce Pattern**: Entity firing actions check exact keyframe indices. When a plant triggers a projectile spawn on frame $N$, it sets an internal `did_shoot` flag, which is cleared on frame $N+1$ to prevent duplicate instantiations during the keyframe window.
 
-### 2. Zombie Physics and Limb Detachment
+### 2. Centralized Audio Management (`AudioManager`)
 
-The `Zombie` base class (`Zombie.h`) integrates a `FallingPart` physics structure to handle limb and armor detachment upon taking critical damage:
+Audio playback is managed via a Meyer's Singleton (`include/core/AudioManager.h`, `src/core/AudioManager.cpp`) wrapping Raylib's audio streaming engine:
 
-* **Particle Physics**: `FallingPart` tracks detached limbs (heads, arms) or armor pieces (cones, buckets) with linear velocity ($v_x, v_y$), angular rotation speed, position coordinates, and lifespan decay timers.
-* **Health Threshold Triggers**: Subclasses like `ZombieNormal`, `ConeheadZombie`, and `BucketheadZombie` override `takeDamage()` to swap track visibility, detach armor, or spawn falling head particles when health drops below specific thresholds.
+* **Music Streaming**: Handles smooth transitions between background tracks (`MusicTrack::MainMenu`, `DayStage`, `NightStage`, `Bowling`, `Vasebreaker`, `ZenGarden`, `CrazyDaveTheme`, `WinMusic`, `LoseMusic`).
+* **Volume Attenuation**: Provides synchronized dynamic volume scaling for background music and concurrent multi-channel sound effects.
+* **Global Stream Pumping**: Invokes `UpdateMusicStream()` once per frame in the main execution loop to prevent buffer underruns.
 
-### 3. Resource Management and Asset Resolution
+### 3. Player Profile and Persistence Engine (`ProfileManager`)
 
-Asset loading is centralized within the `Resources` class (`resources.h`, `resources.cpp`):
+User progress is persisted across sessions via a dedicated Singleton (`include/core/ProfileManager.h`, `src/core/ProfileManager.cpp`):
 
-* **Path Resolution**: `Resources::GetAssetPath()` handles relative directory traversal automatically (`./`, `../`, `../../`, etc.), ensuring asset paths resolve regardless of whether the executable is launched from the project root or build subdirectories.
-* **Pixel-Perfect Alpha Hit Testing**: `Resources::IsPixelTransparent()` queries CPU-side image buffers (`Image`) to perform pixel-accurate mouse hit detection on non-rectangular UI elements, such as the main menu tombstone buttons.
+* **JSON Serialization**: Stores player profiles (`UserProfile`) containing active coin balance, unlocked plant card catalogs, and maximum level completion records.
+* **Multi-User Management**: Supports creating, renaming, deleting, and switching player profiles dynamically via `UserDialog`.
+* **Deck Unlocking Progression**: Manages the default starter deck and validates plant card availability during the pre-level seed chooser phase.
 
-### 4. Custom UI and Typography Engine
+### 4. Custom Typography and Bitmap Font Engine (`BitmapFont`)
 
-* **Bitmap Font Rendering**: `BitmapFont` (`BitmapFont.h`, `BitmapFont.cpp`) parses PopCap font definition files alongside PNG texture atlases, supporting custom kerning pairs, glyph advance widths, and character offsets.
-* **Virtual Input Resolution Scaling**: `UIHelpers` (`UIHelpers.h`, `UIHelpers.cpp`) provides `SetVirtualMouseScale()` and `GetVirtualMousePosition()`, ensuring mouse coordinates map accurately to the fixed 800x600 virtual canvas regardless of display stretching.
-* **Modal Overlay Input Locking**: `SetUIInteractionEnabled()` allows modal menus (such as `OptionsMenu`) to freeze underlying UI interactions when active.
+PopCap UI typography is rendered through a custom bitmap font parser (`include/core/BitmapFont.h`, `src/core/BitmapFont.cpp`):
 
-### 5. Main Loop and Rendering Pipeline
+* **Descriptor Parser**: Reads XML and TXT font descriptor metrics paired with PNG texture atlases (`DwarvenTodcraft24`, `HouseofTerror28`, `BrianneTod16`, `ContinuumBold14`).
+* **Packed Integer Kerning**: Uses a packed 16-bit integer map (`uint16_t` key constructed as `((c1 << 8) | c2)`) to eliminate dynamic heap allocations during per-character kerning lookups.
+* **Text Layout Capabilities**: Supports centered text rendering, line height scaling, character offsets, and automated word wrapping within bounded rectangles.
 
-The main execution loop in `src/main.cpp` follows a four-stage pipeline:
+### 5. Virtual Resolution and UI Engine (`UIHelpers`)
 
-1. **Virtual Mouse Scaling**: Calculates scaling ratios based on current window dimensions relative to the target 800x600 render target.
-2. **State Updates**: Evaluates logic for the active state (`MainMenu`, `OptionsMenu`, or `PlantTest`).
-3. **Offscreen Canvas Pass**: Renders lawn backgrounds, plants, zombies, projectiles, sun items, and UI panels into an 800x600 `RenderTexture2D` canvas using `BeginTextureMode()`.
-4. **Window Presentation Pass**: Draws the canvas texture to the window using `DrawTexturePro()` with hardware bilinear scaling.
+* **Fixed Virtual Canvas**: All game rendering occurs on a fixed 800x600 `RenderTexture2D` canvas, which is stretched to fit the physical window using `DrawTexturePro()` with hardware bilinear filtering.
+* **Virtual Mouse Transformation**: `SetVirtualMouseScale()` maps actual window mouse coordinates to the 800x600 virtual canvas coordinates, ensuring hitboxes align across all display resolutions.
+* **Pixel-Perfect Alpha Hit Testing**: `Resources::IsPixelTransparent()` inspects CPU-side image pixel buffers to perform exact hit-testing on irregular non-rectangular buttons (such as main menu tombstones).
+* **Modal Input Locking**: `SetUIInteractionEnabled()` disables background UI hover and click processing when modal overlays (options, shop, help) are open.
 
 ---
 
-## Plan and Design of 5 OOP Design Patterns
-
-To meet project course requirements (25/100 points) and ensure a modular codebase, five Object-Oriented Design Patterns are incorporated into the software design:
+## Entity Hierarchy and Game Mechanics
 
 ```
-[1. Singleton Pattern] -----> Resources Asset Manager
-[2. Factory Pattern]   -----> Plant and Zombie Spawners
-[3. State Pattern]     -----> Game State Engine and Zombie AI
-[4. Observer Pattern]  -----> Event Dispatcher and HUD/Audio Subsystems
-[5. Strategy Pattern]  -----> Projectile Trajectories and Movement Algorithms
+                         +-------------------------+
+                         |      Resources          | (Singleton)
+                         +-------------------------+
+                                      |
+              +-----------------------+-----------------------+
+              |                       |                       |
+              v                       v                       v
+     +-----------------+     +-----------------+     +-----------------+
+     |   Reanimation   |     |   BitmapFont    |     | ProfileManager  |
+     +-----------------+     +-----------------+     +-----------------+
+
+                                 +---------+
+                                 |  Plant  | (Abstract Base)
+                                 +----+----+
+          +---------------+-----------+-----------+---------------+
+          |               |           |           |               |
+          v               v           v           v               v
+     PeaShooter       SunFlower    Wallnut    CherryBomb       Jalapeno
+     SnowPea          Torchwood    Garlic     PotatoMine       Chomper
+     Repeater         Caltrop      SpikeRock  Squash           IceShroom
+     GatlingPea       Cornpult     Melonpult  Cabbagepult      BowlingNut
+
+                                 +---------+
+                                 | Zombie  | (Abstract Base)
+                                 +----+----+
+          +---------------+-----------+-----------+---------------+
+          |               |           |           |               |
+          v               v           v           v               v
+     ZombieNormal    FlagZombie  ConeheadZombie BucketheadZombie FootballZombie
+                                 NewspaperZombie PoleVaultingZombie
+```
+
+### 1. Plant Taxonomy (`Plant.h`)
+
+All plants derive from the abstract base class `Plant`, which defines integer grid positions ($m_x, m_y$), current and max health ($m_hp, m_maxHp$), sun cost, recharge timers, and pure virtual `update()` and `draw()` methods.
+
+* **Linear Projectile Shooters**: `PeaShooter`, `SnowPea` (applies a chilling slow debuff), `Repeater` (two-shot burst), `GatlingPea` (four-shot barrage), and `FirePea` ($2\times$ damage).
+* **Lobbed Catapults**: `Cabbagepult`, `Cornpult` (flings corn kernels and occasional butter that stuns zombies for 4 seconds), and `Melonpult` (launches heavy melons inflicting splash damage across adjacent tiles).
+* **Economic Producers**: `SunFlower` (produces 25 sun currency every 24 seconds with a pulsing glow animation).
+* **Defensive Shields**: `Wallnut` (4000 HP barrier that swaps texture tracks dynamically to display cracked and severely damaged states).
+* **Tactical Disruptors**: `Garlic` (diverts zombies biting it to adjacent lanes), `Torchwood` (transforms normal peas into fire peas), `SpikeRock` and `Caltrop` (ground hazards that puncture zombie feet and vehicles), and `IceShroom` (temporarily immobilizes all zombies on screen).
+* **Instant Area-of-Effect Explosives**: `CherryBomb` (detonates in a 3x3 grid radius dealing 1800 damage), `Jalapeno` (incinerates an entire horizontal row), `PotatoMine` (arms underground after 14 seconds and detonates on contact), and `Squash` (jumps and crushes approaching zombies).
+
+### 2. Zombie Taxonomy (`Zombie.h`)
+
+All zombies derive from the abstract base class `Zombie`, utilizing continuous float coordinates ($m_x, m_y$) for smooth movement, walk speeds, damage-per-tick values, eating states, and `FallingPart` particle physics for detached limbs.
+
+* **Standard and Swarm Types**: `ZombieNormal` and `FlagZombie` (leads huge waves with increased walk speed).
+* **Multi-Layer Armored Types**: `ConeheadZombie` (cone armor absorption) and `BucketheadZombie` (bucket armor absorption with visual dent stages). Armor breaks and pops off as physics particles before base body damage occurs.
+* **Specialist Types**: `FootballZombie` (high-velocity athlete with heavy armor durability), `NewspaperZombie` (absorbs damage with a newspaper shield; when destroyed, enraged with double walk speed and attack rate), and `PoleVaultingZombie` (sprints and leaps over the first plant barrier before resuming a standard walk).
+
+### 3. Projectiles, Currency, and Interactive Items
+
+* **`Projectile`**: Encapsulates linear horizontal motion for peas and parabolic arc trajectories for catapults:
+  $$y(t) = y_0 - 4h \cdot \left(\frac{x - x_0}{x_{\text{target}} - x_0}\right) \left(1 - \frac{x - x_0}{x_{\text{target}} - x_0}\right)$$
+* **`SunItem`**: Manages falling sky suns and plant-produced suns with gravity physics, ground settling, click hitboxes, and smooth bezier collection flight toward the top-left SeedBank.
+* **`LawnMower`**: Stationed at the left edge of each row. When a zombie breaches the lawn, the mower activates, rolling forward at high speed to clear all zombies in that lane.
+* **`Vase`**: Breakable mystery containers used in Vasebreaker mode with leaf decals (plant) and zombie decals.
+
+---
+
+## Level Progression and Game Modes
+
+### 1. Adventure Mode (Levels 1 to 6)
+
+The adventure campaign provides progressive gameplay with distinct daytime and nighttime mechanics:
+
+* **Daytime Stages (Levels 1–3)**:
+  * Camera pan intro showing upcoming zombie threats.
+  * "READY... SET... PLANT!" opening sequence.
+  * 5x9 lawn grid plant placement with click-to-plant and shovel tools.
+  * Sun economy with periodic sky drops.
+  * Wave timers, progress bar tracking, huge wave announcements, and final wave flag rushes.
+  * Victory award drop presentation and defeat sequences.
+* **Nighttime Stages (Levels 4–6)**:
+  * Dark atmosphere with zero sky sun drops, requiring sun-producing plants.
+  * Procedurally placed gravestones (`GraveStone`) occupying grid cells.
+  * Graves rise dynamically and spawn nocturnal zombies during final wave rushes.
+  * `Gravebuster` integration for clearing cemetery obstacles.
+
+### 2. Wall-nut Bowling Minigame (`BowlingLevel`)
+
+A specialized minigame mode modeled on PopCap's conveyor belt mechanics:
+
+* **Conveyor Belt UI**: Displays available Wall-nut cards moving smoothly from right to left with capacity gating (10 cards maximum).
+* **Physics-Based Rolling Nuts**: Normal Wall-nuts bounce diagonally off top and bottom lawn boundaries upon impact with zombies. Giant Wall-nuts roll continuously through entire rows, crushing all zombies in their path. Explode-o-nuts detonate on first impact, clearing a 3x3 tile radius.
+
+### 3. Vasebreaker Puzzle Mode (`VasebreakerLevel`)
+
+A tactical puzzle mode where all plants and zombies are concealed inside mystery vases:
+
+* **5x9 Vase Matrix**: Vases are divided between green plant vases and brown mystery/zombie vases.
+* **Mallet Cursor Interaction**: Animated hammer strike with delayed hit debouncing (`VaseState::PendingBreak`) to prevent duplicate clicks during swing animations.
+* **Dropped Seed Packets**: Shattered plant vases drop seed packets that fall to the ground with gravity physics, ready for tactical placement.
+
+### 4. Zen Garden and Animation Inspector (`Testing`)
+
+A real-time diagnostic visualizer allowing developers to spawn any plant or zombie, inspect keyframe tracks, test attack frame debouncing, and verify hitbox alignment.
+
+---
+
+## Design and Implementation of 5 OOP Design Patterns
+
+To satisfy project requirements and maintain clean, decoupled software architecture, five design patterns are implemented across the engine:
+
+```
+[1. Singleton Pattern] -----> Resources, AudioManager, ProfileManager
+[2. Factory Pattern]   -----> BowlingNut::Create, PlantFactory, ZombieFactory
+[3. State Pattern]     -----> LevelPhase, QuizState, JalapenoState, IGameState
+[4. Observer Pattern]  -----> EventManager, IObserver (Decoupled HUD/Audio)
+[5. Strategy Pattern]  -----> ITrajectoryStrategy (Interchangeable Flight Math)
 ```
 
 ---
 
 ### 1. Singleton Pattern (Creational)
 
-* **Current Status**: Implemented in `Resources::GetInstance()` (`include/resources.h`).
-* **Design**: Implemented as a Meyer's Singleton using a static local instance within `GetInstance()`. Constructors are private, and copy operations are deleted.
-* **Rationale**: Prevents redundant loading of heavy textures, font atlases, and `.reanim` definitions into GPU memory.
-* **Extension Plan**: Extend this pattern to create a centralized `AudioManager` for sound effect dispatch and a `GameConfig` manager for persistent user settings.
+* **Current Implementation**: Implemented in `Resources::GetInstance()` (`include/core/resources.h`), `AudioManager::GetInstance()` (`include/core/AudioManager.h`), and `ProfileManager::GetInstance()` (`include/core/ProfileManager.h`).
+* **Design Structure**: Implemented using the Meyer's Singleton idiom, utilizing static local instance initialization within `GetInstance()`. Constructors and destructors are private, and copy constructors and assignment operators are explicitly deleted.
+* **Technical Rationale**: Centralizes GPU texture buffers, audio streams, and profile save states into single global access points, preventing redundant resource loading into GPU memory and avoiding race conditions during save file I/O.
+
+```cpp
+class Resources {
+public:
+    static Resources& GetInstance() {
+        static Resources instance;
+        return instance;
+    }
+
+    Resources(const Resources&) = delete;
+    Resources& operator=(const Resources&) = delete;
+
+    Texture2D GetTexture(const std::string& name) const;
+    ReanimDefinition LoadReanim(const std::string& filePath);
+
+private:
+    Resources() = default;
+    ~Resources() = default;
+};
+```
 
 ---
 
 ### 2. Factory Method Pattern (Creational)
 
-* **Current Status**: Planned refactoring for entity creation in `main.cpp`.
-* **Design**: Dedicated factory classes (`PlantFactory` and `ZombieFactory`) exposing static creation interfaces:
-  * `PlantFactory::CreatePlant(PlantType type, int x, int y)`
-  * `ZombieFactory::CreateZombie(ZombieType type, float x, float y)`
-* **Rationale**: Replaces manual `if-else` construction chains in `main.cpp` with a clean creation interface, ensuring adding new plant or zombie types does not require modifying UI or game loop code.
-* **Implementation Blueprint**:
+* **Current Implementation**: Implemented in `BowlingNut::Create(plantType, x, y)` (`src/entities/plants/BowlingNut.cpp`), instantiating `NormalBowlingNut`, `GiantBowlingNut`, or `ExplodeBowlingNut` based on seed card identifiers.
+* **Architecture Extension**: Generalized `PlantFactory` and `ZombieFactory` static creation interfaces replacing manual conditional construction blocks.
+* **Technical Rationale**: Encapsulates entity instantiation, health assignment, animation path binding, and sun cost lookup, honoring the Open-Closed Principle (OCP) when adding new plant or zombie subclasses.
 
 ```cpp
-enum class PlantType { PeaShooter, SnowPea, SunFlower, Wallnut, CherryBomb, Chomper, Jalapeno, Repeater, GatlingPea, Cornpult, Melonpult, FirePea };
+enum class PlantType { PeaShooter, SnowPea, SunFlower, Wallnut, CherryBomb, Chomper, Jalapeno, Cornpult, Melonpult, FirePea };
 
 class PlantFactory {
 public:
@@ -209,10 +358,9 @@ public:
 
 ### 3. State Pattern (Behavioral)
 
-* **Current Status**: Partially implemented via basic enums (`GameState` in `main.cpp` and `JalapenoState` in `Jalapeno.h`). Planned for expansion into class-based state objects.
-* **Design**: Abstract `IGameState` interface defining `Enter()`, `Update()`, `Draw()`, and `Exit()` lifecycle methods, managed by a `GameStateManager` context.
-* **Rationale**: Encapsulates distinct game phases (`MainMenuState`, `SeedSelectState` for pre-level plant deck selection, `PlayingState`, `PauseState`, `GameOverState`) and entity behavior states (`WalkingState`, `EatingState`, `DyingState`).
-* **Implementation Blueprint**:
+* **Current Implementation**: Implemented across level phases (`LevelPhase::SeedSelection`, `PanToLawn`, `ReadySetPlant`, `ActiveWave` in `Level1.h`), quiz phases (`QuizState::Rules`, `Playing`, `AnswerFeedback`, `Summary` in `QuizMenu.h`), and entity life cycles (`JalapenoState::EXPLODING_SWELL`, `EXPLODING_FIRE`, `DONE` in `Jalapeno.h`).
+* **Architecture Extension**: Polymorphic `IGameState` interface and `GameStateManager` context for managing high-level application screen transitions.
+* **Technical Rationale**: Eliminates deeply nested switch-case update blocks in `main.cpp`, giving each game phase encapsulated `Enter()`, `Update()`, `Draw()`, and `Exit()` routines.
 
 ```cpp
 class IGameState {
@@ -242,10 +390,11 @@ public:
 
 ### 4. Observer Pattern (Behavioral)
 
-* **Current Status**: Planned.
-* **Design**: Centralized `EventManager` working with an `IObserver` notification interface.
-* **Rationale**: Decouples gameplay events from secondary systems. When a sun is collected, a zombie dies, or a plant is destroyed, `EventManager` notifies listening subsystems (HUD, score tracker, audio engine, lawn grid) without hard coupling.
-* **Implementation Blueprint**:
+* **Design Structure**: Centralized `EventManager` acting as Subject/Dispatcher with an `IObserver` callback interface.
+* **Technical Rationale**: Decouples gameplay triggers from dependent secondary subsystems:
+  * Collecting a sun notifies `HUDManager` to increment the currency balance and `AudioManager` to play the collection sound without `SunItem` holding references to either class.
+  * A zombie dying notifies wave progress trackers and score tallies.
+  * A plant dying notifies `GridManager` to free the grid cell for replanting.
 
 ```cpp
 enum class GameEvent { SunCollected, ZombieKilled, PlantDestroyed, LawnmowerTriggered };
@@ -270,7 +419,9 @@ public:
         m_listeners[event].push_back(observer);
     }
     void Notify(GameEvent event, const EventData& data) {
-        for (auto* obs : m_listeners[event]) obs->OnNotify(event, data);
+        if (m_listeners.find(event) != m_listeners.end()) {
+            for (auto* obs : m_listeners[event]) obs->OnNotify(event, data);
+        }
     }
 };
 ```
@@ -279,10 +430,8 @@ public:
 
 ### 5. Strategy Pattern (Behavioral)
 
-* **Current Status**: Planned refactoring for `Projectile` trajectory handling (`include/Projectile.h`).
-* **Design**: `ITrajectoryStrategy` interface encapsulating projectile movement mathematics away from entity rendering logic.
-* **Rationale**: Replaces boolean flag checks (`m_isLobbed`) with interchangeable strategy algorithms for linear pea travel (`StraightTrajectoryStrategy`), parabolic catapult arcs (`LobbedTrajectoryStrategy`), and instant radial explosions (`AoeExplosionStrategy`).
-* **Implementation Blueprint**:
+* **Design Structure**: `ITrajectoryStrategy` interface defining position calculation algorithms over time, utilized by `Projectile`.
+* **Technical Rationale**: Replaces boolean flag branching (`m_isLobbed`) in `Projectile.h` with interchangeable strategy algorithms for linear travel (`StraightTrajectoryStrategy`), parabolic catapult flight (`LobbedTrajectoryStrategy`), and radial splash damage (`AoeExplosionStrategy`).
 
 ```cpp
 class ITrajectoryStrategy {
@@ -335,7 +484,8 @@ public:
 
 ```bash
 # Run the automated build script (applies mandatory CMAKE_POLICY_VERSION_MINIMUM shim)
-bash build.sh
+cmake -S . -B build "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
+cmake --build build --config Release --parallel 4
 
 # Run executable
 ./build/PvZGame

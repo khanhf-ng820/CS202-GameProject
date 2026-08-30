@@ -39,6 +39,7 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.LoadFile(res.GetAssetPath("assets/PlantSeedPackets/WALLNUT.png"));
     res.LoadFile(res.GetAssetPath("assets/images/ProjectilePea.png"));
     res.LoadFile(res.GetAssetPath("assets/images/ProjectileSnowPea.png"));
+    res.LoadFile(res.GetAssetPath("assets/reanim/ZombiesWon.jpg"));
 
     // Preload sounds
     res.GetAssetPath("assets/sounds/groan.ogg");
@@ -46,6 +47,16 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.GetAssetPath("assets/sounds/seedlift.ogg");
     res.GetAssetPath("assets/sounds/plant.ogg");
     res.GetAssetPath("assets/sounds/tap.ogg");
+    res.GetAssetPath("assets/sounds/winmusic.ogg");
+    res.GetAssetPath("assets/sounds/pause.ogg");
+    res.GetAssetPath("assets/sounds/buttonclick.ogg");
+    res.GetAssetPath("assets/sounds/scream.ogg");
+    res.GetAssetPath("assets/sounds/losemusic.ogg");
+
+    // Load House of Terror 28 bitmap font
+    std::string fontPng = res.GetAssetPath("assets/data/HouseofTerror28.png");
+    std::string fontTxt = res.GetAssetPath("assets/data/HouseofTerror28.txt");
+    m_font.Load(fontPng, fontTxt);
 
     // Populate initial vases
     spawnVases();
@@ -54,7 +65,14 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
 void VasebreakerLevel::restartLevel() {
     m_levelWon = false;
     m_levelLost = false;
+    m_winMusicPlayed = false;
+    m_loseTimer = 0.0f;
+    m_screamSoundPlayed = false;
+    m_loseMusicPlayed = false;
+    m_gameSpeed = 1.0f;
+    m_isSpeedPaused = false;
     m_isSwinging = false;
+    m_swingProgress = 0.0f;
     m_pendingVaseRow = -1;
     m_pendingVaseCol = -1;
     m_pendingVaseTimer = 0.0f;
@@ -80,22 +98,44 @@ void VasebreakerLevel::spawnVases() {
     m_shards.clear();
     m_zombies.clear();
 
-    // Classic Introductory Pool for the 13 Brown Vases:
-    // 7 Plants (4x PeaShooter, 2x SnowPea, 1x Wallnut)
-    // 6 Zombies (5x ZombieNormal, 1x ConeheadZombie)
+    // Classic Balanced Pool for the 33 Brown Vases:
+    // 18 Plants (8x PeaShooter, 4x Repeater, 3x SnowPea, 3x Wallnut)
+    // 15 Zombies (9x ZombieNormal, 4x ConeheadZombie, 2x BucketheadZombie)
     std::vector<VaseContent> brownPool = {
+        // Zombies (15)
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
+        { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ZombieNormal" },
         { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Zombie, "ConeheadZombie" },
+        { VaseContentKind::Zombie, "BucketheadZombie" },
+        { VaseContentKind::Zombie, "BucketheadZombie" },
+        // Plants (18)
         { VaseContentKind::Plant,  "PeaShooter" },
         { VaseContentKind::Plant,  "PeaShooter" },
         { VaseContentKind::Plant,  "PeaShooter" },
         { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "PeaShooter" },
+        { VaseContentKind::Plant,  "Repeater" },
+        { VaseContentKind::Plant,  "Repeater" },
+        { VaseContentKind::Plant,  "Repeater" },
+        { VaseContentKind::Plant,  "Repeater" },
         { VaseContentKind::Plant,  "SnowPea" },
         { VaseContentKind::Plant,  "SnowPea" },
+        { VaseContentKind::Plant,  "SnowPea" },
+        { VaseContentKind::Plant,  "Wallnut" },
+        { VaseContentKind::Plant,  "Wallnut" },
         { VaseContentKind::Plant,  "Wallnut" }
     };
 
@@ -111,9 +151,9 @@ void VasebreakerLevel::spawnVases() {
     std::shuffle(brownPool.begin(), brownPool.end(), g);
     std::shuffle(greenPool.begin(), greenPool.end(), g);
 
-    // Populate columns 6, 7, 8 across all 5 rows (15 vases total)
+    // Populate the last 7 columns (columns 2 through 8) across all 5 rows (35 vases total)
     for (int r = 0; r < 5; ++r) {
-        for (int c = 6; c < 9; ++c) {
+        for (int c = 2; c < 9; ++c) {
             float cellX = 140.0f + (c == 0 ? 0.0f : 80.0f + (c - 1) * 70.0f);
             float cellY = 80.0f + r * 100.0f;
             float cellW = (c == 0) ? 80.0f : 70.0f;
@@ -123,13 +163,13 @@ void VasebreakerLevel::spawnVases() {
             float vaseX = centerX - 40.0f;
             float vaseY = centerY - 50.0f;
 
-            if ((r == 1 && c == 7) || (r == 3 && c == 7)) {
-                // 2 Guaranteed Green Vases containing shuffled high-tier defense plants
+            if ((r == 1 && c == 5) || (r == 3 && c == 5)) {
+                // 2 Guaranteed Green Vases at (1, 5) and (3, 5)
                 VaseContent content = greenPool.back();
                 greenPool.pop_back();
                 m_vases[r][c] = std::make_unique<GreenVase>(r, c, vaseX, vaseY, content);
             } else {
-                // 13 Brown Vases with randomized shuffled contents
+                // 33 Brown Vases with randomized shuffled contents
                 VaseContent content = brownPool.back();
                 brownPool.pop_back();
                 m_vases[r][c] = std::make_unique<BrownVase>(r, c, vaseX, vaseY, content);
@@ -193,7 +233,9 @@ void VasebreakerLevel::breakVase(int row, int col) {
     } else if (content.kind == VaseContentKind::Zombie) {
         // Spawn zombie at the broken vase's tile coordinates
         float spawnY = 45.0f + row * 100.0f;
-        if (content.name == "ConeheadZombie") {
+        if (content.name == "BucketheadZombie") {
+            m_zombies.push_back(std::make_unique<BucketheadZombie>(res, vaseX, spawnY));
+        } else if (content.name == "ConeheadZombie") {
             m_zombies.push_back(std::make_unique<ConeheadZombie>(res, vaseX, spawnY));
         } else {
             m_zombies.push_back(std::make_unique<ZombieNormal>(res, vaseX, spawnY));
@@ -277,18 +319,62 @@ void VasebreakerLevel::update(float dt) {
         return;
     }
 
-    if (m_levelLost || m_levelWon) return;
+    // Handle Speed & Pause Controls in playing phase
+    Rectangle pauseBtn = { 668.0f, 566.0f, 26.0f, 26.0f };
+    Rectangle speedBtn = { 698.0f, 566.0f, 85.0f, 26.0f };
+
+    if (!m_levelWon && !m_levelLost) {
+        if (IsKeyPressed(KEY_SPACE) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, pauseBtn))) {
+            m_isSpeedPaused = !m_isSpeedPaused;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/pause.ogg"));
+            return;
+        }
+
+        if (IsKeyPressed(KEY_F) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, speedBtn))) {
+            if (m_gameSpeed == 1.0f)      m_gameSpeed = 2.0f;
+            else if (m_gameSpeed == 2.0f) m_gameSpeed = 4.0f;
+            else if (m_gameSpeed == 4.0f) m_gameSpeed = 8.0f;
+            else                          m_gameSpeed = 1.0f;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buttonclick.ogg"));
+            return;
+        }
+    }
+
+    if (m_levelLost) {
+        m_loseTimer += dt;
+        ShowCursor();
+
+        if (!m_screamSoundPlayed) {
+            m_screamSoundPlayed = true;
+            AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/scream.ogg"));
+        }
+
+        if (m_loseTimer >= 0.7f && !m_loseMusicPlayed) {
+            m_loseMusicPlayed = true;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/losemusic.ogg"));
+        }
+
+        if (m_loseTimer >= 2.0f && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_SPACE))) {
+            restartLevel();
+        }
+        return;
+    }
+
+    if (m_levelWon) return;
+
+    float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
 
     // Update plant preview animation
     m_previewPlantAnim.Update(dt);
 
     // Update dropped seed packet cards
     for (auto& packet : m_droppedPackets) {
-        packet.update(dt);
+        packet.update(simDt);
     }
 
-    // Left-click interaction handling
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    // Left-click interaction handling (active when not speed-paused)
+    if (!m_isSpeedPaused && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         bool handledCardClick = false;
 
         // 1. Check if clicking on any dropped seed packet card
@@ -358,10 +444,10 @@ void VasebreakerLevel::update(float dt) {
             } else {
                 // 3. No card selected: standard mallet swing & vase smashing
                 m_isSwinging = true;
+                m_swingProgress = 0.0f;
                 m_malletAnim.SetAnimation("anim_open_pot");
                 m_malletAnim.SetFrame(9.0f); // Start of strike swing
-                m_malletAnim.SetSpeed(2.5f); // Fast responsive swing
-                m_malletAnim.SetPaused(false);
+                m_malletAnim.SetPaused(true); // Manually driven by m_swingProgress to prevent auto-looping
                 AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/swing.ogg"));
 
                 // Target at most ONE vase that is targetable (Intact)
@@ -378,19 +464,23 @@ void VasebreakerLevel::update(float dt) {
         }
     }
 
-    // Process mallet swing animation
+    // Process mallet swing animation deterministically
     if (m_isSwinging) {
-        m_malletAnim.Update(dt);
-        if (m_malletAnim.GetCurrentFrame() >= m_malletAnim.GetEndFrame() - 1 || m_malletAnim.GetCurrentFrame() >= 16) {
+        m_swingProgress += simDt * 30.0f; // 12 fps * 2.5x speed = 30 frames/sec
+        float curFrame = 9.0f + m_swingProgress;
+        if (curFrame >= 16.0f) {
             m_isSwinging = false;
+            m_swingProgress = 0.0f;
             m_malletAnim.SetFrame(14.0f); // Return to resting upright pose
             m_malletAnim.SetPaused(true);
+        } else {
+            m_malletAnim.SetFrame(curFrame);
         }
     }
 
     // Process pending vase strike impact
     if (m_pendingVaseTimer > 0.0f) {
-        m_pendingVaseTimer -= dt;
+        m_pendingVaseTimer -= simDt;
         if (m_pendingVaseTimer <= 0.0f && m_pendingVaseRow >= 0) {
             breakVase(m_pendingVaseRow, m_pendingVaseCol);
             m_pendingVaseRow = -1;
@@ -429,7 +519,7 @@ void VasebreakerLevel::update(float dt) {
                     }
                 }
 
-                m_plants[r][c]->update(dt, m_projectiles, m_suns);
+                m_plants[r][c]->update(simDt, m_projectiles, m_suns);
             }
         }
     }
@@ -445,7 +535,7 @@ void VasebreakerLevel::update(float dt) {
 
     // Update projectiles & projectile-zombie collisions
     for (auto& p : m_projectiles) {
-        p.update(dt);
+        p.update(simDt);
         if (!p.isActive()) continue;
 
         for (auto& z : m_zombies) {
@@ -471,11 +561,11 @@ void VasebreakerLevel::update(float dt) {
 
     // Update active shards
     for (auto& shard : m_shards) {
-        shard.lifetime -= dt;
-        shard.vy += 500.0f * dt; // Gravity
-        shard.x += shard.vx * dt;
-        shard.y += shard.vy * dt;
-        shard.rotation += shard.rotSpeed * dt;
+        shard.lifetime -= simDt;
+        shard.vy += 500.0f * simDt; // Gravity
+        shard.x += shard.vx * simDt;
+        shard.y += shard.vy * simDt;
+        shard.rotation += shard.rotSpeed * simDt;
 
         // Ground bounce
         if (shard.y >= shard.groundY && shard.vy > 0.0f) {
@@ -504,7 +594,7 @@ void VasebreakerLevel::update(float dt) {
     // Update active zombies and zombie-eating-plant interactions
     for (auto& z : m_zombies) {
         if (!z->isFinished()) {
-            z->update(dt);
+            z->update(simDt);
             if (!z->isDead()) {
                 int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
                 bool foundPlantToEat = false;
@@ -521,10 +611,10 @@ void VasebreakerLevel::update(float dt) {
                                     z->getAnim().SetAnimation("anim_eat");
                                 }
 
-                                p->takeDamage((float)z->getDamage() * dt);
+                                p->takeDamage((float)z->getDamage() * simDt);
 
                                 // Periodic chomp sound effect while eating
-                                z->addEatTimer(dt);
+                                z->addEatTimer(simDt);
                                 if (z->getEatTimer() >= 0.35f) {
                                     z->resetEatTimer();
                                     int chompChoice = GetRandomValue(0, 1);
@@ -552,8 +642,8 @@ void VasebreakerLevel::update(float dt) {
                     }
                 }
 
-                // Check loss condition: living zombie reaches house limit
-                if (z->getX() < 160.0f) {
+                // Check loss condition: living zombie reaches house door (x <= 20)
+                if (z->getX() <= 20.0f) {
                     m_levelLost = true;
                 }
             }
@@ -566,6 +656,38 @@ void VasebreakerLevel::update(float dt) {
             [](const std::unique_ptr<Zombie>& z) { return z->isFinished(); }),
         m_zombies.end()
     );
+
+    // Check win condition: all vases destroyed AND all spawned zombies eliminated
+    if (!m_levelWon && !m_levelLost && m_pendingVaseRow == -1) {
+        bool allVasesBroken = true;
+        for (int r = 0; r < 5; ++r) {
+            for (int c = 0; c < 9; ++c) {
+                if (m_vases[r][c] && !m_vases[r][c]->isDestroyed()) {
+                    allVasesBroken = false;
+                    break;
+                }
+            }
+            if (!allVasesBroken) break;
+        }
+
+        bool anyZombieAlive = false;
+        for (const auto& z : m_zombies) {
+            if (!z->isDead()) {
+                anyZombieAlive = true;
+                break;
+            }
+        }
+
+        if (allVasesBroken && !anyZombieAlive) {
+            m_levelWon = true;
+            if (!m_winMusicPlayed) {
+                m_winMusicPlayed = true;
+                AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/winmusic.ogg"));
+            }
+            ShowCursor();
+        }
+    }
 }
 
 void VasebreakerLevel::draw() {
@@ -699,16 +821,29 @@ void VasebreakerLevel::draw() {
         m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
     }
 
-    // 10. Draw Game Over / Loss overlay if triggered
-    if (m_levelLost) {
+    // 10. Draw "Vasebreaker Level" label at the bottom-right corner (to the left of pause button)
+    const char* labelText = "Vasebreaker Level";
+    float fontScale = 0.65f;
+    int textWidth = m_font.MeasureText(labelText, fontScale);
+    float labelX = 668.0f - (float)textWidth - 14.0f;
+    float labelY = 568.0f;
+    m_font.DrawText(labelText, labelX, labelY, fontScale, Color{ 235, 200, 45, 255 });
+
+    // Draw Speed & Pause controls
+    drawSpeedControls();
+
+    // 11. Draw Win / Loss Overlays
+    if (m_levelWon) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
-        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
-        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 215, 240, 22, RED);
-        DrawText("Game Over!", 350, 290, 20, WHITE);
+        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
+        DrawText("LEVEL COMPLETED!", 260, 240, 28, GOLD);
+        DrawText("You smashed all vases and defeated all zombies!", 215, 290, 16, WHITE);
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+    } else if (m_levelLost) {
+        drawLoseScreen();
     }
 
-    // 11. Draw Cursor (only when in-game menu is not open)
+    // 12. Draw Cursor (only when in-game menu is not open)
     if (!m_inGameMenu || !m_inGameMenu->isOpen()) {
         if (m_selectedPacketIndex >= 0) {
             // Translucent plant preview following mouse cursor
@@ -723,14 +858,14 @@ void VasebreakerLevel::draw() {
         DrawCircleLines((int)mousePos.x, (int)mousePos.y, 4.0f, WHITE);
     }
 
-    // 12. Draw in-game pause menu dialog if open (on top of everything)
+    // 13. Draw in-game pause menu dialog if open (on top of everything)
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }
 
     EndTextureMode();
 
-    // 13. Draw targetScreen stretched to actual window dimensions
+    // 14. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -742,6 +877,76 @@ void VasebreakerLevel::draw() {
         WHITE
     );
     EndDrawing();
+}
+
+void VasebreakerLevel::drawSpeedControls() {
+    Vector2 mousePos = GetVirtualMousePosition();
+    Rectangle pauseBtn = { 668.0f, 566.0f, 26.0f, 26.0f };
+    Rectangle speedBtn = { 698.0f, 566.0f, 85.0f, 26.0f };
+
+    bool pauseHover = CheckCollisionPointRec(mousePos, pauseBtn);
+    bool speedHover = CheckCollisionPointRec(mousePos, speedBtn);
+
+    // 1. Draw Pause Button
+    DrawRectangleRounded(pauseBtn, 0.25f, 4, pauseHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
+    DrawRectangleRoundedLines(pauseBtn, 0.25f, 4, 1.5f, pauseHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    if (m_isSpeedPaused) {
+        DrawTriangle({ pauseBtn.x + 8.0f, pauseBtn.y + 6.0f },
+                     { pauseBtn.x + 8.0f, pauseBtn.y + pauseBtn.height - 6.0f },
+                     { pauseBtn.x + pauseBtn.width - 7.0f, pauseBtn.y + pauseBtn.height / 2.0f },
+                     Color{ 240, 240, 255, 255 });
+    } else {
+        DrawRectangleRec({ pauseBtn.x + 7.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+        DrawRectangleRec({ pauseBtn.x + 15.0f, pauseBtn.y + 6.0f, 4.0f, 14.0f }, Color{ 220, 230, 255, 255 });
+    }
+
+    // 2. Draw Speed Button
+    DrawRectangleRounded(speedBtn, 0.25f, 4, speedHover ? Color{ 85, 95, 135, 255 } : Color{ 60, 68, 105, 255 });
+    DrawRectangleRoundedLines(speedBtn, 0.25f, 4, 1.5f, speedHover ? Color{ 140, 160, 220, 255 } : Color{ 100, 115, 165, 255 });
+    DrawTriangle({ speedBtn.x + 8.0f, speedBtn.y + 7.0f },
+                 { speedBtn.x + 8.0f, speedBtn.y + speedBtn.height - 7.0f },
+                 { speedBtn.x + 19.0f, speedBtn.y + speedBtn.height / 2.0f },
+                 Color{ 220, 235, 255, 255 });
+
+    char speedBuf[16];
+    snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
+    DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
+}
+
+void VasebreakerLevel::drawLoseScreen() {
+    // 1. Fade to dark red / black vignette
+    float overlayAlpha = std::clamp(m_loseTimer * 1.8f, 0.0f, 0.88f);
+    DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(Color{ 25, 0, 0, 255 }, overlayAlpha));
+
+    // 2. Draw "THE ZOMBIES ATE YOUR BRAINS!" graphic with zoom-in ease-out
+    Texture2D texZombiesWon = res.GetTexture("ZOMBIESWON");
+    if (texZombiesWon.id == 0) texZombiesWon = res.GetTexture("ZombiesWon");
+    if (texZombiesWon.id != 0) {
+        float zoomProgress = std::clamp((m_loseTimer - 0.4f) * 1.8f, 0.0f, 1.0f);
+        float easeZoom = zoomProgress * zoomProgress * (3.0f - 2.0f * zoomProgress);
+        float scale = 0.5f + 0.5f * easeZoom;
+        float w = (float)texZombiesWon.width * scale;
+        float h = (float)texZombiesWon.height * scale;
+
+        DrawTexturePro(
+            texZombiesWon,
+            { 0.0f, 0.0f, (float)texZombiesWon.width, (float)texZombiesWon.height },
+            { 400.0f, 250.0f, w, h },
+            { w / 2.0f, h / 2.0f },
+            0.0f,
+            ColorAlpha(WHITE, std::min(1.0f, (m_loseTimer - 0.3f) * 2.5f))
+        );
+    } else {
+        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 190, 220, 26, RED);
+    }
+
+    // 3. Prompt when defeat animation concludes
+    if (m_loseTimer >= 1.6f) {
+        float textAlpha = std::clamp((m_loseTimer - 1.6f) * 2.0f, 0.0f, 1.0f);
+        DrawRectangleRec({ 245, 470, 310, 44 }, ColorAlpha(BLACK, textAlpha * 0.75f));
+        DrawRectangleLinesEx({ 245, 470, 310, 44 }, 2.0f, ColorAlpha(RED, textAlpha));
+        DrawText("Click anywhere to try again", 270, 483, 18, ColorAlpha(RAYWHITE, textAlpha));
+    }
 }
 
 void VasebreakerLevel::run() {
@@ -759,7 +964,7 @@ void VasebreakerLevel::run() {
         update(dt);
         draw();
 
-        if (m_exitToMainMenu || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
+        if (m_exitToMainMenu || (m_levelWon && IsKeyPressed(KEY_ENTER)) || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
             break;
         }
     }

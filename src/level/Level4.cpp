@@ -50,6 +50,9 @@ Level4::Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber)
 {
     m_inGameMenu = std::make_unique<InGameMenu>(res);
 
+    // Load House of Terror bitmap font for level labels
+    m_font.Load(res.GetAssetPath("assets/data/HouseofTerror28.png"), res.GetAssetPath("assets/data/HouseofTerror28.txt"));
+
     // Initialize "READY... SET... PLANT!" intro animation
     ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
     m_readySetPlantAnim.SetResources(readyDef, res);
@@ -1554,8 +1557,17 @@ void Level4::drawProgressBar() {
     float barX = 625.0f;
     float barY = 572.0f;
 
-    // 1. Level text: "Level 2-1"
-    DrawText("Level 2-1", (int)(barX - 82.0f), (int)(barY + 5.0f), 18, Color{ 140, 180, 255, 255 });
+    // 1. Level text: "Level 4", "Level 5", "Level 6"
+    std::string levelStr = "Level " + std::to_string(m_levelNumber);
+    float fontScale = 0.65f;
+    int textW = m_font.MeasureText(levelStr.c_str(), fontScale);
+    float textX = barX - (float)textW - 10.0f;
+    float textY = 566.0f;
+
+    // Drop shadow
+    m_font.DrawText(levelStr.c_str(), textX + 2.0f, textY + 2.0f, fontScale, Color{ 0, 0, 0, 255 });
+    // Golden yellow text
+    m_font.DrawText(levelStr.c_str(), textX, textY, fontScale, Color{ 235, 200, 45, 255 });
 
     // 2. Progress Bar Frame
     DrawTextureRec(texMeter, { 0.0f, 0.0f, 158.0f, 25.0f }, { barX, barY }, WHITE);
@@ -1582,13 +1594,13 @@ void Level4::drawProgressBar() {
             DrawTextureRec(texParts, { 25.0f, 0.0f, 25.0f, 25.0f }, { flagX, barY - 2.0f }, WHITE);
 
             float flagOffsetY = (waveProgress >= frac - 0.05f) ? -6.0f : -2.0f;
-            DrawTextureRec(texParts, { 0.0f, 0.0f, 25.0f, 25.0f }, { flagX, barY + flagOffsetY }, WHITE);
+            DrawTextureRec(texParts, { 50.0f, 0.0f, 25.0f, 25.0f }, { flagX, barY + flagOffsetY }, WHITE);
         }
 
         // 6. Zombie Head Slider Marker
         float headX = barX + 155.0f - currentFillWidth - 11.0f;
         headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
-        DrawTextureRec(texParts, { 50.0f, 0.0f, 25.0f, 25.0f }, { headX, barY - 2.0f }, WHITE);
+        DrawTextureRec(texParts, { 0.0f, 0.0f, 25.0f, 25.0f }, { headX, barY - 2.0f }, WHITE);
     }
 }
 

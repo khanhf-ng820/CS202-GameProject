@@ -47,6 +47,9 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen, int levelNumber)
 {
     m_inGameMenu = std::make_unique<InGameMenu>(res);
 
+    // Load House of Terror bitmap font for level labels
+    m_font.Load(res.GetAssetPath("assets/data/HouseofTerror28.png"), res.GetAssetPath("assets/data/HouseofTerror28.txt"));
+
     // Initialize "READY... SET... PLANT!" intro animation
     ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
     m_readySetPlantAnim.SetResources(readyDef, res);
@@ -1276,9 +1279,17 @@ void Level1::drawProgressBar() {
     float barX = 625.0f;
     float barY = 572.0f;
 
-    // 1. Draw level text to the left: "Level 1-1", "Level 1-2", "Level 1-3"
-    std::string levelStr = "Level 1-" + std::to_string(m_levelNumber);
-    DrawText(levelStr.c_str(), (int)(barX - 82.0f), (int)(barY + 5.0f), 18, Color{ 235, 200, 45, 255 });
+    // 1. Draw level text to the left: "Level 1", "Level 2", "Level 3"
+    std::string levelStr = "Level " + std::to_string(m_levelNumber);
+    float fontScale = 0.65f;
+    int textW = m_font.MeasureText(levelStr.c_str(), fontScale);
+    float textX = barX - (float)textW - 10.0f;
+    float textY = 566.0f;
+
+    // Drop shadow
+    m_font.DrawText(levelStr.c_str(), textX + 2.0f, textY + 2.0f, fontScale, Color{ 0, 0, 0, 255 });
+    // Golden yellow text
+    m_font.DrawText(levelStr.c_str(), textX, textY, fontScale, Color{ 235, 200, 45, 255 });
 
     // 2. Draw Progress Bar Frame (0, 0, 158, 25)
     Rectangle srcFrame = { 0.0f, 0.0f, 158.0f, 25.0f };
@@ -1318,14 +1329,14 @@ void Level1::drawProgressBar() {
 
             // Red flag (raised when near/reached that wave fraction)
             float flagOffsetY = (waveProgress >= frac - 0.05f) ? -6.0f : -2.0f;
-            Rectangle srcFlag = { 0.0f, 0.0f, 25.0f, 25.0f };
+            Rectangle srcFlag = { 50.0f, 0.0f, 25.0f, 25.0f };
             DrawTextureRec(texParts, srcFlag, { flagX, barY + flagOffsetY }, WHITE);
         }
 
         // 6. Draw Zombie Head Slider Marker
         float headX = barX + 155.0f - currentFillWidth - 11.0f;
         headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
-        Rectangle srcHead = { 50.0f, 0.0f, 25.0f, 25.0f };
+        Rectangle srcHead = { 0.0f, 0.0f, 25.0f, 25.0f };
         DrawTextureRec(texParts, srcHead, { headX, barY - 2.0f }, WHITE);
     }
 }

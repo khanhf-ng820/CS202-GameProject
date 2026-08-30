@@ -18,6 +18,7 @@
 
 #include "BowlingNut.h"
 #include "InGameMenu.h"
+#include "BitmapFont.h"
 
 struct BowlingCard {
     float x;
@@ -61,6 +62,15 @@ private:
     bool m_levelLost = false;
     bool m_exitToMainMenu = false;
 
+    // Speed & Pause controls
+    float m_gameSpeed = 1.0f;
+    bool m_isSpeedPaused = false;
+
+    // Defeat / Game Over presentation
+    float m_loseTimer = 0.0f;
+    bool m_screamSoundPlayed = false;
+    bool m_loseMusicPlayed = false;
+
     // Grid state for placed plants
     std::unique_ptr<Plant> m_grid[5][9];
 
@@ -71,7 +81,13 @@ private:
     // In-game pause menu
     std::unique_ptr<InGameMenu> m_inGameMenu;
 
+    // Bitmap font for level label
+    BitmapFont m_font;
+
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     void spawnNextWave();
+    void drawProgressBar();
+    void drawSpeedControls();
+    void drawLoseScreen();
 };
 
