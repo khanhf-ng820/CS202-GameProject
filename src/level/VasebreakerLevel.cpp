@@ -43,18 +43,22 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.LoadFile(res.GetAssetPath("assets/reanim/ZombiesWon.jpg"));
     res.LoadFile(res.GetAssetPath("assets/images/trophy_hi_res.png"));
     res.LoadFile(res.GetAssetPath("assets/particles/AwardRays.png"));
+    res.LoadFile(res.GetAssetPath("assets/images/ShovelBank.png"));
+    res.LoadFile(res.GetAssetPath("assets/images/Shovel.png"));
 
     // Preload sounds
     res.GetAssetPath("assets/sounds/groan.ogg");
     res.GetAssetPath("assets/sounds/vase_breaking.ogg");
     res.GetAssetPath("assets/sounds/seedlift.ogg");
     res.GetAssetPath("assets/sounds/plant.ogg");
+    res.GetAssetPath("assets/sounds/plant2.ogg");
     res.GetAssetPath("assets/sounds/tap.ogg");
     res.GetAssetPath("assets/sounds/winmusic.ogg");
     res.GetAssetPath("assets/sounds/pause.ogg");
     res.GetAssetPath("assets/sounds/buttonclick.ogg");
     res.GetAssetPath("assets/sounds/scream.ogg");
     res.GetAssetPath("assets/sounds/losemusic.ogg");
+    res.GetAssetPath("assets/sounds/shovel.ogg");
 
     // Load House of Terror 28 bitmap font
     std::string fontPng = res.GetAssetPath("assets/data/HouseofTerror28.png");
@@ -77,6 +81,7 @@ void VasebreakerLevel::restartLevel() {
     m_loseMusicPlayed = false;
     m_gameSpeed = 1.0f;
     m_isSpeedPaused = false;
+    m_isShovelSelected = false;
     m_isSwinging = false;
     m_swingProgress = 0.0f;
     m_pendingVaseRow = -1;
@@ -325,6 +330,27 @@ void VasebreakerLevel::update(float dt) {
         return;
     }
 
+    // Check click on top Shovel Bank button
+    if (!m_levelWon && !m_levelLost && IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, m_shovelBounds)) {
+        m_isShovelSelected = !m_isShovelSelected;
+        m_selectedPacketIndex = -1;
+        if (m_isShovelSelected) {
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/shovel.ogg"));
+        } else {
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
+        }
+        return;
+    }
+
+    // Right-click deselects card or shovel
+    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
+        if (m_selectedPacketIndex != -1 || m_isShovelSelected) {
+            m_selectedPacketIndex = -1;
+            m_isShovelSelected = false;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
+        }
+    }
+
     // Handle Speed & Pause Controls in playing phase
     Rectangle pauseBtn = { 668.0f, 566.0f, 26.0f, 26.0f };
     Rectangle speedBtn = { 698.0f, 566.0f, 85.0f, 26.0f };
@@ -409,6 +435,7 @@ void VasebreakerLevel::update(float dt) {
                 } else {
                     // Select card for planting
                     m_selectedPacketIndex = i;
+                    m_isShovelSelected = false;
                     AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/seedlift.ogg"));
 
                     // Update preview plant animation to match the selected plant type
@@ -443,7 +470,17 @@ void VasebreakerLevel::update(float dt) {
         }
 
         if (!handledCardClick) {
-            if (m_selectedPacketIndex >= 0 && m_selectedPacketIndex < (int)m_droppedPackets.size()) {
+            if (m_isShovelSelected) {
+                // 1. Shovel tool active: dig up plant on clicked cell
+                int plantRow, plantCol;
+                if (getGridCell(mousePos, plantRow, plantCol)) {
+                    if (m_plants[plantRow][plantCol] && !m_plants[plantRow][plantCol]->isDead()) {
+                        m_plants[plantRow][plantCol].reset();
+                        m_isShovelSelected = false;
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant2.ogg"));
+                    }
+                }
+            } else if (m_selectedPacketIndex >= 0 && m_selectedPacketIndex < (int)m_droppedPackets.size()) {
                 // 2. A card is selected: try placing plant on an empty lawn tile
                 int plantRow, plantCol;
                 if (getGridCell(mousePos, plantRow, plantCol)) {
@@ -833,7 +870,40 @@ void VasebreakerLevel::draw() {
         p.draw();
     }
 
-    // 9. Draw top-right "Menu" stone button (680, 0, 110, 36)
+    // 9. Draw top Shovel Bank & Shovel tool (447, 0, 70, 72)
+    Texture2D shovelBankTex = res.GetTexture("SHOVELBANK");
+    if (shovelBankTex.id == 0) shovelBankTex = res.GetTexture("ShovelBank");
+    if (shovelBankTex.id != 0) {
+        DrawTexturePro(
+            shovelBankTex,
+            { 0.0f, 0.0f, (float)shovelBankTex.width, (float)shovelBankTex.height },
+            m_shovelBounds,
+            { 0.0f, 0.0f },
+            0.0f,
+            WHITE
+        );
+    } else {
+        DrawRectangleRec(m_shovelBounds, ColorAlpha(DARKGRAY, 0.8f));
+    }
+
+    Texture2D shovelTex = res.GetTexture("SHOVEL");
+    if (shovelTex.id == 0) shovelTex = res.GetTexture("Shovel");
+    if (shovelTex.id != 0) {
+        Rectangle shovelDrawRec = { m_shovelBounds.x + 3.0f, m_shovelBounds.y + 4.0f, 64.0f, 64.0f };
+        DrawTexturePro(
+            shovelTex,
+            { 0.0f, 0.0f, (float)shovelTex.width, (float)shovelTex.height },
+            shovelDrawRec,
+            { 0.0f, 0.0f },
+            0.0f,
+            WHITE
+        );
+        if (m_isShovelSelected) {
+            DrawRectangleLinesEx(shovelDrawRec, 2.5f, GOLD);
+        }
+    }
+
+    // 10. Draw top-right "Menu" stone button (680, 0, 110, 36)
     Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
     bool menuHovered = CheckCollisionPointRec(mousePos, menuBtnRect);
     bool menuPressed = menuHovered && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
@@ -841,7 +911,7 @@ void VasebreakerLevel::draw() {
         m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
     }
 
-    // 10. Draw "Vasebreaker Level" label at the bottom-right corner (to the left of pause button)
+    // 11. Draw "Vasebreaker Level" label at the bottom-right corner (to the left of pause button)
     const char* labelText = "Vasebreaker Level";
     float fontScale = 0.65f;
     int textWidth = m_font.MeasureText(labelText, fontScale);
@@ -852,16 +922,28 @@ void VasebreakerLevel::draw() {
     // Draw Speed & Pause controls
     drawSpeedControls();
 
-    // 11. Draw Win / Loss Overlays
+    // 12. Draw Win / Loss Overlays
     if (m_levelWon) {
         drawWinScreen();
     } else if (m_levelLost) {
         drawLoseScreen();
     }
 
-    // 12. Draw Cursor (only when in-game menu is not open)
+    // 13. Draw Cursor (only when in-game menu is not open)
     if (!m_inGameMenu || !m_inGameMenu->isOpen()) {
-        if (m_selectedPacketIndex >= 0) {
+        if (m_isShovelSelected) {
+            if (shovelTex.id != 0) {
+                Rectangle cursorRec = { mousePos.x - 20.0f, mousePos.y - 20.0f, 40.0f, 40.0f };
+                DrawTexturePro(
+                    shovelTex,
+                    { 0.0f, 0.0f, (float)shovelTex.width, (float)shovelTex.height },
+                    cursorRec,
+                    { 0.0f, 0.0f },
+                    0.0f,
+                    WHITE
+                );
+            }
+        } else if (m_selectedPacketIndex >= 0) {
             // Translucent plant preview following mouse cursor
             m_previewPlantAnim.Draw(mousePos.x - 30.0f, mousePos.y - 40.0f, 1.0f, ColorAlpha(WHITE, 0.65f));
         } else {

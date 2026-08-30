@@ -135,6 +135,10 @@ private:
     std::vector<DroppedSeedPacket> m_droppedPackets;
     int m_selectedPacketIndex = -1;
 
+    // Shovel tool
+    Rectangle m_shovelBounds = { 447.0f, 0.0f, 70.0f, 72.0f };
+    bool m_isShovelSelected = false;
+
     // Active projectiles & sun items (for plant update interface)
     std::vector<Projectile> m_projectiles;
     std::vector<SunItem> m_suns;
