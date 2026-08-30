@@ -1,4 +1,5 @@
 #include "BowlingNut.h"
+#include "PoleVaultingZombie.h"
 
 BowlingNut::BowlingNut(float x, float y, float vx, float vy, float rotSpeed)
     : m_x(x), m_y(y), m_vx(vx), m_vy(vy), m_rotationAngle(0.0f), m_rotationSpeed(rotSpeed) {}
@@ -46,6 +47,22 @@ void NormalBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zo
             float dx = m_x - zCx;
             float dy = m_y - zCy;
 
+            PoleVaultingZombie* pvz = dynamic_cast<PoleVaultingZombie*>(z.get());
+
+            // 1. First Contact (Vault Trigger): If the Pole-vaulting Zombie still has his pole, vault over rolling nut
+            if (pvz && !pvz->hasVaulted() && !pvz->isVaulting()) {
+                if (dx >= -50.0f && dx <= 10.0f && fabsf(dy) <= 35.0f) {
+                    pvz->startVault();
+                    // Nut does not bounce or deal damage; passes directly underneath in a straight line
+                    continue;
+                }
+            }
+
+            // 2. Airborne state: While mid-air vaulting, nut passes underneath without colliding
+            if (pvz && pvz->isVaulting()) {
+                continue;
+            }
+
             if (dx <= 10.0f) {
                 float dist = sqrtf(dx * dx + dy * dy);
                 if (dist <= 42.0f) {
@@ -67,7 +84,7 @@ void NormalBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zo
                             damage = 200; // Hit 2: 200 -> 0 (dies)
                         }
                     } else if (zName == "PoleVaultingZombie") {
-                        damage = 250; // 2 hits to defeat (500 HP)
+                        damage = 1800; // Subsequent contacts after vaulting deal lethal damage (1,800 HP)
                     } else {
                         damage = 200; // NormalZombie, FlagZombie: 1 hit death
                     }

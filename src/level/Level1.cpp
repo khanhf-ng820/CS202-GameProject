@@ -1309,14 +1309,14 @@ void Level1::drawProgressBar() {
 
             // Red flag (raised when near/reached that wave fraction)
             float flagOffsetY = (waveProgress >= frac - 0.05f) ? -6.0f : -2.0f;
-            Rectangle srcFlag = { 0.0f, 0.0f, 25.0f, 25.0f };
+            Rectangle srcFlag = { 50.0f, 0.0f, 25.0f, 25.0f };
             DrawTextureRec(texParts, srcFlag, { flagX, barY + flagOffsetY }, WHITE);
         }
 
         // 6. Draw Zombie Head Slider Marker
         float headX = barX + 155.0f - currentFillWidth - 11.0f;
         headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
-        Rectangle srcHead = { 50.0f, 0.0f, 25.0f, 25.0f };
+        Rectangle srcHead = { 0.0f, 0.0f, 25.0f, 25.0f };
         DrawTextureRec(texParts, srcHead, { headX, barY - 2.0f }, WHITE);
     }
 }

@@ -1571,13 +1571,13 @@ void Level4::drawProgressBar() {
             DrawTextureRec(texParts, { 25.0f, 0.0f, 25.0f, 25.0f }, { flagX, barY - 2.0f }, WHITE);
 
             float flagOffsetY = (waveProgress >= frac - 0.05f) ? -6.0f : -2.0f;
-            DrawTextureRec(texParts, { 0.0f, 0.0f, 25.0f, 25.0f }, { flagX, barY + flagOffsetY }, WHITE);
+            DrawTextureRec(texParts, { 50.0f, 0.0f, 25.0f, 25.0f }, { flagX, barY + flagOffsetY }, WHITE);
         }
 
         // 6. Zombie Head Slider Marker
         float headX = barX + 155.0f - currentFillWidth - 11.0f;
         headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
-        DrawTextureRec(texParts, { 50.0f, 0.0f, 25.0f, 25.0f }, { headX, barY - 2.0f }, WHITE);
+        DrawTextureRec(texParts, { 0.0f, 0.0f, 25.0f, 25.0f }, { headX, barY - 2.0f }, WHITE);
     }
 }
 

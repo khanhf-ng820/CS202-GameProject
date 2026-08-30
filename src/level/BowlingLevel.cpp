@@ -566,10 +566,10 @@ void BowlingLevel::drawProgressBar() {
     float barY = 572.0f;
 
     // 1. Draw "Wall-nut Bowling" label to the left with House of Terror font
-    float labelScale = 0.65f;
+    float labelScale = 0.58f;
     int textW = m_font.MeasureText("Wall-nut Bowling", labelScale);
     float textX = barX - (float)textW - 10.0f;
-    float textY = barY + 3.0f;
+    float textY = barY - 6.0f;
 
     // Drop shadow
     m_font.DrawText("Wall-nut Bowling", textX + 2.0f, textY + 2.0f, labelScale, Color{ 0, 0, 0, 255 });
@@ -600,19 +600,19 @@ void BowlingLevel::drawProgressBar() {
         float flagX = barX + 155.0f - maxFillWidth * frac - 8.0f;
         flagX = std::max(barX + 6.0f, flagX);
 
-        // Flag pole
+        // Flag pole (Part 1: x = 25..50)
         Rectangle srcPole = { 25.0f, 0.0f, 25.0f, 25.0f };
         DrawTextureRec(texParts, srcPole, { flagX, barY - 2.0f }, WHITE);
 
-        // Red flag (raised when near/reached final wave fraction)
+        // Red flag (Part 2: x = 50..75) - raised when near/reached final wave fraction
         float flagOffsetY = (waveProgress >= frac - 0.05f) ? -6.0f : -2.0f;
-        Rectangle srcFlag = { 0.0f, 0.0f, 25.0f, 25.0f };
+        Rectangle srcFlag = { 50.0f, 0.0f, 25.0f, 25.0f };
         DrawTextureRec(texParts, srcFlag, { flagX, barY + flagOffsetY }, WHITE);
 
-        // 6. Draw Zombie Head Slider Marker
+        // 6. Draw Zombie Head Slider Marker (Part 0: x = 0..25)
         float headX = barX + 155.0f - currentFillWidth - 11.0f;
         headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
-        Rectangle srcHead = { 50.0f, 0.0f, 25.0f, 25.0f };
+        Rectangle srcHead = { 0.0f, 0.0f, 25.0f, 25.0f };
         DrawTextureRec(texParts, srcHead, { headX, barY - 2.0f }, WHITE);
     }
 }
