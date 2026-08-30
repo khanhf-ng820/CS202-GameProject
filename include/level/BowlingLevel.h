@@ -66,6 +66,11 @@ private:
     float m_gameSpeed = 1.0f;
     bool m_isSpeedPaused = false;
 
+    // Defeat / Game Over presentation
+    float m_loseTimer = 0.0f;
+    bool m_screamSoundPlayed = false;
+    bool m_loseMusicPlayed = false;
+
     // Grid state for placed plants
     std::unique_ptr<Plant> m_grid[5][9];
 
@@ -83,5 +88,6 @@ private:
     void spawnNextWave();
     void drawProgressBar();
     void drawSpeedControls();
+    void drawLoseScreen();
 };
 

@@ -154,6 +154,9 @@ private:
     bool m_levelWon = false;
     bool m_levelLost = false;
     bool m_winMusicPlayed = false;
+    float m_loseTimer = 0.0f;
+    bool m_screamSoundPlayed = false;
+    bool m_loseMusicPlayed = false;
     float m_gameSpeed = 1.0f;
     bool m_isSpeedPaused = false;
 
@@ -164,4 +167,5 @@ private:
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
     void restartLevel();
     void drawSpeedControls();
+    void drawLoseScreen();
 };

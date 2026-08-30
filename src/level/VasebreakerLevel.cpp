@@ -39,6 +39,7 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.LoadFile(res.GetAssetPath("assets/PlantSeedPackets/WALLNUT.png"));
     res.LoadFile(res.GetAssetPath("assets/images/ProjectilePea.png"));
     res.LoadFile(res.GetAssetPath("assets/images/ProjectileSnowPea.png"));
+    res.LoadFile(res.GetAssetPath("assets/reanim/ZombiesWon.jpg"));
 
     // Preload sounds
     res.GetAssetPath("assets/sounds/groan.ogg");
@@ -49,6 +50,8 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.GetAssetPath("assets/sounds/winmusic.ogg");
     res.GetAssetPath("assets/sounds/pause.ogg");
     res.GetAssetPath("assets/sounds/buttonclick.ogg");
+    res.GetAssetPath("assets/sounds/scream.ogg");
+    res.GetAssetPath("assets/sounds/losemusic.ogg");
 
     // Load House of Terror 28 bitmap font
     std::string fontPng = res.GetAssetPath("assets/data/HouseofTerror28.png");
@@ -63,6 +66,9 @@ void VasebreakerLevel::restartLevel() {
     m_levelWon = false;
     m_levelLost = false;
     m_winMusicPlayed = false;
+    m_loseTimer = 0.0f;
+    m_screamSoundPlayed = false;
+    m_loseMusicPlayed = false;
     m_gameSpeed = 1.0f;
     m_isSpeedPaused = false;
     m_isSwinging = false;
@@ -334,7 +340,28 @@ void VasebreakerLevel::update(float dt) {
         }
     }
 
-    if (m_levelLost || m_levelWon) return;
+    if (m_levelLost) {
+        m_loseTimer += dt;
+        ShowCursor();
+
+        if (!m_screamSoundPlayed) {
+            m_screamSoundPlayed = true;
+            AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/scream.ogg"));
+        }
+
+        if (m_loseTimer >= 0.7f && !m_loseMusicPlayed) {
+            m_loseMusicPlayed = true;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/losemusic.ogg"));
+        }
+
+        if (m_loseTimer >= 2.0f && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_SPACE))) {
+            restartLevel();
+        }
+        return;
+    }
+
+    if (m_levelWon) return;
 
     float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
 
@@ -615,8 +642,8 @@ void VasebreakerLevel::update(float dt) {
                     }
                 }
 
-                // Check loss condition: living zombie reaches house limit
-                if (z->getX() < 160.0f) {
+                // Check loss condition: living zombie reaches house door (x <= 20)
+                if (z->getX() <= 20.0f) {
                     m_levelLost = true;
                 }
             }
@@ -813,11 +840,7 @@ void VasebreakerLevel::draw() {
         DrawText("You smashed all vases and defeated all zombies!", 215, 290, 16, WHITE);
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     } else if (m_levelLost) {
-        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
-        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
-        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 215, 240, 22, RED);
-        DrawText("Game Over!", 350, 290, 20, WHITE);
-        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+        drawLoseScreen();
     }
 
     // 12. Draw Cursor (only when in-game menu is not open)
@@ -888,6 +911,42 @@ void VasebreakerLevel::drawSpeedControls() {
     char speedBuf[16];
     snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
     DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
+}
+
+void VasebreakerLevel::drawLoseScreen() {
+    // 1. Fade to dark red / black vignette
+    float overlayAlpha = std::clamp(m_loseTimer * 1.8f, 0.0f, 0.88f);
+    DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(Color{ 25, 0, 0, 255 }, overlayAlpha));
+
+    // 2. Draw "THE ZOMBIES ATE YOUR BRAINS!" graphic with zoom-in ease-out
+    Texture2D texZombiesWon = res.GetTexture("ZOMBIESWON");
+    if (texZombiesWon.id == 0) texZombiesWon = res.GetTexture("ZombiesWon");
+    if (texZombiesWon.id != 0) {
+        float zoomProgress = std::clamp((m_loseTimer - 0.4f) * 1.8f, 0.0f, 1.0f);
+        float easeZoom = zoomProgress * zoomProgress * (3.0f - 2.0f * zoomProgress);
+        float scale = 0.5f + 0.5f * easeZoom;
+        float w = (float)texZombiesWon.width * scale;
+        float h = (float)texZombiesWon.height * scale;
+
+        DrawTexturePro(
+            texZombiesWon,
+            { 0.0f, 0.0f, (float)texZombiesWon.width, (float)texZombiesWon.height },
+            { 400.0f, 250.0f, w, h },
+            { w / 2.0f, h / 2.0f },
+            0.0f,
+            ColorAlpha(WHITE, std::min(1.0f, (m_loseTimer - 0.3f) * 2.5f))
+        );
+    } else {
+        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 190, 220, 26, RED);
+    }
+
+    // 3. Prompt when defeat animation concludes
+    if (m_loseTimer >= 1.6f) {
+        float textAlpha = std::clamp((m_loseTimer - 1.6f) * 2.0f, 0.0f, 1.0f);
+        DrawRectangleRec({ 245, 470, 310, 44 }, ColorAlpha(BLACK, textAlpha * 0.75f));
+        DrawRectangleLinesEx({ 245, 470, 310, 44 }, 2.0f, ColorAlpha(RED, textAlpha));
+        DrawText("Click anywhere to try again", 270, 483, 18, ColorAlpha(RAYWHITE, textAlpha));
+    }
 }
 
 void VasebreakerLevel::run() {

@@ -22,6 +22,9 @@ void BowlingLevel::restartLevel() {
     m_exitToMainMenu = false;
     m_gameSpeed = 1.0f;
     m_isSpeedPaused = false;
+    m_loseTimer = 0.0f;
+    m_screamSoundPlayed = false;
+    m_loseMusicPlayed = false;
 
     m_zombies.clear();
     m_bowlingNuts.clear();
@@ -145,7 +148,27 @@ void BowlingLevel::update(float dt) {
         }
     }
 
-    if (m_levelWon || m_levelLost) return;
+    if (m_levelWon) return;
+
+    if (m_levelLost) {
+        m_loseTimer += dt;
+
+        if (!m_screamSoundPlayed) {
+            m_screamSoundPlayed = true;
+            AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/scream.ogg"));
+        }
+
+        if (m_loseTimer >= 0.7f && !m_loseMusicPlayed) {
+            m_loseMusicPlayed = true;
+            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/losemusic.ogg"));
+        }
+
+        if (m_loseTimer >= 2.0f && (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_SPACE))) {
+            restartLevel();
+        }
+        return;
+    }
 
     float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
 
@@ -283,8 +306,8 @@ void BowlingLevel::update(float dt) {
     for (auto& z : m_zombies) {
         if (!z->isFinished()) {
             z->update(simDt);
-            // Check loss condition: Living Zombie reaches house (x < 160.0f)
-            if (!z->isDead() && z->getX() < 160.0f) {
+            // Check loss condition: Living Zombie reaches house door (x <= 20.0f)
+            if (!z->isDead() && z->getX() <= 20.0f) {
                 m_levelLost = true;
             }
         }
@@ -517,7 +540,7 @@ void BowlingLevel::draw() {
     // 11. Draw Bottom-Right FlagMeter Progress Bar & "Wall-nut Bowling" Label
     drawProgressBar();
 
-    // 12. Draw Win / Loss Overlays (identical to Level 1)
+    // 12. Draw Win / Loss Overlays
     if (m_levelWon) {
         DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
         DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, GOLD);
@@ -525,11 +548,7 @@ void BowlingLevel::draw() {
         DrawText("You defeated all zombies!", 270, 290, 18, WHITE);
         DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
     } else if (m_levelLost) {
-        DrawRectangleRec({ 200, 200, 400, 200 }, ColorAlpha(BLACK, 0.85f));
-        DrawRectangleLinesEx({ 200, 200, 400, 200 }, 3.0f, RED);
-        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 215, 240, 22, RED);
-        DrawText("Game Over!", 350, 290, 20, WHITE);
-        DrawText("Press ESC to return", 300, 340, 16, LIGHTGRAY);
+        drawLoseScreen();
     }
 
     // 13. Draw in-game pause menu dialog if open
@@ -585,6 +604,41 @@ void BowlingLevel::drawSpeedControls() {
     char speedBuf[16];
     snprintf(speedBuf, sizeof(speedBuf), "%.1fx", m_gameSpeed);
     DrawText(speedBuf, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
+}
+
+void BowlingLevel::drawLoseScreen() {
+    // 1. Fade to dark red / black vignette
+    float overlayAlpha = std::clamp(m_loseTimer * 1.8f, 0.0f, 0.88f);
+    DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(Color{ 25, 0, 0, 255 }, overlayAlpha));
+
+    // 2. Draw "THE ZOMBIES ATE YOUR BRAINS!" graphic with zoom-in ease-out
+    Texture2D texZombiesWon = res.GetTexture("ZOMBIESWON");
+    if (texZombiesWon.id != 0) {
+        float zoomProgress = std::clamp((m_loseTimer - 0.4f) * 1.8f, 0.0f, 1.0f);
+        float easeZoom = zoomProgress * zoomProgress * (3.0f - 2.0f * zoomProgress);
+        float scale = 0.5f + 0.5f * easeZoom;
+        float w = (float)texZombiesWon.width * scale;
+        float h = (float)texZombiesWon.height * scale;
+
+        DrawTexturePro(
+            texZombiesWon,
+            { 0.0f, 0.0f, (float)texZombiesWon.width, (float)texZombiesWon.height },
+            { 400.0f, 250.0f, w, h },
+            { w / 2.0f, h / 2.0f },
+            0.0f,
+            ColorAlpha(WHITE, std::min(1.0f, (m_loseTimer - 0.3f) * 2.5f))
+        );
+    } else {
+        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 190, 220, 26, RED);
+    }
+
+    // 3. Prompt when defeat animation concludes
+    if (m_loseTimer >= 1.6f) {
+        float textAlpha = std::clamp((m_loseTimer - 1.6f) * 2.0f, 0.0f, 1.0f);
+        DrawRectangleRec({ 245, 470, 310, 44 }, ColorAlpha(BLACK, textAlpha * 0.75f));
+        DrawRectangleLinesEx({ 245, 470, 310, 44 }, 2.0f, ColorAlpha(RED, textAlpha));
+        DrawText("Click anywhere to try again", 270, 483, 18, ColorAlpha(RAYWHITE, textAlpha));
+    }
 }
 
 void BowlingLevel::drawProgressBar() {
@@ -692,7 +746,7 @@ void BowlingLevel::run() {
         update(dt);
         draw();
 
-        if (m_exitToMainMenu || (m_levelWon && IsKeyPressed(KEY_ENTER)) || ((m_levelWon || m_levelLost) && IsKeyPressed(KEY_ESCAPE))) {
+        if (m_exitToMainMenu || (m_levelWon && IsKeyPressed(KEY_ENTER)) || (m_levelWon && IsKeyPressed(KEY_ESCAPE))) {
             break;
         }
     }
