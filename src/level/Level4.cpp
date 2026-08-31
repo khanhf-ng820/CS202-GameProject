@@ -338,7 +338,7 @@ void Level4::triggerGraveRising(int count) {
 
 void Level4::spawnNextWave() {
     m_currentWave++;
-    float spawnX = 700.0f;
+    float spawnX = 830.0f;
 
     auto laneY = [](int row) -> float {
         return 45.0f + row * 100.0f;
@@ -1392,7 +1392,12 @@ void Level4::update(float dt) {
     );
 
     if (m_currentWave >= m_maxWaves && m_zombies.empty() && m_risingZombies.empty() && !m_levelWon && !m_levelLost) {
-        m_levelWon = true;
+        m_victoryDelayTimer += simDt;
+        if (m_victoryDelayTimer >= 2.0f) {
+            m_levelWon = true;
+        }
+    } else {
+        m_victoryDelayTimer = 0.0f;
     }
 }
 

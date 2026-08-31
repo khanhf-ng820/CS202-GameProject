@@ -17,7 +17,7 @@ std::vector<std::string> Level2::getUniqueLevelZombieTypes() const {
 
 void Level2::spawnNextWave() {
     m_currentWave++;
-    float spawnX = 700.0f;
+    float spawnX = 830.0f;
 
     auto laneY = [](int row) -> float {
         return 45.0f + row * 100.0f;

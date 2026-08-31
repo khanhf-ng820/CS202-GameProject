@@ -163,6 +163,7 @@ private:
     bool m_levelWon = false;
     bool m_levelLost = false;
     bool m_winMusicPlayed = false;
+    float m_victoryDelayTimer = 0.0f;
     float m_winTimer = 0.0f;
     float m_awardY = -150.0f;
     float m_awardRaysRotation = 0.0f;

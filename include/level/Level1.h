@@ -77,6 +77,7 @@ protected:
     bool m_levelLost;
     bool m_finalWaveAnnounced;
     bool m_exitToMainMenu;
+    float m_victoryDelayTimer = 0.0f;
 
     // Speed & Pause controls
     float m_gameSpeed = 1.0f;

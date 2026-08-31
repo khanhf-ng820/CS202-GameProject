@@ -221,22 +221,21 @@ void VasebreakerLevel::breakVase(int row, int col) {
     int shardRow = (vType == VaseType::Green) ? 1 : 0;
     float cx = vaseX + 40.0f;
     float cy = vaseY + 50.0f;
-    float groundY = cy + 35.0f;
 
     // Spawn 16 ceramic shards
     for (int i = 0; i < 16; ++i) {
         VaseShard shard;
         shard.x = cx + (float)GetRandomValue(-15, 15);
-        shard.y = cy + (float)GetRandomValue(-25, 20);
-        float angleDeg = (float)GetRandomValue(200, 340); // upward fan
-        float speed = (float)GetRandomValue(120, 280);
-        shard.vx = cosf(angleDeg * DEG2RAD) * speed;
-        shard.vy = sinf(angleDeg * DEG2RAD) * speed;
+        shard.y = cy + (float)GetRandomValue(-15, 15);
+        float angle = (float)GetRandomValue(0, 360) * 3.14159265f / 180.0f;
+        float speed = (float)GetRandomValue(80, 260);
+        shard.vx = cosf(angle) * speed;
+        shard.vy = sinf(angle) * speed - (float)GetRandomValue(50, 150);
         shard.rotation = (float)GetRandomValue(0, 360);
         shard.rotSpeed = (float)GetRandomValue(-720, 720);
-        shard.groundY = groundY + (float)GetRandomValue(-8, 8);
-        shard.maxLifetime = (float)GetRandomValue(70, 95) / 100.0f;
-        shard.lifetime = shard.maxLifetime;
+        shard.groundY = cy + (float)GetRandomValue(10, 45);
+        shard.lifetime = (float)GetRandomValue(5, 9) / 10.0f;
+        shard.maxLifetime = shard.lifetime;
         shard.frameCol = GetRandomValue(0, 8);
         shard.frameRow = shardRow;
         m_shards.push_back(shard);
@@ -446,87 +445,99 @@ void VasebreakerLevel::update(float dt) {
         packet.update(simDt);
     }
 
+    auto updatePreviewAnim = [&](const std::string& pType) {
+        std::string animFile = "PeaShooter.reanim";
+        if (pType == "SnowPea") animFile = "SnowPea.reanim";
+        else if (pType == "Wallnut") animFile = "Wallnut.reanim";
+
+        std::string reanimPath = res.GetAssetPath("assets/reanim/" + animFile);
+        ReanimDefinition pDef = res.LoadReanim(reanimPath);
+        m_previewPlantAnim.SetResources(pDef, res);
+        m_previewPlantAnim.SetBaseAnimation("anim_idle");
+        m_previewPlantAnim.SetAnimation((pType == "Wallnut") ? "anim_idle" : "anim_head_idle");
+
+        if (pType == "PeaShooter") {
+            m_previewPlantAnim.SetTrackVisible("idle_headleaf_farthest", false);
+            m_previewPlantAnim.SetTrackVisible("idle_headleaf_3rdfarthest", false);
+            m_previewPlantAnim.SetTrackVisible("idle_headleaf_nearest", false);
+            m_previewPlantAnim.SetTrackVisible("idle_headleaf_tip_top", false);
+            m_previewPlantAnim.SetTrackVisible("PeaShooter_eyebrow", false);
+        } else if (pType == "Repeater") {
+            m_previewPlantAnim.SetTrackVisible("idle_headleaf_farthest", true);
+            m_previewPlantAnim.SetTrackVisible("idle_headleaf_3rdfarthest", true);
+            m_previewPlantAnim.SetTrackVisible("idle_headleaf_nearest", true);
+            m_previewPlantAnim.SetTrackVisible("idle_headleaf_tip_top", true);
+            m_previewPlantAnim.SetTrackVisible("PeaShooter_eyebrow", true);
+        }
+    };
+
     // Left-click interaction handling (active when not speed-paused)
     if (!m_isSpeedPaused && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        bool handledCardClick = false;
+        // Priority 1: If a card is ALREADY selected, try planting on an empty lawn tile first
+        if (m_selectedPacketIndex >= 0 && m_selectedPacketIndex < (int)m_droppedPackets.size()) {
+            int plantRow, plantCol;
+            bool clickedGrid = getGridCell(mousePos, plantRow, plantCol);
+            bool tileEmpty = clickedGrid && (!m_plants[plantRow][plantCol]) &&
+                             (!m_vases[plantRow][plantCol] || m_vases[plantRow][plantCol]->isDestroyed());
 
-        // 1. Check if clicking on any dropped seed packet card
-        for (int i = 0; i < (int)m_droppedPackets.size(); ++i) {
-            if (m_droppedPackets[i].isClicked(mousePos)) {
-                if (m_selectedPacketIndex == i) {
-                    // Click selected card again -> Deselect card and return to mallet mode
-                    m_selectedPacketIndex = -1;
-                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
-                } else {
-                    // Select card for planting
+            if (tileEmpty) {
+                float cellX = 140.0f + (plantCol == 0 ? 0.0f : 80.0f + (plantCol - 1) * 70.0f);
+                float cellY = 80.0f + plantRow * 100.0f;
+                std::string plantType = m_droppedPackets[m_selectedPacketIndex].plantType;
+
+                createPlant(plantType, plantRow, plantCol, (int)cellX, (int)cellY);
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant.ogg"));
+
+                // Consume and remove the dropped card
+                m_droppedPackets.erase(m_droppedPackets.begin() + m_selectedPacketIndex);
+                m_selectedPacketIndex = -1;
+            } else {
+                // Clicked an occupied tile or off-grid: check if selecting another card or deselecting
+                for (int i = 0; i < (int)m_droppedPackets.size(); ++i) {
+                    if (m_droppedPackets[i].isClicked(mousePos)) {
+                        if (m_selectedPacketIndex == i) {
+                            // Clicked selected card again -> Deselect
+                            m_selectedPacketIndex = -1;
+                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/tap.ogg"));
+                        } else {
+                            // Select another card
+                            m_selectedPacketIndex = i;
+                            m_isShovelSelected = false;
+                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/seedlift.ogg"));
+                            updatePreviewAnim(m_droppedPackets[i].plantType);
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+        else if (m_isShovelSelected) {
+            // Shovel tool active: dig up plant on clicked cell
+            int plantRow, plantCol;
+            if (getGridCell(mousePos, plantRow, plantCol)) {
+                if (m_plants[plantRow][plantCol] && !m_plants[plantRow][plantCol]->isDead()) {
+                    m_plants[plantRow][plantCol].reset();
+                    m_isShovelSelected = false;
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant2.ogg"));
+                }
+            }
+        }
+        else {
+            // No card selected: check clicking dropped seed packet OR swinging mallet
+            bool clickedCard = false;
+            for (int i = 0; i < (int)m_droppedPackets.size(); ++i) {
+                if (m_droppedPackets[i].isClicked(mousePos)) {
                     m_selectedPacketIndex = i;
                     m_isShovelSelected = false;
                     AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/seedlift.ogg"));
-
-                    // Update preview plant animation to match the selected plant type
-                    std::string pType = m_droppedPackets[i].plantType;
-                    std::string animFile = "PeaShooter.reanim";
-                    if (pType == "SnowPea") animFile = "SnowPea.reanim";
-                    else if (pType == "Wallnut") animFile = "Wallnut.reanim";
-
-                    std::string reanimPath = res.GetAssetPath("assets/reanim/" + animFile);
-                    ReanimDefinition pDef = res.LoadReanim(reanimPath);
-                    m_previewPlantAnim.SetResources(pDef, res);
-                    m_previewPlantAnim.SetBaseAnimation("anim_idle");
-                    m_previewPlantAnim.SetAnimation((pType == "Wallnut") ? "anim_idle" : "anim_head_idle");
-
-                    if (pType == "PeaShooter") {
-                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_farthest", false);
-                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_3rdfarthest", false);
-                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_nearest", false);
-                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_tip_top", false);
-                        m_previewPlantAnim.SetTrackVisible("PeaShooter_eyebrow", false);
-                    } else if (pType == "Repeater") {
-                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_farthest", true);
-                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_3rdfarthest", true);
-                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_nearest", true);
-                        m_previewPlantAnim.SetTrackVisible("idle_headleaf_tip_top", true);
-                        m_previewPlantAnim.SetTrackVisible("PeaShooter_eyebrow", true);
-                    }
+                    updatePreviewAnim(m_droppedPackets[i].plantType);
+                    clickedCard = true;
+                    break;
                 }
-                handledCardClick = true;
-                break;
             }
-        }
 
-        if (!handledCardClick) {
-            if (m_isShovelSelected) {
-                // 1. Shovel tool active: dig up plant on clicked cell
-                int plantRow, plantCol;
-                if (getGridCell(mousePos, plantRow, plantCol)) {
-                    if (m_plants[plantRow][plantCol] && !m_plants[plantRow][plantCol]->isDead()) {
-                        m_plants[plantRow][plantCol].reset();
-                        m_isShovelSelected = false;
-                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant2.ogg"));
-                    }
-                }
-            } else if (m_selectedPacketIndex >= 0 && m_selectedPacketIndex < (int)m_droppedPackets.size()) {
-                // 2. A card is selected: try placing plant on an empty lawn tile
-                int plantRow, plantCol;
-                if (getGridCell(mousePos, plantRow, plantCol)) {
-                    bool tileEmpty = (!m_plants[plantRow][plantCol]) &&
-                                     (!m_vases[plantRow][plantCol] || m_vases[plantRow][plantCol]->isDestroyed());
-                    if (tileEmpty) {
-                        float cellX = 140.0f + (plantCol == 0 ? 0.0f : 80.0f + (plantCol - 1) * 70.0f);
-                        float cellY = 80.0f + plantRow * 100.0f;
-                        std::string plantType = m_droppedPackets[m_selectedPacketIndex].plantType;
-
-                        createPlant(plantType, plantRow, plantCol, (int)cellX, (int)cellY);
-                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plant.ogg"));
-
-                        // Consume and remove the dropped card
-                        m_droppedPackets.erase(m_droppedPackets.begin() + m_selectedPacketIndex);
-                        m_selectedPacketIndex = -1;
-                    }
-                    // If tile is occupied by an intact vase or existing plant, ignore placement and keep card selected
-                }
-            } else {
-                // 3. No card selected: standard mallet swing & vase smashing
+            if (!clickedCard) {
+                // Standard mallet swing & vase smashing
                 m_isSwinging = true;
                 m_swingProgress = 0.0f;
                 m_malletAnim.SetAnimation("anim_open_pot");
@@ -620,20 +631,43 @@ void VasebreakerLevel::update(float dt) {
     // Update projectiles & projectile-zombie collisions
     for (auto& p : m_projectiles) {
         p.update(simDt);
-        if (!p.isActive()) continue;
+        if (!p.isActive() || p.isImpacting()) continue;
 
         for (auto& z : m_zombies) {
             if (!z->isDead()) {
                 int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
                 int pRow = (int)((p.getY() - 80.0f + 50.0f) / 100.0f);
                 if (zRow == pRow && fabsf(p.getX() - (z->getX() + 40.0f)) < 30.0f) {
+                    if (z->getName() == "BucketheadZombie" && z->getHp() > 200) {
+                        static const std::vector<std::string> shieldSounds = {
+                            "assets/sounds/shieldhit.ogg",
+                            "assets/sounds/shieldhit2.ogg"
+                        };
+                        int idx = GetRandomValue(0, (int)shieldSounds.size() - 1);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(shieldSounds[idx]));
+                    } else if (z->getName() == "ConeheadZombie" && z->getHp() > 200) {
+                        static const std::vector<std::string> plasticSounds = {
+                            "assets/sounds/plastichit.ogg",
+                            "assets/sounds/plastichit2.ogg"
+                        };
+                        int idx = GetRandomValue(0, (int)plasticSounds.size() - 1);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(plasticSounds[idx]));
+                    } else {
+                        static const std::vector<std::string> splatSounds = {
+                            "assets/sounds/splat.ogg",
+                            "assets/sounds/splat2.ogg",
+                            "assets/sounds/splat3.ogg"
+                        };
+                        int idx = GetRandomValue(0, (int)splatSounds.size() - 1);
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(splatSounds[idx]));
+                    }
+
                     z->takeDamage((float)p.getDamage());
                     if (p.isSnow()) {
                         z->applySlow(3.0f);
                         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/frozen.ogg"));
                     }
-                    p.deactivate();
-                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/splat.ogg"));
+                    p.onHit();
                     break;
                 }
             }
@@ -767,7 +801,12 @@ void VasebreakerLevel::update(float dt) {
         }
 
         if (allVasesBroken && !anyZombieAlive) {
-            m_levelWon = true;
+            m_victoryDelayTimer += simDt;
+            if (m_victoryDelayTimer >= 2.0f) {
+                m_levelWon = true;
+            }
+        } else {
+            m_victoryDelayTimer = 0.0f;
         }
     }
 }

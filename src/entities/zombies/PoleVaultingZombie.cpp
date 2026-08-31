@@ -204,7 +204,7 @@ void PoleVaultingZombie::update(float deltaTime) {
                 if (m_anim.GetCurrentFrame() >= m_anim.GetEndFrame() - 1 || m_anim.GetCurrentFrame() >= 92) {
                     m_isVaulting = false;
                     m_hasVaulted = true;
-                    m_x -= 150.0f;
+                    m_x -= 140.0f; // Update landing position so zombie doesn't teleport back!
                     m_speed = 5.33f;
                     m_anim.SetBaseAnimation("anim_walk");
                     m_anim.SetAnimation("anim_walk");

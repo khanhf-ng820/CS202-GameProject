@@ -255,7 +255,7 @@ void Level1::createPlant(const std::string& type, int row, int col, int pixelX, 
 
 void Level1::spawnNextWave() {
     m_currentWave++;
-    float spawnX = 700.0f;
+    float spawnX = 830.0f;
 
     auto laneY = [](int row) -> float {
         return 45.0f + row * 100.0f;
@@ -1135,7 +1135,12 @@ void Level1::update(float dt) {
             }
         }
         if (!anyZombieAlive) {
-            m_levelWon = true;
+            m_victoryDelayTimer += simDt;
+            if (m_victoryDelayTimer >= 2.0f) {
+                m_levelWon = true;
+            }
+        } else {
+            m_victoryDelayTimer = 0.0f;
         }
     }
 }

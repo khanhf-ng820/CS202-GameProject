@@ -70,6 +70,7 @@ private:
     bool m_levelWon = false;
     bool m_levelLost = false;
     bool m_exitToMainMenu = false;
+    float m_victoryDelayTimer = 0.0f;
 
     // Speed & Pause controls
     float m_gameSpeed = 1.0f;
