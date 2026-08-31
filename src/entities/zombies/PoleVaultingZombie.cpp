@@ -27,6 +27,13 @@ void PoleVaultingZombie::takeDamage(float damage) {
     if (m_isCharred || m_isSquashed || m_isDevoured) return;
     Zombie::takeDamage(damage);
     if (m_hp <= 0) {
+        if (m_isVaulting) {
+            float progress = (float)(m_anim.GetCurrentFrame() - 50) / 42.0f;
+            progress = std::clamp(progress, 0.0f, 1.0f);
+            m_x -= 150.0f * progress;
+            m_isVaulting = false;
+            m_hasVaulted = true;
+        }
         if (m_anim.GetCurrentAnimName() != "anim_death") {
             m_anim.SetAnimation("anim_death");
         }
@@ -48,6 +55,28 @@ void PoleVaultingZombie::takeDamage(float damage) {
             m_fallingParts.push_back(arm);
         }
     }
+}
+
+void PoleVaultingZombie::takeExplosiveDamage(float damage) {
+    if (m_isVaulting) {
+        float progress = (float)(m_anim.GetCurrentFrame() - 50) / 42.0f;
+        progress = std::clamp(progress, 0.0f, 1.0f);
+        m_x -= 150.0f * progress;
+        m_isVaulting = false;
+        m_hasVaulted = true;
+    }
+    Zombie::takeExplosiveDamage(damage);
+}
+
+void PoleVaultingZombie::takeSquashDamage(float damage) {
+    if (m_isVaulting) {
+        float progress = (float)(m_anim.GetCurrentFrame() - 50) / 42.0f;
+        progress = std::clamp(progress, 0.0f, 1.0f);
+        m_x -= 150.0f * progress;
+        m_isVaulting = false;
+        m_hasVaulted = true;
+    }
+    Zombie::takeSquashDamage(damage);
 }
 
 void PoleVaultingZombie::update(float deltaTime) {
@@ -175,6 +204,7 @@ void PoleVaultingZombie::update(float deltaTime) {
                 if (m_anim.GetCurrentFrame() >= m_anim.GetEndFrame() - 1 || m_anim.GetCurrentFrame() >= 92) {
                     m_isVaulting = false;
                     m_hasVaulted = true;
+                    m_x -= 150.0f;
                     m_speed = 5.33f;
                     m_anim.SetBaseAnimation("anim_walk");
                     m_anim.SetAnimation("anim_walk");

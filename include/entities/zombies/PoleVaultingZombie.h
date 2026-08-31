@@ -10,6 +10,8 @@ public:
     void update(float deltaTime) override;
     void draw() override;
     void takeDamage(float damage) override;
+    void takeExplosiveDamage(float damage) override;
+    void takeSquashDamage(float damage) override;
 
     void startVault();
     bool isVaulting() const { return m_isVaulting; }
