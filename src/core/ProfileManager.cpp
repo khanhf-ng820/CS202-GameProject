@@ -37,7 +37,7 @@ std::vector<std::string> ProfileManager::GetAllPlantTypes() {
         "SnowPea", "Chomper", "Repeater", "IceShroom", "Gravebuster",
         "Squash", "GatlingPea", "Torchwood", "Caltrop",
         "SpikeRock", "Garlic", "Cabbagepult", "Cornpult", "Melonpult",
-        "Jalapeno", "Plantern", "BowlingNut"
+        "Jalapeno", "Plantern", "TwinSunflower", "BowlingNut"
     };
 }
 

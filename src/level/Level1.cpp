@@ -24,6 +24,7 @@
 #include "Caltrop.h"
 #include "SpikeRock.h"
 #include "Plantern.h"
+#include "TwinSunflower.h"
 #include "ZombieNormal.h"
 #include "FlagZombie.h"
 #include "ConeheadZombie.h"
@@ -247,6 +248,8 @@ void Level1::createPlant(const std::string& type, int row, int col, int pixelX, 
         m_grid[row][col] = std::make_unique<SpikeRock>(res, pixelX, pixelY);
     } else if (type == "Plantern") {
         m_grid[row][col] = std::make_unique<Plantern>(res, pixelX, pixelY);
+    } else if (type == "TwinSunflower") {
+        m_grid[row][col] = std::make_unique<TwinSunflower>(res, pixelX, pixelY);
     }
 }
 
@@ -965,12 +968,12 @@ void Level1::update(float dt) {
 
                 std::string targetAnim;
                 if (shoot) {
-                    targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||
+                    targetAnim = (plantName == "SunFlower" || plantName == "TwinSunflower" || plantName == "Wallnut" ||
                                   plantName == "Garlic" || plantName == "Gravebuster" ||
                                   plantName == "Caltrop" || plantName == "SpikeRock" ||
                                   plantName == "Chomper") ? "anim_idle" : "anim_shooting";
                 } else {
-                    targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||
+                    targetAnim = (plantName == "SunFlower" || plantName == "TwinSunflower" || plantName == "Wallnut" ||
                                   plantName == "Garlic" || plantName == "Gravebuster" ||
                                   plantName == "Caltrop" || plantName == "SpikeRock" ||
                                   plantName == "Chomper" || plantName == "Melonpult" ||
@@ -983,7 +986,7 @@ void Level1::update(float dt) {
 
                 if (m_grid[r][c]->getAnim().GetCurrentAnimName() != targetAnim) {
                     m_grid[r][c]->SetAnimation(targetAnim);
-                    if (plantName == "SunFlower" && targetAnim == "anim_idle") {
+                    if ((plantName == "SunFlower" || plantName == "TwinSunflower") && targetAnim == "anim_idle") {
                         m_grid[r][c]->SetBaseAnimation("anim_idle");
                     }
                 }
@@ -1008,7 +1011,7 @@ void Level1::update(float dt) {
                 if (selectedType == "Gravebuster") {
                     // Day levels (Level 1-3) have no graves to bust
                     AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buzzer.ogg"));
-                } else if (m_grid[hoverRow][hoverCol] == nullptr) {
+                } else if (m_grid[hoverRow][hoverCol] == nullptr || (selectedType == "TwinSunflower" && m_grid[hoverRow][hoverCol] && m_grid[hoverRow][hoverCol]->getName() == "SunFlower")) {
                     float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
                     float cellH = 100.0f;
                     float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);

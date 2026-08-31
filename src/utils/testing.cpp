@@ -24,6 +24,7 @@
 #include "SpikeRock.h"
 #include "Squash.h"
 #include "Plantern.h"
+#include "TwinSunflower.h"
 #include "FlagZombie.h"
 #include "ZombieNormal.h"
 #include "ConeheadZombie.h"
@@ -70,6 +71,7 @@ void Testing::run() {
             case 19: return std::make_unique<SpikeRock>(res, 480, 360);
             case 20: return std::make_unique<Squash>(res, 480, 360);
             case 21: return std::make_unique<Plantern>(res, 480, 360);
+            case 22: return std::make_unique<TwinSunflower>(res, 480, 360);
             default: return std::make_unique<PeaShooter>(res, 480, 360);
         }
     };
@@ -95,7 +97,7 @@ void Testing::run() {
         "Torchwood", "Cabbage-pult", "Caltrop",
         "Garlic", "Gravebuster", "Ice-shroom",
         "Potato Mine", "Spikerock", "Squash",
-        "Plantern"
+        "Plantern", "Twin Sunflower"
     };
 
     const std::vector<std::pair<std::string, int>> zombieButtons = {
@@ -204,7 +206,7 @@ void Testing::run() {
         DrawLine(15, 48, (int)panelWidth - 15, 48, ColorAlpha(WHITE, 0.2f));
 
         // Plants section
-        DrawText("Select Plant Type (21 Plants):", 15, 54, 14, SKYBLUE);
+        DrawText("Select Plant Type (22 Plants):", 15, 54, 14, SKYBLUE);
 
         for (size_t i = 0; i < plantNames.size(); ++i) {
             int c = (int)(i % 3);

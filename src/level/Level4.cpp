@@ -24,6 +24,7 @@
 #include "Caltrop.h"
 #include "SpikeRock.h"
 #include "Plantern.h"
+#include "TwinSunflower.h"
 #include "ZombieNormal.h"
 #include "FlagZombie.h"
 #include "ConeheadZombie.h"
@@ -448,6 +449,8 @@ void Level4::createPlant(const std::string& type, int row, int col, int pixelX, 
     } else if (type == "Plantern") {
         m_grid[row][col] = std::make_unique<Plantern>(res, pixelX, pixelY);
         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plantern.ogg"));
+    } else if (type == "TwinSunflower") {
+        m_grid[row][col] = std::make_unique<TwinSunflower>(res, pixelX, pixelY);
     }
 }
 
@@ -1147,12 +1150,12 @@ void Level4::update(float dt) {
 
                 std::string targetAnim;
                 if (shoot) {
-                    targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||
+                    targetAnim = (plantName == "SunFlower" || plantName == "TwinSunflower" || plantName == "Wallnut" ||
                                   plantName == "Garlic" || plantName == "Gravebuster" ||
                                   plantName == "Caltrop" || plantName == "SpikeRock" ||
                                   plantName == "Chomper") ? "anim_idle" : "anim_shooting";
                 } else {
-                    targetAnim = (plantName == "SunFlower" || plantName == "Wallnut" ||
+                    targetAnim = (plantName == "SunFlower" || plantName == "TwinSunflower" || plantName == "Wallnut" ||
                                   plantName == "Garlic" || plantName == "Gravebuster" ||
                                   plantName == "Caltrop" || plantName == "SpikeRock" ||
                                   plantName == "Chomper" || plantName == "Melonpult" ||
@@ -1184,7 +1187,7 @@ void Level4::update(float dt) {
         } else {
             std::string selectedType = m_seedBank.getSelectedPlantType();
             if (!selectedType.empty()) {
-                if (m_grid[hoverRow][hoverCol] == nullptr) {
+                if (m_grid[hoverRow][hoverCol] == nullptr || (selectedType == "TwinSunflower" && m_grid[hoverRow][hoverCol] && m_grid[hoverRow][hoverCol]->getName() == "SunFlower")) {
                     bool isGrave = isCellBlockedByGrave(hoverRow, hoverCol);
                     bool canPlant = (selectedType == "Gravebuster") ? isGrave : !isGrave;
 
