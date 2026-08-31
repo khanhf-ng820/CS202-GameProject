@@ -42,6 +42,7 @@ struct ZombieAlmanacData {
     std::string name;
     std::string reanimPath;
     std::string defaultAnim;
+    AlmanacGroundType ground;
     std::string toughness;
     std::string speed;
     std::string description;
@@ -49,6 +50,9 @@ struct ZombieAlmanacData {
     float animScale;
     float previewOffsetX;
     float previewOffsetY;
+    float iconScale;
+    float iconOffsetX;
+    float iconOffsetY;
 };
 
 class AlmanacMenu {
@@ -89,20 +93,12 @@ private:
     Texture2D m_plantCard;
     Texture2D m_zombieCard;
     Texture2D m_zombieWindow;
-    Texture2D m_zombieWindowHl;
+    Texture2D m_zombieWindow2;
     Texture2D m_zombieBlank;
     Texture2D m_groundDay;
     Texture2D m_groundNight;
     Texture2D m_groundPool;
     Texture2D m_groundRoof;
-
-    // Head textures for portrait grid
-    Texture2D m_zombieHead;
-    Texture2D m_zombieCone;
-    Texture2D m_zombieBucket;
-    Texture2D m_zombieFlag;
-    Texture2D m_footballHead;
-    Texture2D m_newspaperHead;
 
     // Data lists
     std::vector<PlantAlmanacData> m_plants;
@@ -113,6 +109,9 @@ private:
 
     // Active Reanimations
     Reanimation m_previewAnim;
+    Reanimation m_previewFlagAnim;
+    Reanimation m_iconFlagAnim;
     Reanimation m_indexPlantAnim;
     Reanimation m_indexZombieAnim;
+    std::vector<Reanimation> m_zombieIconAnims;
 };

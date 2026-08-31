@@ -18,7 +18,7 @@ AlmanacMenu::AlmanacMenu(Resources& res)
     m_plantCard      = res.GetTexture("ALMANAC_PLANTCARD");
     m_zombieCard     = res.GetTexture("ALMANAC_ZOMBIECARD");
     m_zombieWindow   = res.GetTexture("ALMANAC_ZOMBIEWINDOW");
-    m_zombieWindowHl = res.GetTexture("ALMANAC_ZOMBIEWINDOW2");
+    m_zombieWindow2  = res.GetTexture("ALMANAC_ZOMBIEWINDOW2");
     m_zombieBlank    = res.GetTexture("ALMANAC_ZOMBIEBLANK");
 
     // Ground previews
@@ -26,14 +26,6 @@ AlmanacMenu::AlmanacMenu(Resources& res)
     m_groundNight    = res.GetTexture("ALMANAC_GROUNDNIGHT");
     m_groundPool     = res.GetTexture("ALMANAC_GROUNDPOOL");
     m_groundRoof     = res.GetTexture("ALMANAC_GROUNDROOF");
-
-    // Zombie Head textures for portraits
-    m_zombieHead     = res.GetTexture("ZOMBIE_HEAD");
-    m_zombieCone     = res.GetTexture("ZOMBIE_CONE");
-    m_zombieBucket   = res.GetTexture("ZOMBIE_BUCKET");
-    m_zombieFlag     = res.GetTexture("ZOMBIE_FLAG");
-    m_footballHead   = res.GetTexture("ZOMBIE_FOOTBALL_HEAD");
-    m_newspaperHead  = res.GetTexture("ZOMBIE_PAPER_HEAD_LOOK");
 
     // Load Fonts
     m_titleFont.Load(res.GetAssetPath("assets/data/HouseofTerror28.png"), res.GetAssetPath("assets/data/HouseofTerror28.txt"));
@@ -100,14 +92,91 @@ void AlmanacMenu::initData() {
 
     // 7 Implemented Zombies
     m_zombies = {
-        { "Regular Zombie",        "assets/reanim/Zombie.reanim",               "anim_walk", "Low",       "Basic",                    "Regular garden-variety zombie.",                                                                   "This zombie loves brains. Can't get enough of them.", 1.00f, 577.0f, 155.0f },
-        { "Flag Zombie",           "assets/reanim/Zombie.reanim",               "anim_walk", "Low",       "Basic",                    "Marks the arrival of a huge wave of zombies.",                                                     "Make no mistake, Flag Zombie loves brains just as much as the next guy.", 1.00f, 583.0f, 155.0f },
-        { "Conehead Zombie",       "assets/reanim/Zombie.reanim",               "anim_walk", "Medium",    "Basic",                    "His traffic cone makes him twice as tough as a regular zombie.",                                   "Conehead Zombie was minding his own business when an emergency traffic cone landed on him.", 1.00f, 577.0f, 166.0f },
-        { "Pole Vaulting Zombie",  "assets/reanim/Zombie_polevaulter.reanim",   "anim_run",  "Medium",    "Fast",                     "Vaults over the first plant he encounters.",                                                       "Pole Vaulting Zombie committed himself to excellence in pole vaulting.", 0.95f, 576.0f, 155.0f },
-        { "Buckethead Zombie",     "assets/reanim/Zombie.reanim",               "anim_walk", "High",      "Basic",                    "His bucket head makes him extremely durable and resistant to damage.",                             "Buckethead Zombie always wore a bucket. In a world of zombies, it made him feel unique.", 1.00f, 579.0f, 162.0f },
-        { "Football Zombie",       "assets/reanim/Zombie_football.reanim",      "anim_walk", "Very High", "Fast",                     "Heavy helmet and rapid sprint make him a devastating threat on the lawn.",                         "Football Zombie gives 110 percent on the field, though he doesn't know what a football is.", 0.90f, 576.0f, 158.0f },
-        { "Newspaper Zombie",      "assets/reanim/Zombie_paper.reanim",         "anim_walk", "Medium",    "Basic (Fast when angry)",  "His newspaper protects him until it's destroyed, sending him into an angry sprint.",               "Newspaper Zombie was this close to finishing his Sudoku puzzle.", 0.95f, 579.0f, 153.0f }
+        { "Regular Zombie",        "assets/reanim/Zombie.reanim",               "anim_walk", AlmanacGroundType::Day,   "Low",       "Basic",                    "Regular garden-variety zombie.",                                                                   "This zombie loves brains. Can't get enough of them.", 1.00f, 577.0f, 155.0f, 0.62f, 16.0f, 10.0f },
+        { "Flag Zombie",           "assets/reanim/Zombie.reanim",               "anim_walk", AlmanacGroundType::Day,   "Low",       "Basic",                    "Marks the arrival of a huge wave of zombies.",                                                     "Make no mistake, Flag Zombie loves brains just as much as the next guy.", 1.00f, 583.0f, 155.0f, 0.62f, 16.0f, 10.0f },
+        { "Conehead Zombie",       "assets/reanim/Zombie.reanim",               "anim_walk", AlmanacGroundType::Day,   "Medium",    "Basic",                    "His traffic cone makes him twice as tough as a regular zombie.",                                   "Conehead Zombie was minding his own business when an emergency traffic cone landed on him.", 1.00f, 577.0f, 166.0f, 0.55f, 17.0f, 14.0f },
+        { "Pole Vaulting Zombie",  "assets/reanim/Zombie_polevaulter.reanim",   "anim_run",  AlmanacGroundType::Day,   "Medium",    "Fast",                     "Vaults over the first plant he encounters.",                                                       "Pole Vaulting Zombie committed himself to excellence in pole vaulting.", 0.95f, 576.0f, 155.0f, 0.60f, 18.0f, 10.0f },
+        { "Buckethead Zombie",     "assets/reanim/Zombie.reanim",               "anim_walk", AlmanacGroundType::Day,   "High",      "Basic",                    "His bucket head makes him extremely durable and resistant to damage.",                             "Buckethead Zombie always wore a bucket. In a world of zombies, it made him feel unique.", 1.00f, 579.0f, 162.0f, 0.58f, 17.0f, 12.0f },
+        { "Football Zombie",       "assets/reanim/Zombie_football.reanim",      "anim_walk", AlmanacGroundType::Day,   "Very High", "Fast",                     "Heavy helmet and rapid sprint make him a devastating threat on the lawn.",                         "Football Zombie gives 110 percent on the field, though he doesn't know what a football is.", 0.90f, 576.0f, 158.0f, 0.52f, 12.0f, 10.0f },
+        { "Newspaper Zombie",      "assets/reanim/Zombie_paper.reanim",         "anim_walk", AlmanacGroundType::Night, "Medium",    "Basic (Fast when angry)",  "His newspaper protects him until it's destroyed, sending him into an angry sprint.",               "Newspaper Zombie was this close to finishing his Sudoku puzzle.", 0.95f, 579.0f, 153.0f, 0.58f, 18.0f, 10.0f }
     };
+
+    // Initialize still Reanimations for zombie icon buttons (frozen still image at frame 0)
+    std::string flagPath = m_res.GetAssetPath("assets/reanim/Zombie_flagpole.reanim");
+    if (FileExists(flagPath.c_str())) {
+        m_iconFlagAnim.SetResources(m_res.LoadReanim(flagPath), m_res);
+        m_iconFlagAnim.SetPaused(true);
+    }
+
+    m_zombieIconAnims.clear();
+    for (size_t i = 0; i < m_zombies.size(); ++i) {
+        const auto& z = m_zombies[i];
+        std::string p = m_res.GetAssetPath(z.reanimPath);
+        if (FileExists(p.c_str())) {
+            Reanimation anim;
+            ReanimDefinition def = m_res.LoadReanim(p);
+            anim.SetResources(def, m_res);
+            anim.SetBaseAnimation(z.defaultAnim);
+            anim.SetAnimation(z.defaultAnim);
+            anim.SetPaused(true);
+
+            // Configure armored and accessory tracks for still icon
+            if (z.name == "Regular Zombie") {
+                anim.SetTrackVisible("anim_bucket", false);
+                anim.SetTrackVisible("anim_cone", false);
+                anim.SetTrackVisible("anim_screendoor", false);
+                anim.SetTrackVisible("Zombie_duckytube", false);
+                anim.SetTrackVisible("Zombie_mustache", false);
+                anim.SetTrackVisible("Zombie_innerarm_screendoor", false);
+                anim.SetTrackVisible("Zombie_innerarm_screendoor_hand", false);
+                anim.SetTrackVisible("Zombie_outerarm_screendoor", false);
+                anim.SetTrackVisible("Zombie_flaghand", false);
+                anim.SetTrackVisible("Zombie_outerarm_hand", true);
+            } else if (z.name == "Flag Zombie") {
+                anim.SetTrackVisible("anim_bucket", false);
+                anim.SetTrackVisible("anim_cone", false);
+                anim.SetTrackVisible("anim_screendoor", false);
+                anim.SetTrackVisible("Zombie_duckytube", false);
+                anim.SetTrackVisible("Zombie_mustache", false);
+                anim.SetTrackVisible("Zombie_innerarm_screendoor", true);
+                anim.SetTrackVisible("Zombie_innerarm_screendoor_hand", false);
+                anim.SetTrackVisible("anim_innerarm1", false);
+                anim.SetTrackVisible("anim_innerarm2", false);
+                anim.SetTrackVisible("anim_innerarm3", false);
+                anim.SetTrackVisible("Zombie_outerarm_screendoor", false);
+                anim.SetTrackVisible("Zombie_flaghand", true);
+                anim.SetTrackVisible("Zombie_outerarm_upper", true);
+                anim.SetTrackVisible("Zombie_outerarm_lower", true);
+                anim.SetTrackVisible("Zombie_outerarm_hand", true);
+            } else if (z.name == "Conehead Zombie") {
+                anim.SetTrackVisible("anim_bucket", false);
+                anim.SetTrackVisible("anim_cone", true);
+                anim.SetTrackVisible("anim_screendoor", false);
+                anim.SetTrackVisible("Zombie_duckytube", false);
+                anim.SetTrackVisible("Zombie_mustache", false);
+                anim.SetTrackVisible("Zombie_innerarm_screendoor", false);
+                anim.SetTrackVisible("Zombie_innerarm_screendoor_hand", false);
+                anim.SetTrackVisible("Zombie_outerarm_screendoor", false);
+                anim.SetTrackVisible("Zombie_flaghand", false);
+                anim.SetTrackVisible("Zombie_outerarm_hand", true);
+            } else if (z.name == "Buckethead Zombie") {
+                anim.SetTrackVisible("anim_bucket", true);
+                anim.SetTrackVisible("anim_cone", false);
+                anim.SetTrackVisible("anim_screendoor", false);
+                anim.SetTrackVisible("Zombie_duckytube", false);
+                anim.SetTrackVisible("Zombie_mustache", false);
+                anim.SetTrackVisible("Zombie_innerarm_screendoor", false);
+                anim.SetTrackVisible("Zombie_innerarm_screendoor_hand", false);
+                anim.SetTrackVisible("Zombie_outerarm_screendoor", false);
+                anim.SetTrackVisible("Zombie_flaghand", false);
+                anim.SetTrackVisible("Zombie_outerarm_hand", true);
+            }
+
+            m_zombieIconAnims.push_back(anim);
+        } else {
+            m_zombieIconAnims.push_back(Reanimation());
+        }
+    }
 }
 
 void AlmanacMenu::loadSelectedPlantPreview() {
@@ -172,11 +241,22 @@ void AlmanacMenu::loadSelectedZombiePreview() {
                 m_previewAnim.SetTrackVisible("anim_screendoor", false);
                 m_previewAnim.SetTrackVisible("Zombie_duckytube", false);
                 m_previewAnim.SetTrackVisible("Zombie_mustache", false);
-                m_previewAnim.SetTrackVisible("Zombie_innerarm_screendoor", false);
+                m_previewAnim.SetTrackVisible("Zombie_innerarm_screendoor", true);
                 m_previewAnim.SetTrackVisible("Zombie_innerarm_screendoor_hand", false);
+                m_previewAnim.SetTrackVisible("anim_innerarm1", false);
+                m_previewAnim.SetTrackVisible("anim_innerarm2", false);
+                m_previewAnim.SetTrackVisible("anim_innerarm3", false);
                 m_previewAnim.SetTrackVisible("Zombie_outerarm_screendoor", false);
                 m_previewAnim.SetTrackVisible("Zombie_flaghand", true);
-                m_previewAnim.SetTrackVisible("Zombie_outerarm_hand", false);
+                m_previewAnim.SetTrackVisible("Zombie_outerarm_upper", true);
+                m_previewAnim.SetTrackVisible("Zombie_outerarm_lower", true);
+                m_previewAnim.SetTrackVisible("Zombie_outerarm_hand", true);
+
+                std::string flagPath = m_res.GetAssetPath("assets/reanim/Zombie_flagpole.reanim");
+                if (FileExists(flagPath.c_str())) {
+                    m_previewFlagAnim = Reanimation();
+                    m_previewFlagAnim.SetResources(m_res.LoadReanim(flagPath), m_res);
+                }
             } else if (data.name == "Conehead Zombie") {
                 m_previewAnim.SetTrackVisible("anim_bucket", false);
                 m_previewAnim.SetTrackVisible("anim_cone", true);
@@ -356,6 +436,9 @@ void AlmanacMenu::update(float dt, bool& showAlmanac) {
         }
     } else if (m_currentPage == AlmanacPage::Zombies) {
         m_previewAnim.Update(dt);
+        if (m_selectedZombie >= 0 && m_selectedZombie < (int)m_zombies.size() && m_zombies[m_selectedZombie].name == "Flag Zombie") {
+            m_previewFlagAnim.Update(dt);
+        }
 
         if (IsKeyPressed(KEY_ESCAPE)) {
             AudioManager::GetInstance().PlaySoundEffect(sfxPaper);
@@ -365,7 +448,7 @@ void AlmanacMenu::update(float dt, bool& showAlmanac) {
 
         // Check zombie grid clicks (5 cols x 6 rows)
         float startX = 35.0f;
-        float startY = 80.0f;
+        float startY = 125.0f;
         float slotW  = 64.0f;
         float slotH  = 64.0f;
         int cols     = 5;
@@ -560,7 +643,7 @@ void AlmanacMenu::draw() {
 
         // Left Grid of Zombie Windows (5 cols x 6 rows = 30 slots)
         float startX = 35.0f;
-        float startY = 80.0f;
+        float startY = 125.0f;
         float slotW  = 64.0f;
         float slotH  = 64.0f;
         int cols     = 5;
@@ -572,46 +655,79 @@ void AlmanacMenu::draw() {
             Rectangle slotRect = { startX + col * 68.0f, startY + row * 68.0f, slotW, slotH };
 
             if (i < (int)m_zombies.size()) {
-                Texture2D winTex = (i == m_selectedZombie) ? m_zombieWindowHl : m_zombieWindow;
-                if (winTex.id != 0) {
+                // 1. Draw base window plate (Almanac_ZombieWindow.png)
+                if (m_zombieWindow.id != 0) {
                     DrawTexturePro(
-                        winTex,
-                        { 0.0f, 0.0f, (float)winTex.width, (float)winTex.height },
+                        m_zombieWindow,
+                        { 0.0f, 0.0f, (float)m_zombieWindow.width, (float)m_zombieWindow.height },
                         slotRect,
                         { 0.0f, 0.0f },
                         0.0f,
                         WHITE
                     );
-                } else {
-                    DrawRectangleRec(slotRect, DARKGRAY);
                 }
 
-                // Draw Head Portrait inside window
-                Rectangle headRect = { slotRect.x + 10.0f, slotRect.y + 10.0f, 44.0f, 44.0f };
-                if (i == 0 || i == 1 || i == 2 || i == 3) {
-                    if (m_zombieHead.id != 0) {
-                        DrawTexturePro(m_zombieHead, { 0, 0, (float)m_zombieHead.width, (float)m_zombieHead.height }, headRect, { 0, 0 }, 0.0f, WHITE);
+                // 2. Scissor clip to inner area of window so zombie stays completely inside the frame without protruding
+                float padX = 6.0f;
+                float padY = 6.0f;
+                Rectangle innerClip = {
+                    slotRect.x + padX,
+                    slotRect.y + padY,
+                    slotRect.width - padX * 2.0f,
+                    slotRect.height - padY * 2.0f
+                };
+
+                BeginScissorMode((int)innerClip.x, (int)innerClip.y, (int)innerClip.width, (int)innerClip.height);
+
+                if (i < (int)m_zombieIconAnims.size()) {
+                    const auto& zData = m_zombies[i];
+                    m_zombieIconAnims[i].Draw(
+                        slotRect.x + zData.iconOffsetX,
+                        slotRect.y + zData.iconOffsetY,
+                        zData.iconScale
+                    );
+
+                    if (zData.name == "Flag Zombie") {
+                        float handX = -9.2f, handY = 50.1f, handRot = 0.0f;
+                        if (m_zombieIconAnims[i].GetTrackTransform("Zombie_flaghand", handX, handY, handRot)) {
+                            float dx = handX - (-9.2f);
+                            float dy = handY - 50.1f;
+                            m_iconFlagAnim.Draw(
+                                slotRect.x + zData.iconOffsetX + dx * zData.iconScale,
+                                slotRect.y + zData.iconOffsetY + dy * zData.iconScale,
+                                zData.iconScale
+                            );
+                        } else {
+                            m_iconFlagAnim.Draw(
+                                slotRect.x + zData.iconOffsetX,
+                                slotRect.y + zData.iconOffsetY,
+                                zData.iconScale
+                            );
+                        }
                     }
-                    if (i == 1 && m_zombieFlag.id != 0) {
-                        DrawTexturePro(m_zombieFlag, { 0, 0, (float)m_zombieFlag.width, (float)m_zombieFlag.height }, { headRect.x + 15, headRect.y - 10, 25, 25 }, { 0, 0 }, 0.0f, WHITE);
-                    } else if (i == 2 && m_zombieCone.id != 0) {
-                        DrawTexturePro(m_zombieCone, { 0, 0, (float)m_zombieCone.width, (float)m_zombieCone.height }, { headRect.x + 8, headRect.y - 12, 28, 28 }, { 0, 0 }, 0.0f, WHITE);
-                    } else if (i == 3 && m_zombieBucket.id != 0) {
-                        DrawTexturePro(m_zombieBucket, { 0, 0, (float)m_zombieBucket.width, (float)m_zombieBucket.height }, { headRect.x + 6, headRect.y - 10, 30, 28 }, { 0, 0 }, 0.0f, WHITE);
-                    }
-                } else if (i == 4 && m_footballHead.id != 0) {
-                    DrawTexturePro(m_footballHead, { 0, 0, (float)m_footballHead.width, (float)m_footballHead.height }, headRect, { 0, 0 }, 0.0f, WHITE);
-                } else if (i == 5 && m_newspaperHead.id != 0) {
-                    DrawTexturePro(m_newspaperHead, { 0, 0, (float)m_newspaperHead.width, (float)m_newspaperHead.height }, headRect, { 0, 0 }, 0.0f, WHITE);
+                }
+                EndScissorMode();
+
+                // 3. Overlay metal frame border (Almanac_ZombieWindow2.png)
+                if (m_zombieWindow2.id != 0) {
+                    DrawTexturePro(
+                        m_zombieWindow2,
+                        { 0.0f, 0.0f, (float)m_zombieWindow2.width, (float)m_zombieWindow2.height },
+                        slotRect,
+                        { 0.0f, 0.0f },
+                        0.0f,
+                        WHITE
+                    );
                 }
 
+                // 4. Selection / Hover highlight
                 if (i == m_selectedZombie) {
                     DrawRectangleLinesEx(slotRect, 3.0f, GOLD);
                 } else if (CheckCollisionPointRec(mousePos, slotRect)) {
                     DrawRectangleLinesEx(slotRect, 2.0f, WHITE);
                 }
             } else {
-                // Empty blank slot
+                // Empty blank slot (render Almanac_ZombieBlank.png only)
                 if (m_zombieBlank.id != 0) {
                     DrawTexturePro(
                         m_zombieBlank,
@@ -627,14 +743,41 @@ void AlmanacMenu::draw() {
             }
         }
 
-        // Right Display Card (Animated Zombie -> Parchment Frame Overlay -> Text)
+        // Right Display Card (Ground Tile -> Animated Zombie -> Parchment Frame Overlay -> Text)
         if (m_selectedZombie >= 0 && m_selectedZombie < (int)m_zombies.size()) {
             const auto& zombie = m_zombies[m_selectedZombie];
 
-            // 1. Live Animated Preview centered in the upper slot
-            m_previewAnim.Draw(zombie.previewOffsetX, zombie.previewOffsetY, zombie.animScale);
+            // 1. Ground Tile behind zombie
+            Texture2D groundTex = (zombie.ground == AlmanacGroundType::Night) ? m_groundNight : m_groundDay;
+            if (groundTex.id != 0) {
+                DrawTexturePro(
+                    groundTex,
+                    { 0.0f, 0.0f, (float)groundTex.width, (float)groundTex.height },
+                    { 518.0f, 126.0f, 204.0f, 184.0f },
+                    { 0.0f, 0.0f },
+                    0.0f,
+                    WHITE
+                );
+            }
 
-            // 2. Parchment Card Frame overlay
+            // 2. Live Animated Preview centered in the upper slot
+            m_previewAnim.Draw(zombie.previewOffsetX, zombie.previewOffsetY, zombie.animScale);
+            if (zombie.name == "Flag Zombie") {
+                float handX = -9.2f, handY = 50.1f, handRot = 0.0f;
+                if (m_previewAnim.GetTrackTransform("Zombie_flaghand", handX, handY, handRot)) {
+                    float dx = handX - (-9.2f);
+                    float dy = handY - 50.1f;
+                    m_previewFlagAnim.Draw(
+                        zombie.previewOffsetX + dx * zombie.animScale,
+                        zombie.previewOffsetY + dy * zombie.animScale,
+                        zombie.animScale
+                    );
+                } else {
+                    m_previewFlagAnim.Draw(zombie.previewOffsetX, zombie.previewOffsetY, zombie.animScale);
+                }
+            }
+
+            // 3. Parchment Card Frame overlay
             if (m_zombieCard.id != 0) {
                 DrawTexture(m_zombieCard, 458, 78, WHITE);
             }
