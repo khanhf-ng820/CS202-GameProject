@@ -287,26 +287,30 @@ void ExplodeBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& z
                         m_explosionTimer = 0.0f;
                         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/cherrybomb.ogg"));
 
-                        // Explode in 150px circle radius, instantly incinerating all zombies in range
+                        // Explode in 150px circle radius, restricted to current row, one row above, and one row below
+                        int nutRow = (int)((m_y - 80.0f) / 100.0f);
                         for (auto& targetZ : zombies) {
                             if (!targetZ->isDead()) {
-                                float targetZcx = targetZ->getX() + 40.0f;
-                                float targetZcy = targetZ->getY() + 80.0f;
-                                float exDx = targetZcx - m_x;
-                                float exDy = targetZcy - m_y;
-                                if (exDx * exDx + exDy * exDy <= 150.0f * 150.0f) {
-                                    targetZ->takeExplosiveDamage(1800.0f);
+                                int zRow = (int)((targetZ->getY() - 45.0f + 50.0f) / 100.0f);
+                                if (std::abs(zRow - nutRow) <= 1) {
+                                    float targetZcx = targetZ->getX() + 40.0f;
+                                    float targetZcy = targetZ->getY() + 80.0f;
+                                    float exDx = targetZcx - m_x;
+                                    float exDy = targetZcy - m_y;
+                                    if (exDx * exDx + exDy * exDy <= 150.0f * 150.0f) {
+                                        targetZ->takeExplosiveDamage(1800.0f);
 
-                                    bool foundDebug = false;
-                                    for (auto& item : hitDebugTimers) {
-                                        if (item.first == targetZ.get()) {
-                                            item.second = 0.6f;
-                                            foundDebug = true;
-                                            break;
+                                        bool foundDebug = false;
+                                        for (auto& item : hitDebugTimers) {
+                                            if (item.first == targetZ.get()) {
+                                                item.second = 0.6f;
+                                                foundDebug = true;
+                                                break;
+                                            }
                                         }
-                                    }
-                                    if (!foundDebug) {
-                                        hitDebugTimers.push_back({ targetZ.get(), 0.6f });
+                                        if (!foundDebug) {
+                                            hitDebugTimers.push_back({ targetZ.get(), 0.6f });
+                                        }
                                     }
                                 }
                             }

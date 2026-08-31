@@ -488,12 +488,15 @@ void Level1::updateCollisions(float dt) {
                     float cbCy = (float)cb->getY() + 40.0f;
                     for (auto& z : m_zombies) {
                         if (z->isDead() || z->isDevoured()) continue;
-                        float zCx = z->getX() + 40.0f;
-                        float zCy = z->getY() + 40.0f;
-                        float dx = zCx - cbCx;
-                        float dy = zCy - cbCy;
-                        if (dx * dx + dy * dy <= 180.0f * 180.0f) {
-                            z->takeExplosiveDamage(1800);
+                        int zRow = (int)((z->getY() - 45.0f + 50.0f) / 100.0f);
+                        if (std::abs(zRow - r) <= 1) {
+                            float zCx = z->getX() + 40.0f;
+                            float zCy = z->getY() + 40.0f;
+                            float dx = zCx - cbCx;
+                            float dy = zCy - cbCy;
+                            if (dx * dx + dy * dy <= 180.0f * 180.0f) {
+                                z->takeExplosiveDamage(1800);
+                            }
                         }
                     }
                 }
@@ -618,9 +621,17 @@ void Level1::updateCollisions(float dt) {
     for (auto& z : m_zombies) {
         if (z->isDead() || z->isSquashed()) continue;
 
+        // Update Garlic bite timer and smooth lane diversion
+        z->updateGarlicBite(dt);
+
         PoleVaultingZombie* pvz = dynamic_cast<PoleVaultingZombie*>(z.get());
         if (pvz && pvz->isVaulting()) {
             // In mid-air vaulting over plants: skip eating
+            continue;
+        }
+
+        if (z->isChangingLane()) {
+            // Actively shifting diagonally to the target lane: skip eating old-lane plants
             continue;
         }
 
@@ -648,21 +659,33 @@ void Level1::updateCollisions(float dt) {
 
                 if (z->getX() >= plantX - 20.0f && z->getX() <= plantX + 45.0f) {
                     if (p->getName() == "Garlic") {
-                        p->takeDamage(25.0f); // Garlic takes bite damage
-                        int nextRow = zRow;
-                        if (zRow == 0) nextRow = 1;
-                        else if (zRow == 4) nextRow = 3;
-                        else nextRow = (std::rand() % 2 == 0) ? (zRow - 1) : (zRow + 1);
+                        if (!z->isBitingGarlic()) {
+                            // First contact with Garlic: start the single bite sequence!
+                            int nextRow = zRow;
+                            if (zRow == 0) nextRow = 1;
+                            else if (zRow == 4) nextRow = 3;
+                            else nextRow = (GetRandomValue(0, 1) == 0) ? (zRow - 1) : (zRow + 1);
 
-                        z->setY(45.0f + nextRow * 100.0f);
-                        z->setEating(false);
-                        z->resetEatTimer();
-                        z->getAnim().SetAnimation("anim_walk");
-                        foundPlantToEat = false;
+                            float targetY = 45.0f + nextRow * 100.0f;
+                            z->startBitingGarlic(targetY, 0.55f);
 
-                        if (p->isDead()) {
-                            m_grid[zRow][c] = nullptr;
+                            // Deal single bite damage to Garlic
+                            p->takeDamage(25.0f);
+                            createEatingParticle(plantX + 25.0f, (float)p->getY() + 45.0f);
+
+                            static const std::vector<std::string> chompSounds = {
+                                "assets/sounds/chomp.ogg",
+                                "assets/sounds/chomp2.ogg",
+                                "assets/sounds/chompsoft.ogg"
+                            };
+                            int chompIdx = GetRandomValue(0, (int)chompSounds.size() - 1);
+                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(chompSounds[chompIdx]));
+
+                            if (p->isDead()) {
+                                m_grid[zRow][c] = nullptr;
+                            }
                         }
+                        foundPlantToEat = true;
                         break;
                     }
 
@@ -700,7 +723,7 @@ void Level1::updateCollisions(float dt) {
             }
         }
 
-        if (!foundPlantToEat && (!pvz || (!pvz->isVaulting() && pvz->hasVaulted()))) {
+        if (!foundPlantToEat && (!pvz || (!pvz->isVaulting() && pvz->hasVaulted())) && !z->isBitingGarlic() && !z->isChangingLane()) {
             if (z->isEating() || z->getAnim().GetCurrentAnimName() == "anim_eat") {
                 z->setEating(false);
                 z->resetEatTimer();

@@ -39,6 +39,11 @@ protected:
     bool m_isSlowed{ false };
     float m_slowTimer{ 0.0f };
 
+    bool m_isBitingGarlic{ false };
+    float m_garlicBiteTimer{ 0.0f };
+    bool m_isChangingLane{ false };
+    float m_targetLaneY{ 0.0f };
+
 public:
     Zombie(Resources& res, float x, float y, int hp, float speed, int damage, std::string name);
     virtual ~Zombie() {}
@@ -57,6 +62,42 @@ public:
     int getDamage() const { return m_damage; }
     std::string getName() const { return m_name; }
     Reanimation& getAnim() { return m_anim; }
+
+    bool isBitingGarlic() const { return m_isBitingGarlic; }
+    bool isChangingLane() const { return m_isChangingLane; }
+    float getTargetLaneY() const { return m_targetLaneY; }
+
+    void startBitingGarlic(float targetLaneY, float biteDuration = 0.55f) {
+        m_isBitingGarlic = true;
+        m_garlicBiteTimer = biteDuration;
+        m_targetLaneY = targetLaneY;
+        m_isEating = true;
+        m_anim.SetAnimation("anim_eat");
+    }
+
+    void updateGarlicBite(float dt) {
+        if (m_isBitingGarlic) {
+            m_garlicBiteTimer -= dt;
+            if (m_garlicBiteTimer <= 0.0f) {
+                m_isBitingGarlic = false;
+                m_isEating = false;
+                m_isChangingLane = true;
+                m_anim.SetAnimation("anim_walk");
+            }
+        }
+        if (m_isChangingLane) {
+            float shiftSpeed = 75.0f; // px/s
+            if (m_targetLaneY > m_y) {
+                m_y = std::min(m_targetLaneY, m_y + shiftSpeed * dt);
+            } else {
+                m_y = std::max(m_targetLaneY, m_y - shiftSpeed * dt);
+            }
+            if (std::abs(m_y - m_targetLaneY) < 0.5f) {
+                m_y = m_targetLaneY;
+                m_isChangingLane = false;
+            }
+        }
+    }
 
     void applySlow(float duration = 3.0f) {
         m_isSlowed = true;
