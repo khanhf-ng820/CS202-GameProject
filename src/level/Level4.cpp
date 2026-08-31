@@ -172,12 +172,18 @@ void Level4::initPreviewZombies() {
         float worldY = laneY(row) + (float)(GetRandomValue(-10, 10));
 
         std::unique_ptr<Zombie> previewZ;
-        if (typeName == "ConeheadZombie") {
+        if (typeName == "ZombieNormal") {
+            previewZ = std::make_unique<ZombieNormal>(res, worldX, worldY);
+        } else if (typeName == "ConeheadZombie") {
             previewZ = std::make_unique<ConeheadZombie>(res, worldX, worldY);
         } else if (typeName == "BucketheadZombie") {
             previewZ = std::make_unique<BucketheadZombie>(res, worldX, worldY);
         } else if (typeName == "NewspaperZombie") {
             previewZ = std::make_unique<NewspaperZombie>(res, worldX, worldY);
+        } else if (typeName == "PoleVaultingZombie") {
+            previewZ = std::make_unique<PoleVaultingZombie>(res, worldX, worldY);
+        } else if (typeName == "FootballZombie") {
+            previewZ = std::make_unique<FootballZombie>(res, worldX, worldY);
         } else if (typeName == "FlagZombie") {
             previewZ = std::make_unique<FlagZombie>(res, worldX, worldY);
         } else {
@@ -593,8 +599,17 @@ void Level4::updateCollisions(float dt) {
             if (pCol >= 0 && pCol < 9) {
                 Plant* plant = m_grid[pRow][pCol].get();
                 if (plant && plant->getName() == "Torchwood" && !plant->isDead()) {
-                    p.setFire(true);
-                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/ignite.ogg"));
+                    if (p.getLastTorchwoodCol() != pCol) {
+                        if (p.isSnow()) {
+                            p.melt();
+                            p.setLastTorchwoodCol(pCol);
+                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/ignite.ogg"));
+                        } else {
+                            p.setFire(true);
+                            p.setLastTorchwoodCol(pCol);
+                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/ignite.ogg"));
+                        }
+                    }
                 }
             }
         }
@@ -684,6 +699,7 @@ void Level4::updateCollisions(float dt) {
                         }
                     } else if (sq->isSquashing() && !sq->hasDealtDamage()) {
                         sq->markDamageDealt();
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/gargantuar_thump.ogg"));
                         float sqCx = sq->getTargetX() + 40.0f;
                         for (auto& z : m_zombies) {
                             if (z->isDead() || z->isDevoured()) continue;
@@ -699,10 +715,13 @@ void Level4::updateCollisions(float dt) {
                 }
             } else if (plant->getName() == "IceShroom") {
                 IceShroom* ice = dynamic_cast<IceShroom*>(plant);
-                if (ice && ice->isFreezing()) {
+                if (ice && ice->isFreezing() && !ice->hasDealtDamage()) {
+                    ice->markDamageDealt();
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/frozen.ogg"));
                     for (auto& z : m_zombies) {
                         if (!z->isDead() && !z->isDevoured()) {
                             z->takeDamage(20);
+                            z->applySlow(6.0f);
                         }
                     }
                 }
@@ -1414,7 +1433,7 @@ void Level4::draw() {
             float cellH = 100.0f;
             bool isGrave = isCellBlockedByGrave(hoverRow, hoverCol);
             std::string selType = m_seedBank.getSelectedPlantType();
-            bool isValid = (selType == "Gravebuster") ? isGrave : !isGrave;
+            bool isValid = (selType == "Gravebuster") ? (isGrave && m_grid[hoverRow][hoverCol] == nullptr) : (!isGrave && m_grid[hoverRow][hoverCol] == nullptr);
             DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, isValid ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(RED, 0.6f));
         }
 

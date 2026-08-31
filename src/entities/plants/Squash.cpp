@@ -1,4 +1,5 @@
 #include "Squash.h"
+#include "AudioManager.h"
 #include <cmath>
 
 Squash::Squash(Resources& res, int x, int y)
@@ -19,6 +20,11 @@ void Squash::setTargetZombie(float x, float y) {
         m_state = SquashState::AIMING;
         m_aimTimer = 0.0f;
         m_anim.SetAnimation("anim_lookright");
+
+        std::string soundPath = (GetRandomValue(0, 1) == 0)
+            ? res.GetAssetPath("assets/sounds/squash_hmm.ogg")
+            : res.GetAssetPath("assets/sounds/squash_hmm2.ogg");
+        AudioManager::GetInstance().PlaySoundEffect(soundPath);
     }
 }
 

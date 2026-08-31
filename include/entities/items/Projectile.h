@@ -29,6 +29,7 @@ private:
     bool m_hasImpactAnim = false;
     bool m_isImpacting = false;
     std::vector<ParticleEffect> m_sparks;
+    int m_lastTorchwoodCol = -1;
 
 public:
     Projectile(float x, float y, float speed, Texture2D tex, bool isSnow = false, bool isLobbed = false, float scale = 1.0f, int damage = 20, Resources* res = nullptr, float range = 0) 
@@ -65,6 +66,9 @@ public:
     bool isButter() const { return m_isButter; }
     void setButter(bool is) { m_isButter = is; }
     bool isLobbed() const { return m_isLobbed; }
+    int getLastTorchwoodCol() const { return m_lastTorchwoodCol; }
+    void setLastTorchwoodCol(int col) { m_lastTorchwoodCol = col; }
+
     void setFire(bool is) {
         if (is) {
             this->ignite(m_res ? m_res->GetTexture("fire1") : Texture2D{0});
@@ -75,6 +79,7 @@ public:
         if (!m_isFire) {
             m_isFire = true;
             m_isSnow = false;
+            efftrailing.setActive(false);
             if (fireTex.id != 0) {
                 m_tex = fireTex;
             }
@@ -83,6 +88,19 @@ public:
             if (m_res) {
                 m_fireAnim.SetResources(m_res->LoadReanim(m_res->GetAssetPath("assets/reanim/FirePea.reanim")), *m_res);
                 m_hasReanim = true;
+            }
+        }
+    }
+
+    void melt() {
+        if (m_isSnow) {
+            m_isSnow = false;
+            m_isFire = false;
+            m_damage = 20;
+            m_speed = 400.0f;
+            efftrailing.setActive(false);
+            if (m_res) {
+                m_tex = m_res->GetTexture("ProjectilePea");
             }
         }
     }

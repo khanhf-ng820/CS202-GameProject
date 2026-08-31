@@ -111,22 +111,7 @@ void Level1::restartLevel() {
 }
 
 std::vector<std::string> Level1::getUniqueLevelZombieTypes() const {
-    std::vector<std::string> uniqueTypes;
-    auto addType = [&](const std::string& typeName) {
-        if (std::find(uniqueTypes.begin(), uniqueTypes.end(), typeName) == uniqueTypes.end()) {
-            uniqueTypes.push_back(typeName);
-        }
-    };
-
-    // Inspect wave configuration data across all waves
-    addType("ZombieNormal");
-    addType("ConeheadZombie");
-    addType("BucketheadZombie");
-    addType("NewspaperZombie");
-    addType("FootballZombie");
-    addType("FlagZombie");
-
-    return uniqueTypes;
+    return { "ZombieNormal", "FlagZombie" };
 }
 
 void Level1::initPreviewZombies() {
@@ -155,6 +140,8 @@ void Level1::initPreviewZombies() {
             previewZ = std::make_unique<BucketheadZombie>(res, worldX, worldY);
         } else if (typeName == "NewspaperZombie") {
             previewZ = std::make_unique<NewspaperZombie>(res, worldX, worldY);
+        } else if (typeName == "PoleVaultingZombie") {
+            previewZ = std::make_unique<PoleVaultingZombie>(res, worldX, worldY);
         } else if (typeName == "FootballZombie") {
             previewZ = std::make_unique<FootballZombie>(res, worldX, worldY);
         } else if (typeName == "FlagZombie") {
@@ -456,8 +443,17 @@ void Level1::updateCollisions(float dt) {
             if (pCol >= 0 && pCol < 9) {
                 Plant* plant = m_grid[pRow][pCol].get();
                 if (plant && plant->getName() == "Torchwood" && !plant->isDead()) {
-                    p.setFire(true);
-                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/ignite.ogg"));
+                    if (p.getLastTorchwoodCol() != pCol) {
+                        if (p.isSnow()) {
+                            p.melt();
+                            p.setLastTorchwoodCol(pCol);
+                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/ignite.ogg"));
+                        } else {
+                            p.setFire(true);
+                            p.setLastTorchwoodCol(pCol);
+                            AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/ignite.ogg"));
+                        }
+                    }
                 }
             }
         }
@@ -547,6 +543,7 @@ void Level1::updateCollisions(float dt) {
                         }
                     } else if (sq->isSquashing() && !sq->hasDealtDamage()) {
                         sq->markDamageDealt();
+                        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/gargantuar_thump.ogg"));
                         float sqCx = sq->getTargetX() + 40.0f;
                         for (auto& z : m_zombies) {
                             if (z->isDead() || z->isDevoured()) continue;
@@ -562,10 +559,13 @@ void Level1::updateCollisions(float dt) {
                 }
             } else if (plant->getName() == "IceShroom") {
                 IceShroom* ice = dynamic_cast<IceShroom*>(plant);
-                if (ice && ice->isFreezing()) {
+                if (ice && ice->isFreezing() && !ice->hasDealtDamage()) {
+                    ice->markDamageDealt();
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/frozen.ogg"));
                     for (auto& z : m_zombies) {
                         if (!z->isDead() && !z->isDevoured()) {
                             z->takeDamage(20);
+                            z->applySlow(6.0f);
                         }
                     }
                 }
@@ -979,7 +979,10 @@ void Level1::update(float dt) {
         } else {
             std::string selectedType = m_seedBank.getSelectedPlantType();
             if (!selectedType.empty()) {
-                if (m_grid[hoverRow][hoverCol] == nullptr) {
+                if (selectedType == "Gravebuster") {
+                    // Day levels (Level 1-3) have no graves to bust
+                    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/buzzer.ogg"));
+                } else if (m_grid[hoverRow][hoverCol] == nullptr) {
                     float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
                     float cellH = 100.0f;
                     float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
@@ -1163,7 +1166,9 @@ void Level1::draw() {
             float cellY = 80.0f + hoverRow * 100.0f;
             float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
             float cellH = 100.0f;
-            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
+            std::string selType = m_seedBank.getSelectedPlantType();
+            bool isValid = (selType != "Gravebuster") && (m_grid[hoverRow][hoverCol] == nullptr);
+            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, isValid ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(RED, 0.6f));
         }
 
         // 3. Draw Entities Row-by-Row from Top (Row 0, Y lowest) to Bottom (Row 4, Y highest)
