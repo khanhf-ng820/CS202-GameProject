@@ -4,8 +4,8 @@
 
 class SunFlower : public Plant {
 private:
-    float m_sunProduceTimer = 0.0f;
-    float m_sunProduceInterval = 5.0f; // Spawns sun every 5 seconds
+    float m_sunProduceTimer = 17.0f;    // Initial sun spawns after ~7s, subsequent suns every 24s
+    float m_sunProduceInterval = 24.0f; // Spawns sun every 24 seconds (authentic PvZ timing)
 
 public:
     SunFlower(Resources& res, int x, int y);

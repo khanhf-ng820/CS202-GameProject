@@ -1103,7 +1103,12 @@ void Level1::update(float dt) {
             }
         }
         if (!anyZombieAlive) {
-            m_levelWon = true;
+            m_victoryDelayTimer += simDt;
+            if (m_victoryDelayTimer >= 2.0f) {
+                m_levelWon = true;
+            }
+        } else {
+            m_victoryDelayTimer = 0.0f;
         }
     }
 }
