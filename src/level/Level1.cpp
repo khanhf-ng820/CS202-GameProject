@@ -23,6 +23,7 @@
 #include "Garlic.h"
 #include "Caltrop.h"
 #include "SpikeRock.h"
+#include "Plantern.h"
 #include "ZombieNormal.h"
 #include "FlagZombie.h"
 #include "ConeheadZombie.h"
@@ -244,6 +245,8 @@ void Level1::createPlant(const std::string& type, int row, int col, int pixelX, 
         m_grid[row][col] = std::make_unique<Caltrop>(res, pixelX, pixelY);
     } else if (type == "SpikeRock") {
         m_grid[row][col] = std::make_unique<SpikeRock>(res, pixelX, pixelY);
+    } else if (type == "Plantern") {
+        m_grid[row][col] = std::make_unique<Plantern>(res, pixelX, pixelY);
     }
 }
 

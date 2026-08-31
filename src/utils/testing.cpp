@@ -23,6 +23,7 @@
 #include "PotatoMine.h"
 #include "SpikeRock.h"
 #include "Squash.h"
+#include "Plantern.h"
 #include "FlagZombie.h"
 #include "ZombieNormal.h"
 #include "ConeheadZombie.h"
@@ -68,6 +69,7 @@ void Testing::run() {
             case 18: return std::make_unique<PotatoMine>(res, 480, 360);
             case 19: return std::make_unique<SpikeRock>(res, 480, 360);
             case 20: return std::make_unique<Squash>(res, 480, 360);
+            case 21: return std::make_unique<Plantern>(res, 480, 360);
             default: return std::make_unique<PeaShooter>(res, 480, 360);
         }
     };
@@ -92,7 +94,8 @@ void Testing::run() {
         "Wallnut", "Cherry Bomb", "Chomper",
         "Torchwood", "Cabbage-pult", "Caltrop",
         "Garlic", "Gravebuster", "Ice-shroom",
-        "Potato Mine", "Spikerock", "Squash"
+        "Potato Mine", "Spikerock", "Squash",
+        "Plantern"
     };
 
     const std::vector<std::pair<std::string, int>> zombieButtons = {

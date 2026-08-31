@@ -56,6 +56,9 @@ protected:
     bool m_hasFog = false;
     float m_fogTimer = 0.0f;
     float m_fogStartX = 480.0f;
+    float m_baseFogStartX = 480.0f;
+    float m_rowFogStartX[5] = { 480.0f, 480.0f, 480.0f, 480.0f, 480.0f };
+    float m_targetRowFogStartX[5] = { 480.0f, 480.0f, 480.0f, 480.0f, 480.0f };
 
     LevelPhase m_phase;
     SeedSelectMenu m_seedSelectMenu;
@@ -133,6 +136,7 @@ protected:
     virtual void spawnNextWave();
     virtual void triggerGraveRising(int count = -1);
     virtual void drawFog();
+    void updateFog(float dt);
 
     void createGraveDirtParticle(float x, float y, int count = 25);
     void createGraveCrumbleParticles(float x, float y);

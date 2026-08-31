@@ -23,6 +23,7 @@
 #include "Garlic.h"
 #include "Caltrop.h"
 #include "SpikeRock.h"
+#include "Plantern.h"
 #include "ZombieNormal.h"
 #include "FlagZombie.h"
 #include "ConeheadZombie.h"
@@ -75,6 +76,8 @@ Level4::Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber)
         for (int c = 0; c < 9; ++c) {
             m_grid[r][c] = nullptr;
         }
+        m_rowFogStartX[r] = m_baseFogStartX;
+        m_targetRowFogStartX[r] = m_baseFogStartX;
     }
 
     initGraves();
@@ -107,6 +110,8 @@ void Level4::restartLevel() {
         for (int c = 0; c < 9; ++c) {
             m_grid[r][c] = nullptr;
         }
+        m_rowFogStartX[r] = m_baseFogStartX;
+        m_targetRowFogStartX[r] = m_baseFogStartX;
     }
 
     m_zombies.clear();
@@ -440,6 +445,9 @@ void Level4::createPlant(const std::string& type, int row, int col, int pixelX, 
         m_grid[row][col] = std::make_unique<Caltrop>(res, pixelX, pixelY);
     } else if (type == "SpikeRock") {
         m_grid[row][col] = std::make_unique<SpikeRock>(res, pixelX, pixelY);
+    } else if (type == "Plantern") {
+        m_grid[row][col] = std::make_unique<Plantern>(res, pixelX, pixelY);
+        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/plantern.ogg"));
     }
 }
 
@@ -1329,6 +1337,7 @@ void Level4::update(float dt) {
         }
 
         updateCollisions(subDt);
+        updateFog(subDt);
     }
 
     // Despawn Dead Zombies & Inactive Projectiles
@@ -1731,37 +1740,92 @@ void Level4::drawLoseScreen() {
     }
 }
 
+void Level4::updateFog(float dt) {
+    if (!m_hasFog) return;
+
+    m_fogTimer += dt;
+
+    // 1. Reset target bounds to the level baseline fog start
+    for (int r = 0; r < 5; ++r) {
+        m_targetRowFogStartX[r] = m_baseFogStartX;
+    }
+
+    // 2. Scan all active Planterns and push fog to the right
+    // Plantern at (r, c) clears fog on row r-1, r, r+1 up to the right edge of column (c + 3)
+    // Lawn starts at 140px, column width is 70px.
+    // Right boundary of column (c + 3) is 140.0f + (c + 4) * 70.0f
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            Plant* p = m_grid[r][c].get();
+            if (p && p->getName() == "Plantern" && !p->isDead()) {
+                float clearRightX = 140.0f + (float)(c + 4) * 70.0f;
+                for (int dr = -1; dr <= 1; ++dr) {
+                    int targetRow = r + dr;
+                    if (targetRow >= 0 && targetRow < 5) {
+                        m_targetRowFogStartX[targetRow] = std::max(m_targetRowFogStartX[targetRow], clearRightX);
+                    }
+                }
+            }
+        }
+    }
+
+    // 3. Smoothly slide current fog horizontal boundaries toward target boundaries
+    float fogSpeed = 350.0f; // px/sec for smooth horizontal roll
+    for (int r = 0; r < 5; ++r) {
+        if (m_rowFogStartX[r] < m_targetRowFogStartX[r]) {
+            m_rowFogStartX[r] = std::min(m_targetRowFogStartX[r], m_rowFogStartX[r] + fogSpeed * dt);
+        } else if (m_rowFogStartX[r] > m_targetRowFogStartX[r]) {
+            m_rowFogStartX[r] = std::max(m_targetRowFogStartX[r], m_rowFogStartX[r] - fogSpeed * dt);
+        }
+    }
+}
+
 void Level4::drawFog() {
     if (!m_hasFog) return;
 
-    // 1. Solid opaque atmospheric darkness & fog backing (Completely hides zombies/lawn beneath it!)
-    // Smooth fade from 0% alpha at m_fogStartX to 100% full opacity at m_fogStartX + 50px
-    DrawRectangleGradientH(
-        (int)(m_fogStartX - 30.0f), -50,
-        60, 700,
-        Color{ 16, 20, 36, 0 }, Color{ 16, 20, 36, 255 }
-    );
-    // Draw with generous overspill to the right and top/bottom
-    DrawRectangle(
-        (int)(m_fogStartX + 30.0f), -50,
-        (int)(900.0f - (m_fogStartX + 30.0f)), 700,
-        Color{ 16, 20, 36, 255 }
-    );
+    struct FogBand {
+        float y;
+        float h;
+        int rowIdx;
+    };
+    FogBand bands[7] = {
+        { -50.0f, 130.0f, 0 }, // Top border up to row 0 top (y: -50 to 80)
+        { 80.0f,  100.0f, 0 }, // Row 0 (y: 80 to 180)
+        { 180.0f, 100.0f, 1 }, // Row 1 (y: 180 to 280)
+        { 280.0f, 100.0f, 2 }, // Row 2 (y: 280 to 380)
+        { 380.0f, 100.0f, 3 }, // Row 3 (y: 380 to 480)
+        { 480.0f, 100.0f, 4 }, // Row 4 (y: 480 to 580)
+        { 580.0f, 120.0f, 4 }  // Bottom border (y: 580 to 700)
+    };
 
-    // 2. Rolling PopCap Fog Cloud Textures (Full, uncropped, generously overlapping)
+    // 1. Solid opaque atmospheric darkness & fog backing per row slice
+    for (int b = 0; b < 7; ++b) {
+        float startX = m_rowFogStartX[bands[b].rowIdx];
+        DrawRectangleGradientH(
+            (int)(startX - 30.0f), (int)bands[b].y,
+            60, (int)bands[b].h,
+            Color{ 16, 20, 36, 0 }, Color{ 16, 20, 36, 255 }
+        );
+        DrawRectangle(
+            (int)(startX + 30.0f), (int)bands[b].y,
+            (int)(900.0f - (startX + 30.0f)), (int)bands[b].h,
+            Color{ 16, 20, 36, 255 }
+        );
+    }
+
+    // 2. Rolling PopCap Fog Cloud Textures per row slice
     Texture2D texSoft = res.GetTexture("FOG_SOFTWARE");
     if (texSoft.id == 0) texSoft = res.GetTexture("fog_software");
 
     if (texSoft.id != 0) {
-        // fog_software.png has 3 uncropped cloud frames (189x144 each)
-        for (int r = 0; r < 7; ++r) {
-            float rowY = -25.0f + r * 95.0f;
-            float driftY = cosf(m_fogTimer * 0.9f + (float)r * 1.1f) * 8.0f;
+        for (int b = 0; b < 7; ++b) {
+            float startX = m_rowFogStartX[bands[b].rowIdx];
+            float rowY = bands[b].y - 25.0f;
+            float driftY = cosf(m_fogTimer * 0.9f + (float)b * 1.1f) * 8.0f;
 
-            // Draw clouds across columns with generous overspill past 850px
-            for (float colX = m_fogStartX - 25.0f; colX <= 850.0f; colX += 115.0f) {
-                int cloudIdx = ((int)((colX + (float)r * 70.0f) / 115.0f) % 3 + 3) % 3;
-                float driftX = sinf(m_fogTimer * 0.7f + (float)r * 1.4f + colX * 0.05f) * 14.0f;
+            for (float colX = startX - 25.0f; colX <= 850.0f; colX += 115.0f) {
+                int cloudIdx = ((int)((colX + (float)b * 70.0f) / 115.0f) % 3 + 3) % 3;
+                float driftX = sinf(m_fogTimer * 0.7f + (float)b * 1.4f + colX * 0.05f) * 14.0f;
 
                 Rectangle srcCloud = { (float)cloudIdx * 189.0f, 0.0f, 189.0f, 144.0f };
                 Rectangle destCloud = { colX + driftX, rowY + driftY, 215.0f, 155.0f };
@@ -1770,27 +1834,34 @@ void Level4::drawFog() {
             }
         }
     } else if (m_texFog.id != 0) {
-        for (int r = 0; r < 6; ++r) {
-            float rowY = -20.0f + r * 105.0f;
-            float driftX = sinf(m_fogTimer * 0.8f + (float)r * 1.3f) * 16.0f;
-            float driftY = cosf(m_fogTimer * 1.1f + (float)r * 0.9f) * 6.0f;
+        for (int b = 0; b < 7; ++b) {
+            float startX = m_rowFogStartX[bands[b].rowIdx];
+            float rowY = bands[b].y - 20.0f;
+            float driftX = sinf(m_fogTimer * 0.8f + (float)b * 1.3f) * 16.0f;
+            float driftY = cosf(m_fogTimer * 1.1f + (float)b * 0.9f) * 6.0f;
 
-            for (float colX = m_fogStartX - 30.0f; colX <= 850.0f; colX += 200.0f) {
+            for (float colX = startX - 30.0f; colX <= 850.0f; colX += 200.0f) {
                 Rectangle srcRect = { 0.0f, 0.0f, (float)m_texFog.width * 0.35f, (float)m_texFog.height };
                 Rectangle destRect = { colX + driftX, rowY + driftY, 260.0f, 160.0f };
                 DrawTexturePro(m_texFog, srcRect, destRect, { 0, 0 }, 0.0f, Color{ 220, 230, 250, 255 });
             }
         }
-    } else {
-        // Fallback procedural fog
-        for (int r = 0; r < 6; ++r) {
-            float rowY = 50.0f + r * 100.0f;
-            float driftX = sinf(m_fogTimer + (float)r) * 12.0f;
-            DrawRectangleGradientH(
-                (int)(m_fogStartX + driftX - 40.0f), (int)rowY,
-                (int)(900.0f - m_fogStartX + 40.0f), 110,
-                ColorAlpha(LIGHTGRAY, 0.0f), ColorAlpha(LIGHTGRAY, 1.0f)
-            );
+    }
+
+    // 3. Plantern Fog Illumination & Piercing Light
+    for (int r = 0; r < 5; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            Plant* p = m_grid[r][c].get();
+            if (p && p->getName() == "Plantern" && !p->isDead()) {
+                int cx = p->getX() + 38;
+                int cy = p->getY() + 45;
+                // Warm ambient light piercing the fog
+                DrawCircleGradient(cx, cy, 180.0f, ColorAlpha(GOLD, 0.50f), ColorAlpha(GOLD, 0.0f));
+                DrawCircleGradient(cx, cy, 110.0f, ColorAlpha(YELLOW, 0.65f), ColorAlpha(GOLD, 0.0f));
+                DrawCircleGradient(cx, cy, 55.0f, ColorAlpha(WHITE, 0.85f), ColorAlpha(YELLOW, 0.0f));
+                // Redraw Plantern entity on top of the illuminated fog clearing
+                p->draw();
+            }
         }
     }
 }

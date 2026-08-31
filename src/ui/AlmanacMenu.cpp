@@ -87,7 +87,8 @@ void AlmanacMenu::initData() {
         { "Cabbage-pult","CABBAGEPULT",  "assets/reanim/Cabbagepult.reanim", "anim_idle",      AlmanacGroundType::Roof, 100, "Fast",      "Normal",         "Lobs cabbages at oncoming enemies.",                                                              "Cabbage-pult is cool with lobbing cabbages.", 1.20f, 581.0f, 145.0f, WHITE },
         { "Cornpult",     "CORNPULT",     "assets/reanim/Cornpult.reanim",    "anim_idle",      AlmanacGroundType::Roof, 100, "Fast",      "Normal / Stun",  "Lobs kernels and butter that temporarily immobilizes zombies.",                                   "Cornpult is the oldest of the Pult siblings.", 1.20f, 581.0f, 145.0f, WHITE },
         { "Melonpult",    "MELONPULT",    "assets/reanim/Melonpult.reanim",   "anim_idle",      AlmanacGroundType::Roof, 300, "Fast",      "Heavy",          "Lobs heavy melons that do massive splash damage across multiple lanes.",                          "Melonpult does not mess around when it comes to defending the roof.", 1.20f, 597.0f, 143.0f, WHITE },
-        { "Gatling Pea",  "GATLINGPEA",   "assets/reanim/GatlingPea.reanim",  "anim_head_idle", AlmanacGroundType::Day,  250, "Very Slow", "4x Normal",      "Shoots four peas at a rapid firing rate.",                                                        "Gatling Pea's parents were worried when he decided to join the army.", 1.30f, 558.0f, 125.0f, WHITE }
+        { "Gatling Pea",  "GATLINGPEA",   "assets/reanim/GatlingPea.reanim",  "anim_head_idle", AlmanacGroundType::Day,  250, "Very Slow", "4x Normal",      "Shoots four peas at a rapid firing rate.",                                                        "Gatling Pea's parents were worried when he decided to join the army.", 1.30f, 558.0f, 125.0f, WHITE },
+        { "Plantern",     "PLANTERN",     "assets/reanim/Plantern.reanim",    "anim_idle",      AlmanacGroundType::Night, 25,  "Slow",      "None",           "Planterns light up an area, letting you see through fog.",                                        "Plantern defies science. He just does. Other plants eat light and produce oxygen; Plantern eats darkness and produces light.", 1.25f, 565.0f, 130.0f, WHITE }
     };
 
     // 7 Implemented Zombies
@@ -576,7 +577,14 @@ void AlmanacMenu::draw() {
             const auto& plant = m_plants[m_selectedPlant];
 
             // 1. Ground Tile behind plant
-            Texture2D groundTex = (plant.ground == AlmanacGroundType::Roof) ? m_groundRoof : m_groundDay;
+            Texture2D groundTex = m_groundDay;
+            if (plant.ground == AlmanacGroundType::Night) {
+                groundTex = m_groundNight;
+            } else if (plant.ground == AlmanacGroundType::Roof) {
+                groundTex = m_groundRoof;
+            } else if (plant.ground == AlmanacGroundType::Pool) {
+                groundTex = m_groundPool;
+            }
             if (groundTex.id != 0) {
                 DrawTexturePro(
                     groundTex,
@@ -748,7 +756,14 @@ void AlmanacMenu::draw() {
             const auto& zombie = m_zombies[m_selectedZombie];
 
             // 1. Ground Tile behind zombie
-            Texture2D groundTex = (zombie.ground == AlmanacGroundType::Night) ? m_groundNight : m_groundDay;
+            Texture2D groundTex = m_groundDay;
+            if (zombie.ground == AlmanacGroundType::Night) {
+                groundTex = m_groundNight;
+            } else if (zombie.ground == AlmanacGroundType::Roof) {
+                groundTex = m_groundRoof;
+            } else if (zombie.ground == AlmanacGroundType::Pool) {
+                groundTex = m_groundPool;
+            }
             if (groundTex.id != 0) {
                 DrawTexturePro(
                     groundTex,

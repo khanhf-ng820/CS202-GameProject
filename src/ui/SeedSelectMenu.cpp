@@ -80,7 +80,8 @@ void SeedSelectMenu::initCatalog(Resources& res) {
         { "Gravebuster", 75,  "GRAVEBUSTER" },
         { "Garlic",      50,  "GARLIC" },
         { "Caltrop",     100, "CALTROP" },
-        { "SpikeRock",   125, "SPIKEROCK" }
+        { "SpikeRock",   125, "SPIKEROCK" },
+        { "Plantern",    25,  "PLANTERN" }
     };
 
     float startX = 22.0f;

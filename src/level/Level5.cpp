@@ -11,6 +11,11 @@ Level5::Level5(Resources& res, RenderTexture2D targetScreen)
     : Level4(res, targetScreen, 5) {
     m_hasFog = true;
     m_fogStartX = 480.0f; // Fog covers columns 6, 7, 8 (last 3 columns)
+    m_baseFogStartX = 480.0f;
+    for (int r = 0; r < 5; ++r) {
+        m_rowFogStartX[r] = m_baseFogStartX;
+        m_targetRowFogStartX[r] = m_baseFogStartX;
+    }
     m_maxWaves = 8;
     initGraves();
     initPreviewZombies();

@@ -94,7 +94,8 @@ void SeedBank::initFromDeck(const std::vector<std::string>& chosenPlants) {
         { "Gravebuster", { 75,  10.0f, "GRAVEBUSTER" } },
         { "Garlic",      { 50,  10.0f, "GARLIC" } },
         { "Caltrop",     { 100, 10.0f, "CALTROP" } },
-        { "SpikeRock",   { 125, 10.0f, "SPIKEROCK" } }
+        { "SpikeRock",   { 125, 10.0f, "SPIKEROCK" } },
+        { "Plantern",    { 25,  30.0f, "PLANTERN" } }
     };
 
     for (size_t i = 0; i < chosenPlants.size(); ++i) {

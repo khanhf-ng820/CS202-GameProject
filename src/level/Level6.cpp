@@ -12,6 +12,11 @@ Level6::Level6(Resources& res, RenderTexture2D targetScreen)
     : Level4(res, targetScreen, 6) {
     m_hasFog = true;
     m_fogStartX = 410.0f; // Dense fog encroaches deeper into column 5 (last 4 columns)
+    m_baseFogStartX = 410.0f;
+    for (int r = 0; r < 5; ++r) {
+        m_rowFogStartX[r] = m_baseFogStartX;
+        m_targetRowFogStartX[r] = m_baseFogStartX;
+    }
     m_maxWaves = 10;
     initGraves();
     initPreviewZombies();
