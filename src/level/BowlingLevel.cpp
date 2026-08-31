@@ -10,6 +10,7 @@ BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
 
     ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
     m_readySetPlantAnim.SetResources(readyDef, res);
+    m_readySetPlantAnim.SetLooping(false);
     m_readySetPlantTimer = 0.0f;
     m_readySetPlantDone = false;
     AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));

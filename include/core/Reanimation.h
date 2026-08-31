@@ -28,6 +28,9 @@ public:
     bool IsPaused() const;
     void TogglePause();
     void SetFrame(float frame);
+    void SetLooping(bool looping);
+    bool IsLooping() const;
+    bool IsFinished() const;
 
     // Query methods
     int GetCurrentFrame() const;
@@ -63,6 +66,7 @@ private:
     std::vector<AnimationRange> m_anims;
     float m_speedMultiplier = 1.0f;
     bool m_isPaused = false;
+    bool m_isLooping = true;
     std::unordered_map<std::string, bool> m_trackVisibility;
     std::unordered_map<std::string, std::string> m_trackImageOverrides;
 };

@@ -56,6 +56,7 @@ Level4::Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber)
     // Initialize "READY... SET... PLANT!" intro animation
     ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
     m_readySetPlantAnim.SetResources(readyDef, res);
+    m_readySetPlantAnim.SetLooping(false);
 
     m_texBgNight = res.GetTexture("BACKGROUND2");
     if (m_texBgNight.id == 0) m_texBgNight = res.GetTexture("background2");

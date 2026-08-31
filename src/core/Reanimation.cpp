@@ -80,9 +80,17 @@ void Reanimation::Update(float dt) {
     int end = m_anims[m_currentAnimIndex].endFrame;
 
     if (m_currentFrameFloat > (float)end) {
-        m_currentFrameFloat = GetLoopStartTime(m_currentAnimIndex); // Loop back
+        if (m_isLooping) {
+            m_currentFrameFloat = GetLoopStartTime(m_currentAnimIndex); // Loop back
+        } else {
+            m_currentFrameFloat = (float)end; // Clamp to end
+        }
     } else if (m_currentFrameFloat < (float)start) {
-        m_currentFrameFloat = GetLoopStartTime(m_currentAnimIndex);
+        if (m_isLooping) {
+            m_currentFrameFloat = GetLoopStartTime(m_currentAnimIndex);
+        } else {
+            m_currentFrameFloat = (float)start;
+        }
     }
 }
 
@@ -416,6 +424,22 @@ bool Reanimation::IsPaused() const {
 
 void Reanimation::TogglePause() {
     m_isPaused = !m_isPaused;
+}
+
+void Reanimation::SetLooping(bool looping) {
+    m_isLooping = looping;
+}
+
+bool Reanimation::IsLooping() const {
+    return m_isLooping;
+}
+
+bool Reanimation::IsFinished() const {
+    if (m_anims.empty() || m_currentAnimIndex >= (int)m_anims.size()) {
+        return true;
+    }
+    int end = m_anims[m_currentAnimIndex].endFrame;
+    return !m_isLooping && (m_currentFrameFloat >= (float)end);
 }
 
 int Reanimation::GetCurrentFrame() const {

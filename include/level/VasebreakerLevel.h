@@ -117,6 +117,11 @@ private:
     std::unique_ptr<InGameMenu> m_inGameMenu;
     bool m_exitToMainMenu = false;
 
+    // "Ready, Set, Plant" Intro Animation
+    Reanimation m_readySetPlantAnim;
+    float m_readySetPlantTimer = 0.0f;
+    bool m_readySetPlantDone = false;
+
     // Mallet cursor animation state
     Reanimation m_malletAnim;
     bool m_isSwinging = false;

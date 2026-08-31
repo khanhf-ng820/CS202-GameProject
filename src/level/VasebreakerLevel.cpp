@@ -59,11 +59,19 @@ VasebreakerLevel::VasebreakerLevel(Resources& res, RenderTexture2D targetScreen)
     res.GetAssetPath("assets/sounds/scream.ogg");
     res.GetAssetPath("assets/sounds/losemusic.ogg");
     res.GetAssetPath("assets/sounds/shovel.ogg");
+    res.GetAssetPath("assets/sounds/readysetplant.ogg");
 
     // Load House of Terror 28 bitmap font
     std::string fontPng = res.GetAssetPath("assets/data/HouseofTerror28.png");
     std::string fontTxt = res.GetAssetPath("assets/data/HouseofTerror28.txt");
     m_font.Load(fontPng, fontTxt);
+
+    // Initialize "READY... SET... PLANT!" intro animation
+    ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
+    m_readySetPlantAnim.SetResources(readyDef, res);
+    m_readySetPlantAnim.SetLooping(false);
+    m_readySetPlantTimer = 0.0f;
+    m_readySetPlantDone = false;
 
     // Populate initial vases
     spawnVases();
@@ -90,6 +98,12 @@ void VasebreakerLevel::restartLevel() {
     m_malletAnim.SetAnimation("anim_open_pot");
     m_malletAnim.SetFrame(14.0f);
     m_malletAnim.SetPaused(true);
+
+    m_readySetPlantTimer = 0.0f;
+    m_readySetPlantDone = false;
+    m_readySetPlantAnim.SetFrame(0.0f);
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));
+
     spawnVases();
     if (m_inGameMenu) m_inGameMenu->close();
     HideCursor();
@@ -326,6 +340,17 @@ void VasebreakerLevel::update(float dt) {
         if (m_inGameMenu) {
             m_inGameMenu->open();
             ShowCursor();
+        }
+        return;
+    }
+
+    // Process "Ready, Set, Plant" countdown intro
+    if (!m_readySetPlantDone) {
+        m_readySetPlantTimer += dt;
+        m_readySetPlantAnim.Update(dt);
+        if (m_readySetPlantTimer >= 1.9f) {
+            m_readySetPlantDone = true;
+            AudioManager::GetInstance().PlayMusic(MusicTrack::Vasebreaker);
         }
         return;
     }
@@ -929,7 +954,12 @@ void VasebreakerLevel::draw() {
         drawLoseScreen();
     }
 
-    // 13. Draw Cursor (only when in-game menu is not open)
+    // 13. Draw "Ready, Set, Plant" intro animation
+    if (!m_readySetPlantDone) {
+        m_readySetPlantAnim.Draw(400.0f, 300.0f, 1.0f);
+    }
+
+    // 14. Draw Cursor (only when in-game menu is not open)
     if (!m_inGameMenu || !m_inGameMenu->isOpen()) {
         if (m_isShovelSelected) {
             if (shovelTex.id != 0) {
@@ -956,14 +986,14 @@ void VasebreakerLevel::draw() {
         DrawCircleLines((int)mousePos.x, (int)mousePos.y, 4.0f, WHITE);
     }
 
-    // 13. Draw in-game pause menu dialog if open (on top of everything)
+    // 15. Draw in-game pause menu dialog if open (on top of everything)
     if (m_inGameMenu && m_inGameMenu->isOpen()) {
         m_inGameMenu->draw();
     }
 
     EndTextureMode();
 
-    // 14. Draw targetScreen stretched to actual window dimensions
+    // 16. Draw targetScreen stretched to actual window dimensions
     BeginDrawing();
     ClearBackground(BLACK);
     DrawTexturePro(
@@ -1089,7 +1119,10 @@ void VasebreakerLevel::drawLoseScreen() {
 void VasebreakerLevel::run() {
     SetUIInteractionEnabled(true);
     HideCursor();
-    AudioManager::GetInstance().PlayMusic(MusicTrack::Vasebreaker);
+    m_readySetPlantTimer = 0.0f;
+    m_readySetPlantDone = false;
+    m_readySetPlantAnim.SetFrame(0.0f);
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));
 
     while (!WindowShouldClose()) {
         float scaleX = 800.0f / (float)GetScreenWidth();
