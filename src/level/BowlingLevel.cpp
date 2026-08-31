@@ -92,7 +92,7 @@ bool BowlingLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const
 
 void BowlingLevel::spawnNextWave() {
     m_currentWave++;
-    float spawnX = 700.0f;
+    float spawnX = 830.0f;
 
     auto laneY = [](int row) -> float {
         return 50.0f + row * 100.0f;

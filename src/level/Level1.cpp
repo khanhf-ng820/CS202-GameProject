@@ -262,7 +262,7 @@ void Level1::createPlant(const std::string& type, int row, int col, int pixelX, 
 
 void Level1::spawnNextWave() {
     m_currentWave++;
-    float spawnX = 700.0f;
+    float spawnX = 830.0f;
 
     auto laneY = [](int row) -> float {
         return 45.0f + row * 100.0f;

@@ -326,7 +326,7 @@ void Level4::triggerGraveRising(int count) {
 
 void Level4::spawnNextWave() {
     m_currentWave++;
-    float spawnX = 700.0f;
+    float spawnX = 830.0f;
 
     auto laneY = [](int row) -> float {
         return 45.0f + row * 100.0f;

@@ -36,7 +36,7 @@ void Level6::initGraves() {
 
 void Level6::spawnNextWave() {
     m_currentWave++;
-    float spawnX = 720.0f;
+    float spawnX = 830.0f;
 
     auto laneY = [](int row) -> float {
         return 45.0f + row * 100.0f;
