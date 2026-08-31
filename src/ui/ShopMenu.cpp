@@ -15,7 +15,7 @@ static std::string FormatMoney(int amount) {
 }
 
 ShopMenu::ShopMenu(Resources& res)
-    : m_res(res), m_currentPage(0), m_totalPages(4), m_playerMoney(ProfileManager::GetInstance().GetActiveProfile().coins) {
+    : m_res(res), m_currentPage(0), m_totalPages(3), m_playerMoney(ProfileManager::GetInstance().GetActiveProfile().coins) {
     // Load store background, car, price tag, coinbank, and button textures
     m_shopBack          = res.GetTexture("STORE_BACKGROUND");
     m_car               = res.GetTexture("STORE_CAR");
@@ -74,7 +74,7 @@ ShopMenu::ShopMenu(Resources& res)
         { 642.0f, 206.0f, 50.0f, 70.0f },
     };
 
-    // Item definitions for 4 pages (8 items per page)
+    // Item definitions for 3 pages (only implemented plants in the game)
     struct ItemRawDef {
         const char* name;
         const char* key;
@@ -82,56 +82,46 @@ ShopMenu::ShopMenu(Resources& res)
         int priceValue;
     };
 
-    ItemRawDef pagesDefs[4][8] = {
-        // Page 1
+    ItemRawDef pagesDefs[3][8] = {
+        // Page 1: Upgrades & Offense (8 slots)
         {
             { "Gatling Pea",     "GATLINGPEA",    "$5,000",  5000 },
             { "Twin Sunflower",  "TWINSUNFLOWER", "$5,000",  5000 },
-            { "Gloom-Shroom",    "GLOOMSHROOM",   "$7,500",  7500 },
-            { "Cattail",         "CATTAIL",       "$10,000", 10000 },
-            { "Winter Melon",    "WINTERMELON",   "$10,000", 10000 },
-            { "Gold Magnet",     "GOLDMAGNET",    "$3,000",  3000 },
             { "Spikerock",       "SPIKEROCK",     "$7,500",  7500 },
-            { "Cob Cannon",      "COBCANNON",     "$20,000", 20000 },
+            { "Snow Pea",        "SNOWPEA",       "$2,500",  2500 },
+            { "Repeater",        "REPEATER",      "$3,000",  3000 },
+            { "Torchwood",       "TORCHWOOD",     "$3,500",  3500 },
+            { "Chomper",         "CHOMPER",       "$2,000",  2000 },
+            { "Caltrop",         "CALTROP",       "$1,500",  1500 },
         },
-        // Page 2
+        // Page 2: Explosives, Defense & Traps (8 slots)
         {
-            { "Imitater",        "IMITATER",      "$30,000", 30000 },
-            { "Jalapeno",        "JALAPENO",      "$1,000",  1000 },
-            { "Squash",          "SQUASH",        "$1,000",  1000 },
             { "Potato Mine",     "POTATOMINE",    "$500",    500 },
             { "Cherry Bomb",     "CHERRYBOMB",    "$2,500",  2500 },
+            { "Jalapeno",        "JALAPENO",      "$1,000",  1000 },
+            { "Squash",          "SQUASH",        "$1,000",  1000 },
             { "Garlic",          "GARLIC",        "$800",    800 },
-            { "Pumpkin",         "PUMPKIN",       "$2,000",  2000 },
-            { "Torchwood",       "TORCHWOOD",     "$3,500",  3500 },
+            { "Gravebuster",     "GRAVEBUSTER",   "$1,000",  1000 },
+            { "Ice-Shroom",      "ICESHROOM",     "$4,000",  4000 },
+            { "Plantern",        "PLANTERN",      "$1,500",  1500 },
         },
-        // Page 3
+        // Page 3: Catapults (3 slots)
         {
-            { "Melon-Pult",      "MELONPULT",     "$5,000",  5000 },
             { "Cabbage-Pult",    "CABBAGEPULT",   "$1,500",  1500 },
             { "Corn-Pult",       "CORNPULT",      "$2,000",  2000 },
-            { "Coffee Bean",     "COFFEEBEAN",    "$1,000",  1000 },
-            { "Doom-Shroom",     "DOOMSHROOM",    "$6,000",  6000 },
-            { "Ice-Shroom",      "ICESHROOM",     "$4,000",  4000 },
-            { "Hypno-Shroom",    "HYPNOSHROOM",   "$3,000",  3000 },
-            { "Scaredy-Shroom",  "SCAREDYSHROOM", "$1,000",  1000 },
-        },
-        // Page 4
-        {
-            { "Puff-Shroom",     "PUFFSHROOM",    "$500",    500 },
-            { "Sun-Shroom",      "SUNSHROOM",     "$1,000",  1000 },
-            { "Fume-Shroom",     "FUMESHROOM",    "$2,500",  2500 },
-            { "Magnet-Shroom",   "MAGNETSHROOM",  "$3,000",  3000 },
-            { "Lily Pad",        "LILYPAD",       "$1,000",  1000 },
-            { "Tangle Kelp",     "TANGLEKELP",    "$1,500",  1500 },
-            { "Sea-Shroom",      "SEASHROOM",     "$2,000",  2000 },
-            { "Plantern",        "PLANTERN",      "$1,500",  1500 },
+            { "Melon-Pult",      "MELONPULT",     "$5,000",  5000 },
+            { nullptr,           nullptr,         nullptr,   0 },
+            { nullptr,           nullptr,         nullptr,   0 },
+            { nullptr,           nullptr,         nullptr,   0 },
+            { nullptr,           nullptr,         nullptr,   0 },
+            { nullptr,           nullptr,         nullptr,   0 },
         }
     };
 
-    m_pages.resize(4);
-    for (int p = 0; p < 4; p++) {
+    m_pages.resize(3);
+    for (int p = 0; p < 3; p++) {
         for (int i = 0; i < 8; i++) {
+            if (pagesDefs[p][i].name == nullptr) continue;
             Texture2D tex = res.GetTexture(pagesDefs[p][i].key);
             m_pages[p].push_back({
                 pagesDefs[p][i].name,

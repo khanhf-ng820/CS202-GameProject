@@ -42,10 +42,9 @@ std::vector<std::string> ProfileManager::GetAllPlantTypes() {
 }
 
 std::vector<std::string> ProfileManager::GetDefaultStarterPlants() {
-    // All plants in project that are NOT sold in Crazy Dave's shop:
+    // Default starter plants given for free (all other implemented plants are purchasable in Crazy Dave's shop):
     return {
-        "PeaShooter", "SunFlower", "Wallnut", "SnowPea", "Chomper",
-        "Repeater", "Gravebuster", "Caltrop", "Plantern", "BowlingNut"
+        "PeaShooter", "SunFlower", "Wallnut", "BowlingNut"
     };
 }
 
