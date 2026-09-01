@@ -345,7 +345,7 @@ void BowlingLevel::update(float dt) {
     float cardW = 50.0f;
 
     m_cardSpawnTimer += simDt;
-    if (m_cardSpawnTimer >= 3.8f) {
+    if (m_cardSpawnTimer >= 6.5f) {
         // Only spawn a new card if the conveyor belt has room (last card has moved left of spawn position)
         if (m_cards.empty() || m_cards.back().x < spawnX) {
             int roll = GetRandomValue(1, 100);
@@ -358,8 +358,8 @@ void BowlingLevel::update(float dt) {
             m_cards.push_back({ spawnX, plantType });
             m_cardSpawnTimer = 0.0f;
         } else {
-            // Conveyor belt is full; cap timer at 3.8s so a card spawns immediately when space opens up
-            m_cardSpawnTimer = 3.8f;
+            // Conveyor belt is full; cap timer at 6.5s so a card spawns immediately when space opens up
+            m_cardSpawnTimer = 6.5f;
         }
     }
 
@@ -374,20 +374,6 @@ void BowlingLevel::update(float dt) {
             }
         } else if (m_cards[i].x < targetX) {
             m_cards[i].x = targetX;
-        }
-    }
-
-    // 4. Handle Debug toggle button click (580, 5, 90, 26)
-    Rectangle debugBtnRect = { 580.0f, 5.0f, 90.0f, 26.0f };
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(mousePos, debugBtnRect)) {
-        m_showDebug = !m_showDebug;
-    }
-
-    // 5. Handle right-click on grid to spawn PoleVaultingZombie at right of lane (x = 700.0f, y = 50.0f + r * 100.0f)
-    if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT)) {
-        int r, c;
-        if (getGridCell(mousePos, r, c)) {
-            m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, 700.0f, 50.0f + r * 100.0f));
         }
     }
 
@@ -647,12 +633,6 @@ void BowlingLevel::draw() {
         nut->draw(res, m_showDebug);
     }
 
-    // Draw Debug toggle button in top right UI area (580, 5, 90, 26)
-    Rectangle debugBtnRect = { 580.0f, 5.0f, 90.0f, 26.0f };
-    DrawRectangleRec(debugBtnRect, m_showDebug ? DARKGREEN : DARKGRAY);
-    DrawRectangleLinesEx(debugBtnRect, 2.0f, WHITE);
-    DrawText(m_showDebug ? "Debug: ON" : "Debug: OFF", 588, 11, 14, WHITE);
-
     // Draw top-right "Menu" stone button (680, 0, 110, 36)
     Vector2 mousePos = GetVirtualMousePosition();
     Rectangle menuBtnRect = InGameMenu::GetMenuButtonRect();
@@ -662,26 +642,7 @@ void BowlingLevel::draw() {
         m_inGameMenu->drawMenuButton(menuHovered, menuPressed);
     }
 
-    // 6. Draw hover highlight cell on front lawn grid
-    int hoverRow, hoverCol;
-    if (getGridCell(mousePos, hoverRow, hoverCol)) {
-        float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
-        float cellY = 80.0f + hoverRow * 100.0f;
-        float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
-        float cellH = 100.0f;
-
-        if (m_isHoldingCard) {
-            // ONLY ALLOW placement on tiles to the left of the red bowling stripe (columns 0, 1, 2)
-            // Tiles are immediately available for placement
-            if (hoverCol <= 2) {
-                DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
-            } else {
-                DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(RED, 0.6f));
-            }
-        } else {
-            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
-        }
-    }
+    // 6. Lawn grid hover logic (no rectangle outline overlay)
 
     // 7. Draw ConveyorBelt_backdrop at (0,0) (matching Level 1 SeedBank position)
     Texture2D backdropTex = res.GetTexture("CONVEYORBELT_BACKDROP");

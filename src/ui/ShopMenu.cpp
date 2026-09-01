@@ -203,12 +203,14 @@ void ShopMenu::update(float dt, bool& showShop) {
 
     // Update pixel-perfect hover checks and click interactions for current page seed packets
     m_playerMoney = ProfileManager::GetInstance().GetActiveProfile().coins;
+    for (auto& page : m_pages) {
+        for (auto& item : page) {
+            item.isSoldOut = ProfileManager::GetInstance().IsPlantUnlocked(item.name);
+        }
+    }
+
     if (m_currentPage >= 0 && m_currentPage < (int)m_pages.size()) {
         for (auto& item : m_pages[m_currentPage]) {
-            if (ProfileManager::GetInstance().IsPlantUnlocked(item.name)) {
-                item.isSoldOut = true;
-            }
-
             if (item.isSoldOut) {
                 item.hovered = false;
             } else {

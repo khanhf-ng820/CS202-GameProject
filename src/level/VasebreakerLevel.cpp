@@ -849,24 +849,8 @@ void VasebreakerLevel::draw() {
         }
     }
 
-    // 2. Draw hover highlight on lawn grid
+    // 2. Lawn grid hover logic (no rectangle outline overlay)
     Vector2 mousePos = GetVirtualMousePosition();
-    int hoverRow, hoverCol;
-    if (getGridCell(mousePos, hoverRow, hoverCol)) {
-        float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
-        float cellY = 80.0f + hoverRow * 100.0f;
-        float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
-        float cellH = 100.0f;
-
-        if (m_selectedPacketIndex >= 0) {
-            bool tileEmpty = (!m_plants[hoverRow][hoverCol]) &&
-                             (!m_vases[hoverRow][hoverCol] || m_vases[hoverRow][hoverCol]->isDestroyed());
-            Color outlineColor = tileEmpty ? ColorAlpha(GREEN, 0.8f) : ColorAlpha(RED, 0.6f);
-            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, outlineColor);
-        } else {
-            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, ColorAlpha(GREEN, 0.6f));
-        }
-    }
 
     // 3. Draw active placed plants
     for (int r = 0; r < 5; ++r) {

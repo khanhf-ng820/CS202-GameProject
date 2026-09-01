@@ -155,6 +155,7 @@ void Level4::restartLevel() {
     m_loseMusicPlayed = false;
 
     m_phase = LevelPhase::SeedSelection;
+    m_seedSelectMenu.refreshCatalog(res);
     m_cameraCropX = 500.0f;
     m_panTimer = 0.0f;
     m_readySetPlantTimer = 0.0f;
@@ -1532,18 +1533,7 @@ void Level4::draw() {
         m_seedBank.draw(res, mousePos);
         m_readySetPlantAnim.Draw(400.0f, 300.0f, 1.0f);
     } else {
-        // Grid hover highlight
-        int hoverRow, hoverCol;
-        if (getGridCell(mousePos, hoverRow, hoverCol)) {
-            float cellX = 140.0f + (hoverCol == 0 ? 0.0f : 80.0f + (hoverCol - 1) * 70.0f);
-            float cellY = 80.0f + hoverRow * 100.0f;
-            float cellW = (hoverCol == 0) ? 80.0f : 70.0f;
-            float cellH = 100.0f;
-            bool isGrave = isCellBlockedByGrave(hoverRow, hoverCol);
-            std::string selType = m_seedBank.getSelectedPlantType();
-            bool isValid = (selType == "Gravebuster") ? (isGrave && m_grid[hoverRow][hoverCol] == nullptr) : (!isGrave && m_grid[hoverRow][hoverCol] == nullptr);
-            DrawRectangleLinesEx({ cellX, cellY, cellW, cellH }, 2.0f, isValid ? ColorAlpha(GREEN, 0.6f) : ColorAlpha(RED, 0.6f));
-        }
+        // Grid cell hover logic (no rectangle outline overlay)
 
         // Draw Row-by-Row from Top (Row 0) to Bottom (Row 4) for proper depth
         for (int r = 0; r < 5; ++r) {

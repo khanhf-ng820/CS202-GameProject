@@ -42,6 +42,8 @@ public:
     SeedSelectMenu(Resources& res);
     ~SeedSelectMenu() = default;
 
+    void refreshCatalog(Resources& res);
+
     // Returns true when confirm button ("LET'S ROCK!") is clicked to launch gameplay
     bool update(float dt, Vector2 mousePos, bool mouseClicked);
     void draw(Resources& res, Vector2 mousePos) const;

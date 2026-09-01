@@ -261,6 +261,7 @@ void QuizMenu::nextQuestion() {
 }
 
 void QuizMenu::update(float dt, bool& showQuiz) {
+    m_totalPlayerCoins = ProfileManager::GetInstance().GetActiveProfile().coins;
     m_crazyDave.Update(dt);
 
     // If Dave is playing an expressive animation, return to anim_idle once it finishes 1 cycle
