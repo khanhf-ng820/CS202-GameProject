@@ -16,7 +16,7 @@ Level5::Level5(Resources& res, RenderTexture2D targetScreen)
         m_rowFogStartX[r] = m_baseFogStartX;
         m_targetRowFogStartX[r] = m_baseFogStartX;
     }
-    m_maxWaves = 8;
+    m_maxWaves = 10;
     initGraves();
     initPreviewZombies();
 }
@@ -85,7 +85,19 @@ void Level5::spawnNextWave() {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 100.0f, laneY(4)));
         m_waveTimer = 23.0f;
     } else if (m_currentWave == 8) {
-        // Final Wave
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 30.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 60.0f, laneY(0)));
+        triggerGraveRising(2);
+        m_waveTimer = 22.0f;
+    } else if (m_currentWave == 9) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 30.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 60.0f, laneY(4)));
+        triggerGraveRising(3);
+        m_waveTimer = 23.0f;
+    } else if (m_currentWave == 10) {
+        // Final Wave (Huge Wave)
         triggerFinalWave();
 
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
