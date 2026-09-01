@@ -19,7 +19,7 @@ private:
     BitmapFont m_priceFont;
 
 public:
-    SeedBank(int initialSun = 40000);
+    SeedBank(int initialSun = 0);
 
     void initDefaultDeck();
     void initFromDeck(const std::vector<std::string>& chosenPlants);
@@ -35,6 +35,7 @@ public:
     void consumeSelected();
     
     int getSunCount() const { return m_sunCount; }
+    void setSun(int amount) { m_sunCount = amount; }
     void addSun(int amount) { m_sunCount += amount; }
     bool deductSun(int amount);
 };

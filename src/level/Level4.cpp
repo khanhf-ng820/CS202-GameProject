@@ -41,7 +41,7 @@ Level4::Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber)
     : res(res), targetScreen(targetScreen),
       m_levelNumber(levelNumber), m_hasFog(false), m_fogTimer(0.0f), m_fogStartX(480.0f),
       m_phase(LevelPhase::SeedSelection),
-      m_seedSelectMenu(res), m_seedBank(40000),
+      m_seedSelectMenu(res), m_seedBank(0),
       m_waveTimer(14.0f), m_currentWave(0),
       m_maxWaves(8), m_levelWon(false), m_levelLost(false),
       m_finalWaveAnnounced(false), m_exitToMainMenu(false),
@@ -149,6 +149,7 @@ void Level4::restartLevel() {
     m_cameraCropX = 500.0f;
     m_panTimer = 0.0f;
     m_readySetPlantTimer = 0.0f;
+    m_seedBank.setSun(0);
     m_seedBank.deselect();
     m_ignoreInitialClick = true;
     AudioManager::GetInstance().PlayMusic(MusicTrack::None);

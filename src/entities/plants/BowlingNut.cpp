@@ -85,7 +85,7 @@ void NormalBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zo
                             damage = 200; // Hit 2: 200 -> 0 (dies)
                         }
                     } else if (zName == "PoleVaultingZombie") {
-                        damage = 1800; // Subsequent contacts after vaulting deal lethal damage (1,800 HP)
+                        damage = 500; // Subsequent contacts after vaulting deal lethal damage (500 HP)
                     } else {
                         damage = 200; // NormalZombie, FlagZombie: 1 hit death
                     }
@@ -187,7 +187,7 @@ void GiantBowlingNut::update(float dt, std::vector<std::unique_ptr<Zombie>>& zom
                             m_hitZombies.push_back(z.get());
 
                             // Instantly kill the zombie (triggers armor detachment and death animations)
-                            z->takeDamage(1000);
+                            z->takeDamage(1800);
 
                             bool foundDebug = false;
                             for (auto& item : hitDebugTimers) {

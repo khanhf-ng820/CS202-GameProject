@@ -57,7 +57,7 @@ private:
     // Active zombies
     std::vector<std::unique_ptr<Zombie>> m_zombies;
     std::vector<std::pair<const Zombie*, float>> m_hitDebugTimers;
-    bool m_showDebug = true;
+    bool m_showDebug = false;
 
     // Lawn mowers on all 5 lanes
     std::vector<LawnMower> m_lawnMowers;

@@ -37,14 +37,14 @@ std::vector<std::string> ProfileManager::GetAllPlantTypes() {
         "SnowPea", "Chomper", "Repeater", "IceShroom", "Gravebuster",
         "Squash", "GatlingPea", "Torchwood", "Caltrop",
         "SpikeRock", "Garlic", "Cabbagepult", "Cornpult", "Melonpult",
-        "Jalapeno", "Plantern", "TwinSunflower", "BowlingNut"
+        "Jalapeno", "Plantern", "TwinSunflower"
     };
 }
 
 std::vector<std::string> ProfileManager::GetDefaultStarterPlants() {
     // Default starter plants given for free (all other implemented plants are purchasable in Crazy Dave's shop):
     return {
-        "PeaShooter", "SunFlower", "Wallnut", "BowlingNut"
+        "PeaShooter", "SunFlower", "Wallnut"
     };
 }
 
@@ -69,7 +69,11 @@ bool ProfileManager::loadProfileFromFile(const std::string& filePath, UserProfil
         if (j.contains("unlockedPlants") && j["unlockedPlants"].is_array()) {
             for (const auto& item : j["unlockedPlants"]) {
                 if (item.is_string()) {
-                    outProfile.unlockedPlants.push_back(item.get<std::string>());
+                    std::string plantStr = item.get<std::string>();
+                    // Exclude minigame-exclusive entity BowlingNut from inventory
+                    if (plantStr != "BowlingNut") {
+                        outProfile.unlockedPlants.push_back(plantStr);
+                    }
                 }
             }
         }

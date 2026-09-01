@@ -192,7 +192,7 @@ void SeedSelectMenu::draw(Resources& res, Vector2 mousePos) const {
     }
 
     // Draw Sun Count on top SeedBank (matching SeedBank::draw positioning)
-    std::string sunText = "40000";
+    std::string sunText = "0";
     m_sunFont.DrawTextCentered(sunText.c_str(), { m_bankBounds.x + 4.0f, m_bankBounds.y + 60.0f, 66.0f, 22.0f }, 0.9f, BLACK);
 
     auto drawSunCostLabel = [&](int cost, Rectangle bounds, Color tint) {
