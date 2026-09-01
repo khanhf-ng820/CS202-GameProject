@@ -42,8 +42,8 @@ Level4::Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber)
       m_levelNumber(levelNumber), m_hasFog(false), m_fogTimer(0.0f), m_fogStartX(480.0f),
       m_phase(LevelPhase::SeedSelection),
       m_seedSelectMenu(res), m_seedBank(0),
-      m_waveTimer(14.0f), m_currentWave(0),
-      m_maxWaves(8), m_levelWon(false), m_levelLost(false),
+      m_waveTimer(18.0f), m_currentWave(0),
+      m_maxWaves(10), m_levelWon(false), m_levelLost(false),
       m_finalWaveAnnounced(false), m_exitToMainMenu(false),
       m_gameSpeed(1.0f), m_isSpeedPaused(false),
       m_winTimer(0.0f), m_awardY(-150.0f), m_awardRaysRotation(0.0f), m_winMusicPlayed(false),
@@ -149,7 +149,7 @@ void Level4::restartLevel() {
     m_cameraCropX = 500.0f;
     m_panTimer = 0.0f;
     m_readySetPlantTimer = 0.0f;
-    m_seedBank.setSun(0);
+    m_seedBank.setSun(50);
     m_seedBank.deselect();
     m_ignoreInitialClick = true;
     AudioManager::GetInstance().PlayMusic(MusicTrack::None);
@@ -388,13 +388,23 @@ void Level4::spawnNextWave() {
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(1)));
         triggerGraveRising(3);
     } else if (m_currentWave == 8) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 25.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 50.0f, laneY(4)));
+        triggerGraveRising(2);
+    } else if (m_currentWave == 9) {
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 30.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 60.0f, laneY(3)));
+        triggerGraveRising(3);
+    } else if (m_currentWave == 10) {
         isHugeWave = true;
         m_finalWaveAnnounced = true;
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(1)));
-        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(0)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 15.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 25.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 35.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 45.0f, laneY(4)));
         triggerGraveRising(-1); // ALL graves emerge!
     }
 
@@ -803,8 +813,8 @@ void Level4::updateCollisions(float dt) {
                                 float cellY = 80.0f + g.row * 100.0f;
                                 createGraveCrumbleParticles(cellX + 35.0f, cellY + 75.0f);
                                 AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
-                                Texture2D texSun = res.GetTexture("SUN");
-                                if (texSun.id == 0) texSun = res.GetTexture("Sun");
+                                Texture2D texSun = res.GetTexture("SUN3");
+                                if (texSun.id == 0) texSun = res.GetTexture("SUN1");
                                 m_suns.emplace_back(cellX + 25.0f, cellY + 15.0f, texSun);
                             }
                             break;
@@ -1016,6 +1026,7 @@ void Level4::update(float dt) {
             m_phase = LevelPhase::PanToLawn;
             m_panTimer = 0.0f;
             m_seedBank.initFromDeck(m_seedSelectMenu.getChosenDeck());
+            m_seedBank.setSun(50);
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/gravebutton.ogg"));
         }
         return;
@@ -1253,10 +1264,18 @@ void Level4::update(float dt) {
         remainingDt -= subDt;
 
         if (m_currentWave < m_maxWaves) {
+            int activeZombies = 0;
+            for (const auto& z : m_zombies) {
+                if (!z->isDead()) activeZombies++;
+            }
+            if (activeZombies == 0 && m_waveTimer > 5.0f) {
+                m_waveTimer = 5.0f; // 5 seconds breathing room when board is clear
+            }
+
             m_waveTimer -= subDt;
             if (m_waveTimer <= 0.0f) {
                 spawnNextWave();
-                m_waveTimer = 22.0f;
+                m_waveTimer = 32.0f; // Relaxed 32 seconds between waves
             }
         }
 
@@ -1332,8 +1351,8 @@ void Level4::update(float dt) {
                                         float cellY = 80.0f + g.row * 100.0f;
                                         createGraveCrumbleParticles(cellX + 35.0f, cellY + 75.0f);
                                         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
-                                        Texture2D texSun = res.GetTexture("SUN");
-                                        if (texSun.id == 0) texSun = res.GetTexture("Sun");
+                                        Texture2D texSun = res.GetTexture("SUN3");
+                                        if (texSun.id == 0) texSun = res.GetTexture("SUN1");
                                         m_suns.emplace_back(cellX + 25.0f, cellY + 15.0f, texSun);
                                     }
                                     break;

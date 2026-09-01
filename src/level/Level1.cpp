@@ -40,8 +40,8 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen, int levelNumber)
     : res(res), targetScreen(targetScreen), m_levelNumber(levelNumber),
       m_phase(LevelPhase::SeedSelection),
       m_seedSelectMenu(res), m_seedBank(0),
-      m_skySunTimer(0.0f), m_waveTimer(14.0f), m_currentWave(0),
-      m_maxWaves(5), m_levelWon(false), m_levelLost(false),
+      m_skySunTimer(0.0f), m_waveTimer(18.0f), m_currentWave(0),
+      m_maxWaves(10), m_levelWon(false), m_levelLost(false),
       m_finalWaveAnnounced(false), m_exitToMainMenu(false),
       m_gameSpeed(1.0f), m_isSpeedPaused(false),
       m_winTimer(0.0f), m_awardY(-150.0f), m_awardRaysRotation(0.0f), m_winMusicPlayed(false),
@@ -206,8 +206,9 @@ bool Level1::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
 void Level1::spawnSunFromSky() {
     float spawnX = (float)(220 + std::rand() % 500);
     float targetY = (float)(120 + std::rand() % 380);
-    Texture2D tex = res.GetTexture("SUN");
-    if (tex.id == 0) tex = res.GetTexture("Sun");
+    Texture2D tex = res.GetTexture("SUN3");
+    if (tex.id == 0) tex = res.GetTexture("SUN1");
+    if (tex.id == 0) tex = res.GetTexture("SUN");
     m_suns.push_back(SunItem(spawnX, -40.0f, targetY, tex));
 }
 
@@ -280,13 +281,33 @@ void Level1::spawnNextWave() {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(3)));
     } else if (m_currentWave == 5) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
+    } else if (m_currentWave == 6) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 30.0f, laneY(3)));
+    } else if (m_currentWave == 7) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 25.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 50.0f, laneY(4)));
+    } else if (m_currentWave == 8) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 30.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 60.0f, laneY(3)));
+    } else if (m_currentWave == 9) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 20.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 40.0f, laneY(4)));
+    } else if (m_currentWave == 10) {
         m_finalWaveAnnounced = true;
         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(4)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 15.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 25.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 35.0f, laneY(3)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 45.0f, laneY(4)));
         return;
     }
 
@@ -869,6 +890,7 @@ void Level1::update(float dt) {
         if (m_readySetPlantTimer >= 1.9f) {
             m_phase = LevelPhase::ActiveWave;
             AudioManager::GetInstance().PlayMusic(MusicTrack::DayLevel);
+            spawnSunFromSky();
         }
         return;
     }
@@ -1069,10 +1091,18 @@ void Level1::update(float dt) {
 
         // Wave spawn timer
         if (m_currentWave < m_maxWaves) {
+            int activeZombies = 0;
+            for (const auto& z : m_zombies) {
+                if (!z->isDead()) activeZombies++;
+            }
+            if (activeZombies == 0 && m_waveTimer > 5.0f) {
+                m_waveTimer = 5.0f; // 5 seconds breathing room when board is clear
+            }
+
             m_waveTimer -= subDt;
             if (m_waveTimer <= 0.0f) {
                 spawnNextWave();
-                m_waveTimer = 22.0f;
+                m_waveTimer = 32.0f; // Relaxed 32 seconds between waves
             }
         }
 

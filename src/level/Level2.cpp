@@ -7,7 +7,7 @@
 
 Level2::Level2(Resources& res, RenderTexture2D targetScreen)
     : Level1(res, targetScreen, 2) {
-    m_maxWaves = 8;
+    m_maxWaves = 10;
     initPreviewZombies();
 }
 
@@ -47,14 +47,22 @@ void Level2::spawnNextWave() {
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
     } else if (m_currentWave == 8) {
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(0)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 25.0f, laneY(2)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 50.0f, laneY(3)));
+    } else if (m_currentWave == 9) {
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(1)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 30.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 60.0f, laneY(2)));
+    } else if (m_currentWave == 10) {
         m_finalWaveAnnounced = true;
         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(0)));
-        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(1)));
-        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(3)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 15.0f, laneY(0)));
+        m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 25.0f, laneY(1)));
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 35.0f, laneY(4)));
+        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX + 45.0f, laneY(3)));
         return;
     }
 
