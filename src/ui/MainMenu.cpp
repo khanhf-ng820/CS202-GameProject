@@ -305,30 +305,6 @@ void MainMenu::draw() {
     // Anchor to the bottom of the window so the grass line matches the window's bottom edge.
     m_anim.Draw(0, yOffset, REANIM_SCALE);
 
-    // --- Overlay custom "Level 1/2/3" text on the repurposed button sprites ---
-    struct LevelLabel {
-        const char* trackName;
-        const char* label;
-    };
-
-    LevelLabel labels[] = {
-        { TRACK_START_ADVENTURE, "Levels" },
-        { TRACK_SURVIVAL,        "Wall-nut Bowling" },
-        { TRACK_CHALLENGES,      "Brain Busters" },
-        { TRACK_ZEN_GARDEN,      "Vasebreaker" },
-    };
-
-    for (const auto& lbl : labels) {
-        Rectangle bounds = m_anim.GetTrackBounds(lbl.trackName, 0, yOffset, REANIM_SCALE);
-        if (bounds.width > 0 && bounds.height > 0) {
-            // Shadow pass (offset by 2px)
-            Rectangle shadowBounds = { bounds.x + 2, bounds.y + 2, bounds.width, bounds.height };
-            m_font.DrawTextCentered(lbl.label, shadowBounds, REANIM_SCALE, ColorAlpha(BLACK, 0.6f));
-            // Main pass
-            m_font.DrawTextCentered(lbl.label, bounds, REANIM_SCALE, WHITE);
-        }
-    }
-
     // --- Draw bottom-bar buttons (Options / Help / Quit) ---
     float optW = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.width : 81.0f;
     float optH = (m_optionsBtn.id != 0) ? (float)m_optionsBtn.height + 23.0f : 54.0f;

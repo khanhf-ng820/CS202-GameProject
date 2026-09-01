@@ -49,6 +49,10 @@ SeedSelectMenu::SeedSelectMenu(Resources& res) {
     initCatalog(res);
 }
 
+void SeedSelectMenu::refreshCatalog(Resources& res) {
+    initCatalog(res);
+}
+
 void SeedSelectMenu::initCatalog(Resources& res) {
     m_availableCards.clear();
     m_chosenPlants.clear();
