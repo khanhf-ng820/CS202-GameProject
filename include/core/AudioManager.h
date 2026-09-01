@@ -9,7 +9,9 @@ enum class MusicTrack {
     ShopMenu,
     Vasebreaker,
     DayLevel,
-    NightLevel
+    NightLevel,
+    ChooseYourSeeds,
+    Bowling
 };
 
 class AudioManager {

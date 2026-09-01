@@ -68,8 +68,7 @@ void Level6::spawnNextWave() {
         m_waveTimer = 20.0f;
     } else if (m_currentWave == 5) {
         // Mid-Level Huge Wave 1!
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
+        triggerHugeWave();
 
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 25.0f, laneY(0)));
@@ -110,9 +109,7 @@ void Level6::spawnNextWave() {
         m_waveTimer = 24.0f;
     } else if (m_currentWave == 10) {
         // Finale Huge Wave Horde
-        m_finalWaveAnnounced = true;
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
+        triggerFinalWave();
 
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX + 20.0f, laneY(1)));

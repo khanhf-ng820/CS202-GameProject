@@ -102,11 +102,21 @@ private:
     BitmapFont m_brianneFont;
     bool m_brianneLoaded = false;
 
+    // Final wave announcement reanimation
+    Reanimation m_finalWaveAnim;
+    bool m_finalWaveActive = false;
+    float m_finalWaveTimer = 0.0f;
+    bool m_hugeWaveActive = false;
+    float m_hugeWaveTimer = 0.0f;
+
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     void initLawnMowers();
     void spawnNextWave();
+    void triggerFinalWave();
+    void triggerHugeWave();
     void drawProgressBar();
     void drawSpeedControls();
+    void drawWaveAnnouncements();
     void drawLoseScreen();
     void drawWinScreen();
 };

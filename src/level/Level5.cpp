@@ -98,9 +98,7 @@ void Level5::spawnNextWave() {
         m_waveTimer = 23.0f;
     } else if (m_currentWave == 10) {
         // Final Wave (Huge Wave)
-        m_finalWaveAnnounced = true;
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
+        triggerFinalWave();
 
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX + 25.0f, laneY(0)));

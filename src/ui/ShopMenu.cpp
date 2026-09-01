@@ -182,6 +182,7 @@ void ShopMenu::update(float dt, bool& showShop) {
         if (isButtonHovered(mousePos, prevRect, "STORE_PREVBUTTON")) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 m_currentPage--;
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/buttonclick.ogg"));
             }
         }
     }
@@ -195,6 +196,7 @@ void ShopMenu::update(float dt, bool& showShop) {
         if (isButtonHovered(mousePos, nextRect, "STORE_NEXTBUTTON")) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 m_currentPage++;
+                AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/buttonclick.ogg"));
             }
         }
     }

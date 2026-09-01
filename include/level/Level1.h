@@ -100,6 +100,13 @@ protected:
     std::unique_ptr<InGameMenu> m_inGameMenu;
     bool m_ignoreInitialClick = true;
 
+    // Wave visual announcement animations & banners
+    Reanimation m_finalWaveAnim;
+    bool m_finalWaveActive = false;
+    float m_finalWaveTimer = 0.0f;
+    bool m_hugeWaveActive = false;
+    float m_hugeWaveTimer = 0.0f;
+
     // Helper functions & Virtual hooks for derived levels
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     virtual std::vector<std::string> getUniqueLevelZombieTypes() const;
@@ -107,6 +114,8 @@ protected:
     void initLawnMowers();
     void spawnSunFromSky();
     virtual void spawnNextWave();
+    void triggerFinalWave();
+    void triggerHugeWave();
     void createPlant(const std::string& type, int row, int col, int pixelX, int pixelY);
     void createSplat(float x, float y, bool isSnow);
     void createFireSplat(float x, float y);
@@ -114,6 +123,7 @@ protected:
     void updateCollisions(float dt);
     void drawProgressBar();
     void drawSpeedControls();
+    void drawWaveAnnouncements();
     void drawWinScreen();
     void drawLoseScreen();
 };

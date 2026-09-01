@@ -51,12 +51,13 @@ void Level3::spawnNextWave() {
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
     } else if (m_currentWave == 5) {
-        isHugeWave = true;
+        triggerHugeWave();
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(0)));
         m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(3)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
+        return;
     } else if (m_currentWave == 6) {
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(4)));
@@ -78,8 +79,7 @@ void Level3::spawnNextWave() {
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
     } else if (m_currentWave == 10) {
-        isHugeWave = true;
-        m_finalWaveAnnounced = true;
+        triggerFinalWave();
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX, laneY(3)));
@@ -87,17 +87,13 @@ void Level3::spawnNextWave() {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(4)));
         m_zombies.push_back(std::make_unique<PoleVaultingZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(2)));
+        return;
     }
 
-    if (isHugeWave) {
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
-    } else {
-        static const std::vector<std::string> waveGroanSounds = {
-            "assets/sounds/sukhbir.ogg", "assets/sounds/sukhbir2.ogg", "assets/sounds/sukhbir3.ogg",
-            "assets/sounds/groan.ogg", "assets/sounds/groan2.ogg", "assets/sounds/lowgroan.ogg"
-        };
-        int rIdx = GetRandomValue(0, (int)waveGroanSounds.size() - 1);
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(waveGroanSounds[rIdx]));
-    }
+    static const std::vector<std::string> waveGroanSounds = {
+        "assets/sounds/sukhbir.ogg", "assets/sounds/sukhbir2.ogg", "assets/sounds/sukhbir3.ogg",
+        "assets/sounds/groan.ogg", "assets/sounds/groan2.ogg", "assets/sounds/lowgroan.ogg"
+    };
+    int rIdx = GetRandomValue(0, (int)waveGroanSounds.size() - 1);
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(waveGroanSounds[rIdx]));
 }

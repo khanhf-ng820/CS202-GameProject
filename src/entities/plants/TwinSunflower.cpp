@@ -17,13 +17,13 @@ void TwinSunflower::update(float deltaTime, std::vector<Projectile>& outProjecti
     if (m_sunProduceTimer >= m_sunProduceInterval) {
         m_sunProduceTimer = 0.0f;
 
-        // Get the Sun texture (Sun3.png, Sun1.png, or SUN)
+        // Get the Sun texture (Sun3.png, Sun2.png, or Sun1.png)
         Texture2D sunTex = res.GetTexture("Sun3");
         if (sunTex.id == 0) {
-            sunTex = res.GetTexture("Sun1");
+            sunTex = res.GetTexture("Sun2");
         }
         if (sunTex.id == 0) {
-            sunTex = res.GetTexture("SUN");
+            sunTex = res.GetTexture("Sun1");
         }
 
         // Spawn 2 SunItems at TwinSunflower's position (spaced slightly left and right)

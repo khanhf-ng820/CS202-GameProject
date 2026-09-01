@@ -129,6 +129,13 @@ protected:
     std::unique_ptr<InGameMenu> m_inGameMenu;
     bool m_ignoreInitialClick = true;
 
+    // Wave visual announcement animations & banners
+    Reanimation m_finalWaveAnim;
+    bool m_finalWaveActive = false;
+    float m_finalWaveTimer = 0.0f;
+    bool m_hugeWaveActive = false;
+    float m_hugeWaveTimer = 0.0f;
+
     // Helper functions
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     bool isCellBlockedByGrave(int row, int col) const;
@@ -137,6 +144,8 @@ protected:
     virtual void initLawnMowers();
     virtual void initGraves();
     virtual void spawnNextWave();
+    void triggerFinalWave();
+    void triggerHugeWave();
     virtual void triggerGraveRising(int count = -1);
     virtual void drawFog();
     void updateFog(float dt);
@@ -150,6 +159,7 @@ protected:
     void updateCollisions(float dt);
     void drawProgressBar();
     void drawSpeedControls();
+    void drawWaveAnnouncements();
     void drawWinScreen();
     void drawLoseScreen();
 };

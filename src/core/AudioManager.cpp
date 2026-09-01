@@ -50,6 +50,10 @@ void AudioManager::PlayMusic(MusicTrack track) {
         soundPath = res.GetAssetPath("assets/sounds/grasswalk.ogg");
     } else if (track == MusicTrack::NightLevel) {
         soundPath = res.GetAssetPath("assets/sounds/watery_graves.ogg");
+    } else if (track == MusicTrack::ChooseYourSeeds) {
+        soundPath = res.GetAssetPath("assets/sounds/choose_your_seeds.ogg");
+    } else if (track == MusicTrack::Bowling) {
+        soundPath = res.GetAssetPath("assets/sounds/wallnut_bowling_bgm.ogg");
     }
 
     if (!soundPath.empty()) {

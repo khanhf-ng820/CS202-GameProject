@@ -9,13 +9,24 @@ enum class PotatoMineState {
     DONE
 };
 
+struct PotatoChunkParticle {
+    float x, y;
+    float vx, vy;
+    float rotation;
+    float rotSpeed;
+    float scale;
+    int frameIndex;
+    float alpha;
+};
+
 class PotatoMine : public Plant {
 private:
     PotatoMineState m_state = PotatoMineState::UNARMED;
     float m_armTimer = 0.0f;
     float m_explodeTimer = 0.0f;
     bool m_hasDealtDamage = false;
-    static constexpr float ARM_DELAY = 3.0f; // Seconds before the mine becomes active
+    static constexpr float ARM_DELAY = 15.0f; // Seconds before the mine becomes active
+    std::vector<PotatoChunkParticle> m_particles;
 
 public:
     PotatoMine(Resources& res, int x, int y);

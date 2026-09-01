@@ -19,7 +19,7 @@ private:
     BitmapFont m_priceFont;
 
 public:
-    SeedBank(int initialSun = 0);
+    SeedBank(int initialSun = 50);
 
     void initDefaultDeck();
     void initFromDeck(const std::vector<std::string>& chosenPlants);

@@ -21,6 +21,11 @@ BowlingLevel::BowlingLevel(Resources& res, RenderTexture2D targetScreen)
     m_readySetPlantDone = false;
     AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));
 
+    // Initialize Final Wave reanimation
+    ReanimDefinition finalDef = res.LoadReanim(res.GetAssetPath("assets/reanim/FinalWave.reanim"));
+    m_finalWaveAnim.SetResources(finalDef, res);
+    m_finalWaveAnim.SetLooping(false);
+
     initLawnMowers();
     for (int r = 0; r < 5; ++r) {
         for (int c = 0; c < 9; ++c) {
@@ -42,6 +47,10 @@ void BowlingLevel::restartLevel() {
     m_currentWave = 0;
     m_waveTimer = 2.0f;
     m_finalWaveAnnounced = false;
+    m_finalWaveActive = false;
+    m_finalWaveTimer = 0.0f;
+    m_hugeWaveActive = false;
+    m_hugeWaveTimer = 0.0f;
     m_levelWon = false;
     m_levelLost = false;
     m_exitToMainMenu = false;
@@ -94,6 +103,25 @@ bool BowlingLevel::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const
         return true;
     }
     return false;
+}
+
+void BowlingLevel::triggerFinalWave() {
+    m_finalWaveAnnounced = true;
+    m_finalWaveActive = true;
+    m_finalWaveTimer = 2.4f;
+    m_finalWaveAnim.SetFrame(0.0f);
+    m_finalWaveAnim.SetPaused(false);
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/finalwave.ogg"));
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
+}
+
+void BowlingLevel::triggerHugeWave() {
+    m_hugeWaveActive = true;
+    m_hugeWaveTimer = 2.4f;
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/awooga.ogg"));
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
 }
 
 void BowlingLevel::spawnNextWave() {
@@ -153,6 +181,7 @@ void BowlingLevel::spawnNextWave() {
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 130.0f, laneY(3)));
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 150.0f, laneY(2)));
     } else if (m_currentWave == 9) {
+        triggerHugeWave();
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 30.0f, laneY(0)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 50.0f, laneY(4)));
@@ -161,9 +190,10 @@ void BowlingLevel::spawnNextWave() {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX + 110.0f, laneY(3)));
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 130.0f, laneY(0)));
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 150.0f, laneY(4)));
+        return;
     } else if (m_currentWave == 10) {
-        // Final wave! HUGE WAVE OF ZOMBIES!
-        m_finalWaveAnnounced = true;
+        // Final wave!
+        triggerFinalWave();
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 30.0f, laneY(0)));
         m_zombies.push_back(std::make_unique<FootballZombie>(res, spawnX + 40.0f, laneY(1)));
@@ -176,6 +206,7 @@ void BowlingLevel::spawnNextWave() {
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 110.0f, laneY(1)));
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX + 120.0f, laneY(3)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX + 130.0f, laneY(2)));
+        return;
     }
 }
 
@@ -196,7 +227,7 @@ void BowlingLevel::update(float dt) {
         m_readySetPlantAnim.Update(dt);
         if (m_readySetPlantTimer >= 1.9f) {
             m_readySetPlantDone = true;
-            AudioManager::GetInstance().PlayMusic(MusicTrack::DayLevel);
+            AudioManager::GetInstance().PlayMusic(MusicTrack::Bowling);
         }
         return;
     }
@@ -275,6 +306,21 @@ void BowlingLevel::update(float dt) {
     }
 
     float simDt = m_isSpeedPaused ? 0.0f : dt * m_gameSpeed;
+
+    // Wave announcement animation & timer updates
+    if (m_finalWaveActive) {
+        m_finalWaveAnim.Update(simDt);
+        m_finalWaveTimer -= simDt;
+        if (m_finalWaveTimer <= 0.0f) {
+            m_finalWaveActive = false;
+        }
+    }
+    if (m_hugeWaveActive) {
+        m_hugeWaveTimer -= simDt;
+        if (m_hugeWaveTimer <= 0.0f) {
+            m_hugeWaveActive = false;
+        }
+    }
 
     // 0. Wave spawn timer (Aggressive 12.0s interval)
     if (m_currentWave < m_maxWaves) {
@@ -670,14 +716,17 @@ void BowlingLevel::draw() {
     // 11. Draw Bottom-Right FlagMeter Progress Bar & "Wall-nut Bowling" Label
     drawProgressBar();
 
-    // 12. Draw Win / Loss Overlays
+    // 12. Draw Wave Announcements (Final Wave / Huge Wave Warning)
+    drawWaveAnnouncements();
+
+    // 13. Draw Win / Loss Overlays
     if (m_levelWon) {
         drawWinScreen();
     } else if (m_levelLost) {
         drawLoseScreen();
     }
 
-    // 13. Draw "READY... SET... PLANT!" intro animation if active
+    // 14. Draw "READY... SET... PLANT!" intro animation if active
     if (!m_readySetPlantDone) {
         m_readySetPlantAnim.Draw(400.0f, 300.0f, 1.0f);
     }
@@ -957,6 +1006,41 @@ void BowlingLevel::drawProgressBar() {
         headX = std::clamp(headX, barX + 6.0f, barX + 144.0f);
         Rectangle srcHead = { 0.0f, 0.0f, 25.0f, 25.0f };
         DrawTextureRec(texParts, srcHead, { headX, barY - 2.0f }, WHITE);
+    }
+}
+
+void BowlingLevel::drawWaveAnnouncements() {
+    // 1. Final Wave Reanimation
+    if (m_finalWaveActive) {
+        m_finalWaveAnim.Draw(0.0f, 0.0f, 1.0f);
+    }
+
+    // 2. Huge Wave Warning Text Banner
+    if (m_hugeWaveActive) {
+        float elapsed = 2.4f - m_hugeWaveTimer;
+        float alpha = 1.0f;
+        if (elapsed < 0.25f) {
+            alpha = elapsed / 0.25f;
+        } else if (m_hugeWaveTimer < 0.4f) {
+            alpha = m_hugeWaveTimer / 0.4f;
+        }
+        alpha = std::clamp(alpha, 0.0f, 1.0f);
+
+        // Zoom-in scale effect from 1.8x down to 1.0x
+        float scale = 1.0f;
+        if (elapsed < 0.35f) {
+            float t = elapsed / 0.35f;
+            scale = 1.8f - 0.8f * (t * (2.0f - t)); // Ease-out quad
+        }
+
+        const char* hugeWaveText = "A HUGE WAVE OF ZOMBIES IS APPROACHING!";
+        Rectangle bannerRect = { 0.0f, 275.0f, 800.0f, 50.0f };
+        
+        // Bold Drop Shadow / Outline
+        m_font.DrawTextCentered(hugeWaveText, { bannerRect.x + 2.0f, bannerRect.y + 2.0f, bannerRect.width, bannerRect.height }, scale, ColorAlpha(BLACK, 0.9f * alpha));
+        m_font.DrawTextCentered(hugeWaveText, { bannerRect.x - 1.0f, bannerRect.y - 1.0f, bannerRect.width, bannerRect.height }, scale, ColorAlpha(BLACK, 0.9f * alpha));
+        // Main Vibrant Blood Red text
+        m_font.DrawTextCentered(hugeWaveText, bannerRect, scale, ColorAlpha(Color{ 235, 30, 30, 255 }, alpha));
     }
 }
 

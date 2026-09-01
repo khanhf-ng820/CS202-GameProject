@@ -3,8 +3,17 @@
 #include <cmath>
 #include <algorithm>
 
+static Texture2D EnsureValidSunTexture(Texture2D tex) {
+    if (tex.id != 0) return tex;
+    Resources& res = Resources::GetInstance();
+    Texture2D validTex = res.GetTexture("Sun3");
+    if (validTex.id == 0) validTex = res.GetTexture("Sun2");
+    if (validTex.id == 0) validTex = res.GetTexture("Sun1");
+    return validTex;
+}
+
 SunItem::SunItem(float x, float y, Texture2D tex)
-    : m_x(x), m_y(y), m_startX(x), m_startY(y), m_targetY(y + 50.0f), m_tex(tex),
+    : m_x(x), m_y(y), m_startX(x), m_startY(y), m_targetY(y + 50.0f), m_tex(EnsureValidSunTexture(tex)),
       m_lifetime(0.0f), m_active(true), m_isSkySun(false),
       m_isCollecting(false), m_collectStartX(x), m_collectStartY(y),
       m_destX(20.0f), m_destY(15.0f), m_collectTimer(0.0f),
@@ -12,7 +21,7 @@ SunItem::SunItem(float x, float y, Texture2D tex)
 }
 
 SunItem::SunItem(float x, float startY, float targetY, Texture2D tex)
-    : m_x(x), m_y(startY), m_startX(x), m_startY(startY), m_targetY(targetY), m_tex(tex),
+    : m_x(x), m_y(startY), m_startX(x), m_startY(startY), m_targetY(targetY), m_tex(EnsureValidSunTexture(tex)),
       m_lifetime(0.0f), m_active(true), m_isSkySun(true),
       m_isCollecting(false), m_collectStartX(x), m_collectStartY(startY),
       m_destX(20.0f), m_destY(15.0f), m_collectTimer(0.0f),
