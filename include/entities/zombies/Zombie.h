@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "resources.h"
 #include "Reanimation.h"
+#include "AudioManager.h"
 #include <string>
 
 struct FallingPart {
@@ -83,6 +84,11 @@ public:
                 m_isEating = false;
                 m_isChangingLane = true;
                 m_anim.SetAnimation("anim_walk");
+
+                std::string sfx = (GetRandomValue(0, 1) == 0)
+                    ? res.GetAssetPath("assets/sounds/yuck.ogg")
+                    : res.GetAssetPath("assets/sounds/yuck2.ogg");
+                AudioManager::GetInstance().PlaySoundEffect(sfx);
             }
         }
         if (m_isChangingLane) {

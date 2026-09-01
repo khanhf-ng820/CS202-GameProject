@@ -1,5 +1,6 @@
 #include "Chomper.h"
 #include "Zombie.h"
+#include "AudioManager.h"
 
 Chomper::Chomper(Resources& res, int x, int y)
     : Plant(res, x, y, 300, 150, "Chomper") {
@@ -36,9 +37,11 @@ void Chomper::update(float deltaTime, std::vector<Projectile>& outProjectiles, s
                 m_anim.SetAnimation("anim_bite");
             }
             // Devour target zombie right at the 2nd second of bite animation when mouth closes
+            // Devour target zombie right at the moment of bite animation when mouth snaps shut
             if (m_stateTimer >= 1.5f && m_targetZombie && !m_targetZombie->isDevoured()) {
                 m_targetZombie->devour();
                 m_targetZombie = nullptr;
+                AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/bigchomp.ogg"));
             }
             if (m_stateTimer >= 2.0f) {
                 m_state = ChomperState::CHEWING;
