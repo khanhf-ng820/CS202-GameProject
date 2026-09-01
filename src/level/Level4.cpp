@@ -803,8 +803,9 @@ void Level4::updateCollisions(float dt) {
                                 float cellY = 80.0f + g.row * 100.0f;
                                 createGraveCrumbleParticles(cellX + 35.0f, cellY + 75.0f);
                                 AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
-                                Texture2D texSun = res.GetTexture("SUN");
-                                if (texSun.id == 0) texSun = res.GetTexture("Sun");
+                                Texture2D texSun = res.GetTexture("Sun3");
+                                if (texSun.id == 0) texSun = res.GetTexture("Sun2");
+                                if (texSun.id == 0) texSun = res.GetTexture("Sun1");
                                 m_suns.emplace_back(cellX + 25.0f, cellY + 15.0f, texSun);
                             }
                             break;
@@ -1332,8 +1333,9 @@ void Level4::update(float dt) {
                                         float cellY = 80.0f + g.row * 100.0f;
                                         createGraveCrumbleParticles(cellX + 35.0f, cellY + 75.0f);
                                         AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/dirt_rise.ogg"));
-                                        Texture2D texSun = res.GetTexture("SUN");
-                                        if (texSun.id == 0) texSun = res.GetTexture("Sun");
+                                        Texture2D texSun = res.GetTexture("Sun3");
+                                        if (texSun.id == 0) texSun = res.GetTexture("Sun2");
+                                        if (texSun.id == 0) texSun = res.GetTexture("Sun1");
                                         m_suns.emplace_back(cellX + 25.0f, cellY + 15.0f, texSun);
                                     }
                                     break;

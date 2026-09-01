@@ -40,7 +40,7 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen, int levelNumber)
     : res(res), targetScreen(targetScreen), m_levelNumber(levelNumber),
       m_phase(LevelPhase::SeedSelection),
       m_seedSelectMenu(res), m_seedBank(0),
-      m_skySunTimer(0.0f), m_waveTimer(14.0f), m_currentWave(0),
+      m_skySunTimer(6.5f), m_waveTimer(14.0f), m_currentWave(0),
       m_maxWaves(5), m_levelWon(false), m_levelLost(false),
       m_finalWaveAnnounced(false), m_exitToMainMenu(false),
       m_gameSpeed(1.0f), m_isSpeedPaused(false),
@@ -92,7 +92,7 @@ void Level1::restartLevel() {
     m_currentWave = 0;
     m_waveTimer = 14.0f;
     m_maxWaves = 5;
-    m_skySunTimer = 0.0f;
+    m_skySunTimer = 6.5f;
     m_levelWon = false;
     m_levelLost = false;
     m_finalWaveAnnounced = false;
@@ -206,8 +206,9 @@ bool Level1::getGridCell(Vector2 mousePos, int& outRow, int& outCol) const {
 void Level1::spawnSunFromSky() {
     float spawnX = (float)(220 + std::rand() % 500);
     float targetY = (float)(120 + std::rand() % 380);
-    Texture2D tex = res.GetTexture("SUN");
-    if (tex.id == 0) tex = res.GetTexture("Sun");
+    Texture2D tex = res.GetTexture("Sun3");
+    if (tex.id == 0) tex = res.GetTexture("Sun2");
+    if (tex.id == 0) tex = res.GetTexture("Sun1");
     m_suns.push_back(SunItem(spawnX, -40.0f, targetY, tex));
 }
 
