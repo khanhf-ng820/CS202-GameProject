@@ -161,7 +161,7 @@ void Level4::restartLevel() {
     m_seedBank.setSun(50);
     m_seedBank.deselect();
     m_ignoreInitialClick = true;
-    AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+    AudioManager::GetInstance().PlayMusic(MusicTrack::ChooseYourSeeds);
 
     initGraves();
     initPreviewZombies();
@@ -1070,6 +1070,7 @@ void Level4::update(float dt) {
             m_previewZombies.clear();
             m_readySetPlantTimer = 0.0f;
             m_readySetPlantAnim.SetFrame(0.0f);
+            AudioManager::GetInstance().PlayMusic(MusicTrack::None);
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/readysetplant.ogg"));
         }
         return;
@@ -2064,7 +2065,7 @@ void Level4::drawWaveAnnouncements() {
 
 void Level4::run() {
     SetUIInteractionEnabled(true);
-    AudioManager::GetInstance().PlayMusic(MusicTrack::None);
+    AudioManager::GetInstance().PlayMusic(MusicTrack::ChooseYourSeeds);
     while (!WindowShouldClose()) {
         float scaleX = 800.0f / (float)GetScreenWidth();
         float scaleY = 600.0f / (float)GetScreenHeight();

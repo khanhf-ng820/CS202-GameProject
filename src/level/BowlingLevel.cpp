@@ -227,7 +227,7 @@ void BowlingLevel::update(float dt) {
         m_readySetPlantAnim.Update(dt);
         if (m_readySetPlantTimer >= 1.9f) {
             m_readySetPlantDone = true;
-            AudioManager::GetInstance().PlayMusic(MusicTrack::DayLevel);
+            AudioManager::GetInstance().PlayMusic(MusicTrack::Bowling);
         }
         return;
     }
