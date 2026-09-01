@@ -67,6 +67,11 @@ Level4::Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber)
     m_readySetPlantAnim.SetResources(readyDef, res);
     m_readySetPlantAnim.SetLooping(false);
 
+    // Initialize Final Wave reanimation
+    ReanimDefinition finalDef = res.LoadReanim(res.GetAssetPath("assets/reanim/FinalWave.reanim"));
+    m_finalWaveAnim.SetResources(finalDef, res);
+    m_finalWaveAnim.SetLooping(false);
+
     m_texBgNight = res.GetTexture("BACKGROUND2");
     if (m_texBgNight.id == 0) m_texBgNight = res.GetTexture("background2");
 
@@ -133,6 +138,10 @@ void Level4::restartLevel() {
     m_levelWon = false;
     m_levelLost = false;
     m_finalWaveAnnounced = false;
+    m_finalWaveActive = false;
+    m_finalWaveTimer = 0.0f;
+    m_hugeWaveActive = false;
+    m_hugeWaveTimer = 0.0f;
     m_exitToMainMenu = false;
 
     m_gameSpeed = 1.0f;
@@ -344,6 +353,25 @@ void Level4::triggerGraveRising(int count) {
     }
 }
 
+void Level4::triggerFinalWave() {
+    m_finalWaveAnnounced = true;
+    m_finalWaveActive = true;
+    m_finalWaveTimer = 2.4f;
+    m_finalWaveAnim.SetFrame(0.0f);
+    m_finalWaveAnim.SetPaused(false);
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/finalwave.ogg"));
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
+}
+
+void Level4::triggerHugeWave() {
+    m_hugeWaveActive = true;
+    m_hugeWaveTimer = 2.4f;
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/awooga.ogg"));
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
+}
+
 void Level4::spawnNextWave() {
     m_currentWave++;
     float spawnX = 830.0f;
@@ -351,8 +379,6 @@ void Level4::spawnNextWave() {
     auto laneY = [](int row) -> float {
         return 45.0f + row * 100.0f;
     };
-
-    bool isHugeWave = false;
 
     if (m_currentWave == 1) {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
@@ -371,11 +397,12 @@ void Level4::spawnNextWave() {
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(2)));
         triggerGraveRising(2);
     } else if (m_currentWave == 5) {
-        isHugeWave = true;
+        triggerHugeWave();
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(0)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
         triggerGraveRising(-1); // ALL graves emerge!
+        return;
     } else if (m_currentWave == 6) {
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(3)));
@@ -388,27 +415,22 @@ void Level4::spawnNextWave() {
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(1)));
         triggerGraveRising(3);
     } else if (m_currentWave == 8) {
-        isHugeWave = true;
-        m_finalWaveAnnounced = true;
+        triggerFinalWave();
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(1)));
         m_zombies.push_back(std::make_unique<BucketheadZombie>(res, spawnX, laneY(3)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(0)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
         triggerGraveRising(-1); // ALL graves emerge!
+        return;
     }
 
-    if (isHugeWave) {
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
-    } else {
-        static const std::vector<std::string> waveGroanSounds = {
-            "assets/sounds/sukhbir.ogg", "assets/sounds/sukhbir2.ogg", "assets/sounds/sukhbir3.ogg",
-            "assets/sounds/groan.ogg", "assets/sounds/groan2.ogg", "assets/sounds/lowgroan.ogg"
-        };
-        int rIdx = GetRandomValue(0, (int)waveGroanSounds.size() - 1);
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(waveGroanSounds[rIdx]));
-    }
+    static const std::vector<std::string> waveGroanSounds = {
+        "assets/sounds/sukhbir.ogg", "assets/sounds/sukhbir2.ogg", "assets/sounds/sukhbir3.ogg",
+        "assets/sounds/groan.ogg", "assets/sounds/groan2.ogg", "assets/sounds/lowgroan.ogg"
+    };
+    int rIdx = GetRandomValue(0, (int)waveGroanSounds.size() - 1);
+    AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath(waveGroanSounds[rIdx]));
 }
 
 void Level4::createPlant(const std::string& type, int row, int col, int pixelX, int pixelY) {
@@ -1253,6 +1275,21 @@ void Level4::update(float dt) {
         float subDt = std::min(remainingDt, maxSubStep);
         remainingDt -= subDt;
 
+        // Wave announcement animation & timer updates
+        if (m_finalWaveActive) {
+            m_finalWaveAnim.Update(subDt);
+            m_finalWaveTimer -= subDt;
+            if (m_finalWaveTimer <= 0.0f) {
+                m_finalWaveActive = false;
+            }
+        }
+        if (m_hugeWaveActive) {
+            m_hugeWaveTimer -= subDt;
+            if (m_hugeWaveTimer <= 0.0f) {
+                m_hugeWaveActive = false;
+            }
+        }
+
         if (m_currentWave < m_maxWaves) {
             m_waveTimer -= subDt;
             if (m_waveTimer <= 0.0f) {
@@ -1580,6 +1617,9 @@ void Level4::draw() {
         for (const auto& s : m_suns) {
             s.draw();
         }
+
+        // Draw Wave Announcements (Final Wave / Huge Wave Warning)
+        drawWaveAnnouncements();
 
         if (m_levelWon) {
             drawWinScreen();
@@ -1964,6 +2004,41 @@ void Level4::drawFog() {
                 p->draw();
             }
         }
+    }
+}
+
+void Level4::drawWaveAnnouncements() {
+    // 1. Final Wave Reanimation
+    if (m_finalWaveActive) {
+        m_finalWaveAnim.Draw(0.0f, 0.0f, 1.0f);
+    }
+
+    // 2. Huge Wave Warning Text Banner
+    if (m_hugeWaveActive) {
+        float elapsed = 2.4f - m_hugeWaveTimer;
+        float alpha = 1.0f;
+        if (elapsed < 0.25f) {
+            alpha = elapsed / 0.25f;
+        } else if (m_hugeWaveTimer < 0.4f) {
+            alpha = m_hugeWaveTimer / 0.4f;
+        }
+        alpha = std::clamp(alpha, 0.0f, 1.0f);
+
+        // Zoom-in scale effect from 1.8x down to 1.0x
+        float scale = 1.0f;
+        if (elapsed < 0.35f) {
+            float t = elapsed / 0.35f;
+            scale = 1.8f - 0.8f * (t * (2.0f - t)); // Ease-out quad
+        }
+
+        const char* hugeWaveText = "A HUGE WAVE OF ZOMBIES IS APPROACHING!";
+        Rectangle bannerRect = { 0.0f, 275.0f, 800.0f, 50.0f };
+        
+        // Bold Drop Shadow / Outline
+        m_font.DrawTextCentered(hugeWaveText, { bannerRect.x + 2.0f, bannerRect.y + 2.0f, bannerRect.width, bannerRect.height }, scale, ColorAlpha(BLACK, 0.9f * alpha));
+        m_font.DrawTextCentered(hugeWaveText, { bannerRect.x - 1.0f, bannerRect.y - 1.0f, bannerRect.width, bannerRect.height }, scale, ColorAlpha(BLACK, 0.9f * alpha));
+        // Main Vibrant Blood Red text
+        m_font.DrawTextCentered(hugeWaveText, bannerRect, scale, ColorAlpha(Color{ 235, 30, 30, 255 }, alpha));
     }
 }
 

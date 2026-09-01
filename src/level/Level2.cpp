@@ -47,9 +47,7 @@ void Level2::spawnNextWave() {
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(4)));
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(0)));
     } else if (m_currentWave == 8) {
-        m_finalWaveAnnounced = true;
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/hugewave.ogg"));
-        AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/siren.ogg"));
+        triggerFinalWave();
         m_zombies.push_back(std::make_unique<FlagZombie>(res, spawnX, laneY(2)));
         m_zombies.push_back(std::make_unique<ConeheadZombie>(res, spawnX, laneY(0)));
         m_zombies.push_back(std::make_unique<NewspaperZombie>(res, spawnX, laneY(1)));
