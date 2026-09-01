@@ -85,25 +85,25 @@ ShopMenu::ShopMenu(Resources& res)
     ItemRawDef pagesDefs[3][8] = {
         // Page 1: Upgrades & Offense (8 slots)
         {
-            { "Gatling Pea",     "GATLINGPEA",    "$5,000",  5000 },
-            { "Twin Sunflower",  "TWINSUNFLOWER", "$5,000",  5000 },
+            { "Gatling Pea",     "GATLINGPEA",    "$10,000", 10000 },
+            { "Twin Sunflower",  "TWINSUNFLOWER", "$6,000",  6000 },
             { "Spikerock",       "SPIKEROCK",     "$7,500",  7500 },
             { "Snow Pea",        "SNOWPEA",       "$2,500",  2500 },
-            { "Repeater",        "REPEATER",      "$3,000",  3000 },
+            { "Repeater",        "REPEATER",      "$3,200",  3200 },
             { "Torchwood",       "TORCHWOOD",     "$3,500",  3500 },
-            { "Chomper",         "CHOMPER",       "$2,000",  2000 },
+            { "Chomper",         "CHOMPER",       "$2,200",  2200 },
             { "Caltrop",         "CALTROP",       "$1,500",  1500 },
         },
-        // Page 2: Explosives, Defense & Traps (8 slots)
+        // Page 2: Explosives, Traps & Screen Control (8 slots)
         {
             { "Potato Mine",     "POTATOMINE",    "$500",    500 },
-            { "Cherry Bomb",     "CHERRYBOMB",    "$2,500",  2500 },
-            { "Jalapeno",        "JALAPENO",      "$1,000",  1000 },
-            { "Squash",          "SQUASH",        "$1,000",  1000 },
             { "Garlic",          "GARLIC",        "$800",    800 },
             { "Gravebuster",     "GRAVEBUSTER",   "$1,000",  1000 },
-            { "Ice-Shroom",      "ICESHROOM",     "$4,000",  4000 },
-            { "Plantern",        "PLANTERN",      "$1,500",  1500 },
+            { "Plantern",        "PLANTERN",      "$1,000",  1000 },
+            { "Squash",          "SQUASH",        "$1,200",  1200 },
+            { "Cherry Bomb",     "CHERRYBOMB",    "$2,800",  2800 },
+            { "Jalapeno",        "JALAPENO",      "$3,000",  3000 },
+            { "Ice-Shroom",      "ICESHROOM",     "$4,500",  4500 },
         },
         // Page 3: Catapults (3 slots)
         {

@@ -61,15 +61,16 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
     float dialogX = (800.0f - 423.0f) / 2.0f;
     float dialogY = (600.0f - 498.0f) / 2.0f;
 
-    // Slider dimensions
-    float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;
-    float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width : 22.0f;
+    // Slider dimensions (0.80x scale)
+    float sliderScale = 0.80f;
+    float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width * sliderScale : 108.0f;
+    float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width * sliderScale : 17.6f;
     float travelW = slotW - knobW;
 
     // 1. Handle Music Volume Slider dragging
     float musicSlotX = dialogX + 205.0f;
-    float musicSlotY = dialogY + 82.0f;
-    Rectangle musicHitbox = { musicSlotX - 10.0f, musicSlotY - 15.0f, slotW + 20.0f, 40.0f };
+    float musicSlotY = dialogY + 118.0f;
+    Rectangle musicHitbox = { musicSlotX - 10.0f, musicSlotY - 10.0f, slotW + 20.0f, 30.0f };
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, musicHitbox)) {
         m_isDraggingMusicSlider = true;
@@ -86,8 +87,8 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
 
     // 2. Handle Sound FX Volume Slider dragging
     float sfxSlotX = dialogX + 205.0f;
-    float sfxSlotY = dialogY + 122.0f;
-    Rectangle sfxHitbox = { sfxSlotX - 10.0f, sfxSlotY - 15.0f, slotW + 20.0f, 40.0f };
+    float sfxSlotY = dialogY + 153.0f;
+    Rectangle sfxHitbox = { sfxSlotX - 10.0f, sfxSlotY - 10.0f, slotW + 20.0f, 30.0f };
 
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && CheckCollisionPointRec(mousePos, sfxHitbox)) {
         m_isDraggingSfxSlider = true;
@@ -103,14 +104,17 @@ void OptionsMenu::update(float dt, bool& showOptions, int& currentWidth, int& cu
     }
 
     // Checkbox scale and dimensions
-    float cbScale = 0.75f;
+    float cbScale = 0.58f;
+    float cbW = 42.0f * cbScale;
     float cbH = 39.0f * cbScale;
+    float resStartX = dialogX + 68.0f;
+    float resStartY = dialogY + 195.0f;
+    float resSpacing = 34.0f;
 
     // 3. Handle clicking on resolutions (checkboxes / labels)
     for (int i = 0; i < NUM_RESOLUTIONS; ++i) {
-        float itemY = dialogY + 160.0f + i * 42.0f;
-        // Collision rectangle spans from checkbox to label text
-        Rectangle hitRect = { dialogX + 60.0f, itemY, 300.0f, cbH };
+        float itemY = resStartY + i * resSpacing;
+        Rectangle hitRect = { resStartX, itemY, 280.0f, cbH };
         if (CheckCollisionPointRec(mousePos, hitRect)) {
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 if (m_selectedResolutionIndex != i) {
@@ -168,23 +172,31 @@ void OptionsMenu::draw() {
         DrawRectangleLinesEx({ dialogX, dialogY, 423, 498 }, 4.0f, BROWN);
     }
 
-    // Draw OPTIONS title
-    m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 30.0f, 423.0f, 35.0f }, 1.3f, Color{ 220, 180, 80, 255 });
+    // Draw OPTIONS title on carved stone ribbon
+    m_font.DrawTextCentered("OPTIONS", { dialogX, dialogY + 65.0f, 423.0f, 35.0f }, 0.90f, Color{ 220, 180, 80, 255 });
 
-    float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width : 135.0f;
-    float slotH = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.height : 10.0f;
-    float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width : 22.0f;
-    float knobH = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.height : 29.0f;
+    float sliderScale = 0.80f;
+    float slotW = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.width * sliderScale : 108.0f;
+    float slotH = (m_sliderSlot.id != 0) ? (float)m_sliderSlot.height * sliderScale : 8.0f;
+    float knobW = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.width * sliderScale : 17.6f;
+    float knobH = (m_sliderKnob.id != 0) ? (float)m_sliderKnob.height * sliderScale : 23.2f;
     float travelW = slotW - knobW;
 
     // --- 1. Draw Music Volume Section ---
-    Rectangle musicLabelRect = { dialogX + 45.0f, dialogY + 75.0f, 140.0f, 25.0f };
-    m_font.DrawTextCentered("Music Volume", musicLabelRect, 0.70f, Color{ 210, 210, 210, 255 });
+    Rectangle musicLabelRect = { dialogX + 35.0f, dialogY + 110.0f, 150.0f, 25.0f };
+    m_font.DrawTextCentered("Music Volume", musicLabelRect, 0.55f, Color{ 210, 210, 210, 255 });
 
     float musicSlotX = dialogX + 205.0f;
-    float musicSlotY = dialogY + 82.0f;
+    float musicSlotY = dialogY + 118.0f;
     if (m_sliderSlot.id != 0) {
-        DrawTexture(m_sliderSlot, (int)musicSlotX, (int)musicSlotY, WHITE);
+        DrawTexturePro(
+            m_sliderSlot,
+            { 0.0f, 0.0f, (float)m_sliderSlot.width, (float)m_sliderSlot.height },
+            { musicSlotX, musicSlotY, slotW, slotH },
+            { 0.0f, 0.0f },
+            0.0f,
+            WHITE
+        );
     } else {
         DrawRectangleRec({ musicSlotX, musicSlotY, slotW, slotH }, DARKGRAY);
     }
@@ -193,19 +205,33 @@ void OptionsMenu::draw() {
     float musicKnobX = musicSlotX + musicVol * travelW;
     float musicKnobY = musicSlotY + (slotH - knobH) / 2.0f;
     if (m_sliderKnob.id != 0) {
-        DrawTexture(m_sliderKnob, (int)musicKnobX, (int)musicKnobY, WHITE);
+        DrawTexturePro(
+            m_sliderKnob,
+            { 0.0f, 0.0f, (float)m_sliderKnob.width, (float)m_sliderKnob.height },
+            { musicKnobX, musicKnobY, knobW, knobH },
+            { 0.0f, 0.0f },
+            0.0f,
+            WHITE
+        );
     } else {
         DrawRectangleRec({ musicKnobX, musicKnobY, knobW, knobH }, GRAY);
     }
 
     // --- 2. Draw Sound FX Volume Section ---
-    Rectangle sfxLabelRect = { dialogX + 45.0f, dialogY + 115.0f, 140.0f, 25.0f };
-    m_font.DrawTextCentered("Sound FX Volume", sfxLabelRect, 0.70f, Color{ 210, 210, 210, 255 });
+    Rectangle sfxLabelRect = { dialogX + 35.0f, dialogY + 145.0f, 150.0f, 25.0f };
+    m_font.DrawTextCentered("Sound FX Volume", sfxLabelRect, 0.55f, Color{ 210, 210, 210, 255 });
 
     float sfxSlotX = dialogX + 205.0f;
-    float sfxSlotY = dialogY + 122.0f;
+    float sfxSlotY = dialogY + 153.0f;
     if (m_sliderSlot.id != 0) {
-        DrawTexture(m_sliderSlot, (int)sfxSlotX, (int)sfxSlotY, WHITE);
+        DrawTexturePro(
+            m_sliderSlot,
+            { 0.0f, 0.0f, (float)m_sliderSlot.width, (float)m_sliderSlot.height },
+            { sfxSlotX, sfxSlotY, slotW, slotH },
+            { 0.0f, 0.0f },
+            0.0f,
+            WHITE
+        );
     } else {
         DrawRectangleRec({ sfxSlotX, sfxSlotY, slotW, slotH }, DARKGRAY);
     }
@@ -214,20 +240,30 @@ void OptionsMenu::draw() {
     float sfxKnobX = sfxSlotX + sfxVol * travelW;
     float sfxKnobY = sfxSlotY + (slotH - knobH) / 2.0f;
     if (m_sliderKnob.id != 0) {
-        DrawTexture(m_sliderKnob, (int)sfxKnobX, (int)sfxKnobY, WHITE);
+        DrawTexturePro(
+            m_sliderKnob,
+            { 0.0f, 0.0f, (float)m_sliderKnob.width, (float)m_sliderKnob.height },
+            { sfxKnobX, sfxKnobY, knobW, knobH },
+            { 0.0f, 0.0f },
+            0.0f,
+            WHITE
+        );
     } else {
         DrawRectangleRec({ sfxKnobX, sfxKnobY, knobW, knobH }, GRAY);
     }
 
     // Draw resolution checklist
     Vector2 mousePos = GetVirtualMousePosition();
-    float cbScale = 0.75f;
+    float cbScale = 0.58f;
     float cbW = 42.0f * cbScale;
     float cbH = 39.0f * cbScale;
+    float resStartX = dialogX + 68.0f;
+    float resStartY = dialogY + 195.0f;
+    float resSpacing = 34.0f;
 
     for (int i = 0; i < NUM_RESOLUTIONS; ++i) {
-        float itemY = dialogY + 160.0f + i * 42.0f;
-        Rectangle checkboxRect = { dialogX + 60.0f, itemY, cbW, cbH };
+        float itemY = resStartY + i * resSpacing;
+        Rectangle checkboxRect = { resStartX, itemY, cbW, cbH };
         bool isSelected = (m_selectedResolutionIndex == i);
 
         // Draw Checkbox texture
@@ -244,15 +280,15 @@ void OptionsMenu::draw() {
         } else {
             DrawRectangleRec(checkboxRect, GRAY);
             if (isSelected) {
-                DrawRectangleRec({ checkboxRect.x + 8.0f, checkboxRect.y + 8.0f, 17.6f, 15.2f }, GREEN);
+                DrawRectangleRec({ checkboxRect.x + 5.0f, checkboxRect.y + 5.0f, cbW - 10.0f, cbH - 10.0f }, GREEN);
             }
         }
 
         // Draw Resolution label (highlight green on hover)
-        Rectangle textRect = { dialogX + 105.0f, itemY, 250.0f, cbH };
-        bool itemHovered = CheckCollisionPointRec(mousePos, { dialogX + 60.0f, itemY, 300.0f, cbH });
+        Rectangle textRect = { resStartX + cbW + 10.0f, itemY, 240.0f, cbH };
+        bool itemHovered = CheckCollisionPointRec(mousePos, { resStartX, itemY, 280.0f, cbH });
         Color labelColor = itemHovered ? GREEN : Color{ 210, 210, 210, 255 };
-        m_font.DrawTextCentered(RESOLUTION_PRESETS[i].label, textRect, 0.64f, labelColor);
+        m_font.DrawTextCentered(RESOLUTION_PRESETS[i].label, textRect, 0.52f, labelColor);
     }
 
     // Draw Apply Changes Button

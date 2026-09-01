@@ -218,8 +218,8 @@ void QuizMenu::selectAnswer(int optionIndex) {
     if (optionIndex == q.correctIndex) {
         m_isCorrect = true;
         m_score++;
-        m_coinsEarned += 250;
-        ProfileManager::GetInstance().AddCoins(250);
+        m_coinsEarned += 300;
+        ProfileManager::GetInstance().AddCoins(300);
         m_totalPlayerCoins = ProfileManager::GetInstance().GetActiveProfile().coins;
 
         m_crazyDave.SetAnimation("anim_crazy");
@@ -227,7 +227,7 @@ void QuizMenu::selectAnswer(int optionIndex) {
         AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/coin.ogg"));
         AudioManager::GetInstance().PlaySoundEffect(m_res.GetAssetPath("assets/sounds/moneyfalls.ogg"));
 
-        m_floatingTexts.push_back({ "+$250 Cash!", { 200.0f, 220.0f }, 1.0f, GOLD });
+        m_floatingTexts.push_back({ "+$300 Cash!", { 200.0f, 220.0f }, 1.0f, GOLD });
     } else {
         m_isCorrect = false;
         m_crazyDave.SetAnimation("anim_mediumtalk");
@@ -384,7 +384,7 @@ void QuizMenu::draw() {
         textY += 85.0f;
         drawWrappedText(m_fontQuestion, "* 10 Random questions selected from a bank of 100 PvZ trivia questions.", textX, textY, 430.0f, 0.95f, Color{ 170, 255, 170, 255 }, 24.0f);
         textY += 45.0f;
-        drawWrappedText(m_fontQuestion, "* Each correct answer awards you +$250 Gold Cash directly to your bank!", textX, textY, 430.0f, 0.95f, GOLD, 24.0f);
+        drawWrappedText(m_fontQuestion, "* Each correct answer awards you +$300 Gold Cash directly to your bank!", textX, textY, 430.0f, 0.95f, GOLD, 24.0f);
         textY += 45.0f;
         drawWrappedText(m_fontQuestion, "* Answer correctly to prove your zombie-battling IQ!", textX, textY, 430.0f, 0.95f, Color{ 255, 200, 150, 255 }, 24.0f);
 

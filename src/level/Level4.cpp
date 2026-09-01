@@ -1095,7 +1095,8 @@ void Level4::update(float dt) {
         if (!m_winMusicPlayed) {
             m_winMusicPlayed = true;
             ProfileManager::GetInstance().UnlockNextLevel(m_levelNumber);
-            ProfileManager::GetInstance().AddCoins(500);
+            int rewardCoins = (m_levelNumber == 4 ? 2500 : (m_levelNumber == 5 ? 3000 : 4000));
+            ProfileManager::GetInstance().AddCoins(rewardCoins);
             AudioManager::GetInstance().PlayMusic(MusicTrack::None);
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/winmusic.ogg"));
         }
@@ -1769,8 +1770,8 @@ void Level4::drawWinScreen() {
         }
 
         // 3. Cash Reward Line: with BrianneTod16 in bright coin gold
-        int rewardCoins = (m_levelNumber == 4 ? 300 : (m_levelNumber == 5 ? 400 : 500));
-        std::string rewardStr = TextFormat("+%d Coins Earned!", rewardCoins);
+        int rewardCoins = (m_levelNumber == 4 ? 2500 : (m_levelNumber == 5 ? 3000 : 4000));
+        std::string rewardStr = (m_levelNumber == 4 ? "+2,500 Coins Earned!" : (m_levelNumber == 5 ? "+3,000 Coins Earned!" : "+4,000 Coins Earned!"));
         Rectangle rewardRect = { bannerRect.x, bannerRect.y + 84.0f, bannerRect.width, 24.0f };
         if (m_brianneLoaded) {
             m_brianneFont.DrawTextCentered(rewardStr.c_str(), { rewardRect.x + 1.0f, rewardRect.y + 1.0f, rewardRect.width, rewardRect.height }, 1.15f, ColorAlpha(BLACK, 0.8f * textAlpha));

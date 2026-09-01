@@ -243,7 +243,7 @@ void BowlingLevel::update(float dt) {
 
         if (!m_winMusicPlayed) {
             m_winMusicPlayed = true;
-            ProfileManager::GetInstance().AddCoins(500);
+            ProfileManager::GetInstance().AddCoins(2000);
             AudioManager::GetInstance().PlayMusic(MusicTrack::None);
             AudioManager::GetInstance().PlaySoundEffect(res.GetAssetPath("assets/sounds/winmusic.ogg"));
         }
@@ -888,7 +888,7 @@ void BowlingLevel::drawWinScreen() {
         }
 
         // 3. Cash Reward Line: with BrianneTod16 in bright coin gold
-        std::string rewardStr = "+500 Coins Earned!";
+        std::string rewardStr = "+2,000 Coins Earned!";
         Rectangle rewardRect = { bannerRect.x, bannerRect.y + 84.0f, bannerRect.width, 24.0f };
         if (m_brianneLoaded) {
             m_brianneFont.DrawTextCentered(rewardStr.c_str(), { rewardRect.x + 1.0f, rewardRect.y + 1.0f, rewardRect.width, rewardRect.height }, 1.15f, ColorAlpha(BLACK, 0.8f * bannerAlpha));
