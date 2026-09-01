@@ -99,6 +99,8 @@ private:
 
     // Bitmap font for level label
     BitmapFont m_font;
+    BitmapFont m_brianneFont;
+    bool m_brianneLoaded = false;
 
     bool getGridCell(Vector2 mousePos, int& outRow, int& outCol) const;
     void initLawnMowers();

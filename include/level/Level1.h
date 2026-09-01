@@ -38,6 +38,8 @@ protected:
     RenderTexture2D targetScreen;
     int m_levelNumber = 1;
     BitmapFont m_font;
+    BitmapFont m_brianneFont;
+    bool m_brianneLoaded = false;
 
     LevelPhase m_phase;
     SeedSelectMenu m_seedSelectMenu;

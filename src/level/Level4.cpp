@@ -55,6 +55,13 @@ Level4::Level4(Resources& res, RenderTexture2D targetScreen, int levelNumber)
     // Load House of Terror bitmap font for level labels
     m_font.Load(res.GetAssetPath("assets/data/HouseofTerror28.png"), res.GetAssetPath("assets/data/HouseofTerror28.txt"));
 
+    // Load BrianneTod bitmap font for speed controls and UI
+    std::string briannePng = res.GetAssetPath("assets/data/_BrianneTod16.png");
+    std::string brianneTxt = res.GetAssetPath("assets/data/BrianneTod16.txt");
+    if (FileExists(briannePng.c_str()) && FileExists(brianneTxt.c_str())) {
+        m_brianneLoaded = m_brianneFont.Load(briannePng, brianneTxt);
+    }
+
     // Initialize "READY... SET... PLANT!" intro animation
     ReanimDefinition readyDef = res.LoadReanim(res.GetAssetPath("assets/reanim/StartReadySetPlant.reanim"));
     m_readySetPlantAnim.SetResources(readyDef, res);
@@ -1694,7 +1701,16 @@ void Level4::drawSpeedControls() {
 
     char speedText[16];
     snprintf(speedText, sizeof(speedText), "%.0fx", m_gameSpeed);
-    DrawText(speedText, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 });
+    Color speedColor = (m_gameSpeed > 1.0f) ? Color{ 255, 220, 40, 255 } : Color{ 230, 235, 245, 255 };
+
+    if (m_brianneLoaded) {
+        Rectangle textBounds = { speedBtn.x + 19.0f, speedBtn.y, speedBtn.width - 19.0f, speedBtn.height };
+        Rectangle shadowBounds = { textBounds.x + 1.0f, textBounds.y + 1.0f, textBounds.width, textBounds.height };
+        m_brianneFont.DrawTextCentered(speedText, shadowBounds, 1.0f, ColorAlpha(BLACK, 0.7f));
+        m_brianneFont.DrawTextCentered(speedText, textBounds, 1.0f, speedColor);
+    } else {
+        DrawText(speedText, (int)(speedBtn.x + 24.0f), (int)(speedBtn.y + 4.0f), 17, speedColor);
+    }
 }
 
 void Level4::drawWinScreen() {
@@ -1730,12 +1746,45 @@ void Level4::drawWinScreen() {
         );
     }
 
-    if (m_winTimer >= 1.2f) {
-        float textAlpha = std::clamp((m_winTimer - 1.2f) * 2.5f, 0.0f, 1.0f);
-        DrawRectangleRec({ 220, 390, 360, 95 }, ColorAlpha(BLACK, textAlpha * 0.8f));
-        DrawRectangleLinesEx({ 220, 390, 360, 95 }, 2.0f, ColorAlpha(GOLD, textAlpha));
-        DrawText("NIGHT STAGE COMPLETED!", 245, 405, 22, ColorAlpha(GOLD, textAlpha));
-        DrawText("Click anywhere to continue", 280, 445, 17, ColorAlpha(RAYWHITE, textAlpha));
+    if (m_winTimer >= 1.0f) {
+        float textAlpha = std::clamp((m_winTimer - 1.0f) * 2.0f, 0.0f, 1.0f);
+        Rectangle bannerRect = { 175.0f, 345.0f, 450.0f, 180.0f };
+        DrawRectangleRec(bannerRect, ColorAlpha(Color{ 15, 20, 35, 255 }, textAlpha * 0.92f));
+        DrawRectangleLinesEx(bannerRect, 3.0f, ColorAlpha(GOLD, textAlpha));
+
+        // 1. Big Title: "NIGHT STAGE COMPLETED!" (or "ADVENTURE COMPLETED!") with HouseofTerror28
+        const char* titleText = (m_levelNumber == 6) ? "ADVENTURE COMPLETED!" : "NIGHT STAGE COMPLETED!";
+        Rectangle shadowTitle = { bannerRect.x + 2.0f, bannerRect.y + 14.0f, bannerRect.width, 36.0f };
+        Rectangle textTitle = { bannerRect.x, bannerRect.y + 12.0f, bannerRect.width, 36.0f };
+        m_font.DrawTextCentered(titleText, shadowTitle, 1.0f, ColorAlpha(BLACK, 0.8f * textAlpha));
+        m_font.DrawTextCentered(titleText, textTitle, 1.0f, ColorAlpha(GOLD, textAlpha));
+
+        // 2. Subtitle: with BrianneTod16
+        Rectangle subRect = { bannerRect.x, bannerRect.y + 54.0f, bannerRect.width, 22.0f };
+        if (m_brianneLoaded) {
+            m_brianneFont.DrawTextCentered("You survived the foggy graveyard horde!", subRect, 0.95f, ColorAlpha(WHITE, textAlpha));
+        } else {
+            DrawText("You survived the foggy graveyard horde!", 235, 400, 17, ColorAlpha(WHITE, textAlpha));
+        }
+
+        // 3. Cash Reward Line: with BrianneTod16 in bright coin gold
+        int rewardCoins = (m_levelNumber == 4 ? 300 : (m_levelNumber == 5 ? 400 : 500));
+        std::string rewardStr = TextFormat("+%d Coins Earned!", rewardCoins);
+        Rectangle rewardRect = { bannerRect.x, bannerRect.y + 84.0f, bannerRect.width, 24.0f };
+        if (m_brianneLoaded) {
+            m_brianneFont.DrawTextCentered(rewardStr.c_str(), { rewardRect.x + 1.0f, rewardRect.y + 1.0f, rewardRect.width, rewardRect.height }, 1.15f, ColorAlpha(BLACK, 0.8f * textAlpha));
+            m_brianneFont.DrawTextCentered(rewardStr.c_str(), rewardRect, 1.15f, ColorAlpha(Color{ 255, 220, 50, 255 }, textAlpha));
+        } else {
+            DrawText(rewardStr.c_str(), 320, 430, 19, ColorAlpha(GOLD, textAlpha));
+        }
+
+        // 4. Continue prompt
+        Rectangle promptRect = { bannerRect.x, bannerRect.y + 128.0f, bannerRect.width, 22.0f };
+        if (m_brianneLoaded) {
+            m_brianneFont.DrawTextCentered("Click anywhere or press ENTER to continue", promptRect, 0.85f, ColorAlpha(Color{ 200, 200, 200, 255 }, textAlpha));
+        } else {
+            DrawText("Click anywhere or press ENTER to continue", 230, 474, 16, ColorAlpha(LIGHTGRAY, textAlpha));
+        }
     }
 }
 
@@ -1744,30 +1793,47 @@ void Level4::drawLoseScreen() {
     DrawRectangleRec({ 0, 0, 800, 600 }, ColorAlpha(Color{ 25, 0, 0, 255 }, overlayAlpha));
 
     Texture2D texZombiesWon = res.GetTexture("ZOMBIESWON");
+    if (texZombiesWon.id == 0) texZombiesWon = res.GetTexture("ZombiesWon");
+    if (texZombiesWon.id == 0) {
+        std::string path = res.GetAssetPath("assets/reanim/ZombiesWon.jpg");
+        if (FileExists(path.c_str())) {
+            res.LoadFile(path);
+            texZombiesWon = res.GetTexture("ZOMBIESWON");
+            if (texZombiesWon.id == 0) texZombiesWon = res.GetTexture("ZombiesWon");
+        }
+    }
+
     if (texZombiesWon.id != 0) {
         float zoomProgress = std::clamp((m_loseTimer - 0.4f) * 1.8f, 0.0f, 1.0f);
         float easeZoom = zoomProgress * zoomProgress * (3.0f - 2.0f * zoomProgress);
-        float scale = 0.5f + 0.5f * easeZoom;
+        float scale = 0.40f + 0.45f * easeZoom;
         float w = (float)texZombiesWon.width * scale;
         float h = (float)texZombiesWon.height * scale;
 
         DrawTexturePro(
             texZombiesWon,
             { 0.0f, 0.0f, (float)texZombiesWon.width, (float)texZombiesWon.height },
-            { 400.0f, 250.0f, w, h },
+            { 400.0f, 255.0f, w, h },
             { w / 2.0f, h / 2.0f },
             0.0f,
             ColorAlpha(WHITE, std::min(1.0f, (m_loseTimer - 0.3f) * 2.5f))
         );
     } else {
-        DrawText("THE ZOMBIES ATE YOUR BRAINS!", 190, 220, 26, RED);
+        m_font.DrawTextCentered("THE ZOMBIES ATE YOUR BRAINS!", { 2.0f, 222.0f, 800.0f, 50.0f }, 1.15f, ColorAlpha(BLACK, 0.9f));
+        m_font.DrawTextCentered("THE ZOMBIES ATE YOUR BRAINS!", { 0.0f, 220.0f, 800.0f, 50.0f }, 1.15f, RED);
     }
 
     if (m_loseTimer >= 1.6f) {
         float textAlpha = std::clamp((m_loseTimer - 1.6f) * 2.0f, 0.0f, 1.0f);
-        DrawRectangleRec({ 245, 470, 310, 44 }, ColorAlpha(BLACK, textAlpha * 0.75f));
-        DrawRectangleLinesEx({ 245, 470, 310, 44 }, 2.0f, ColorAlpha(RED, textAlpha));
-        DrawText("Click anywhere to try again", 270, 483, 18, ColorAlpha(RAYWHITE, textAlpha));
+        Rectangle promptBox = { 230.0f, 515.0f, 340.0f, 44.0f };
+        DrawRectangleRec(promptBox, ColorAlpha(BLACK, textAlpha * 0.75f));
+        DrawRectangleLinesEx(promptBox, 2.0f, ColorAlpha(RED, textAlpha));
+        if (m_brianneLoaded) {
+            m_brianneFont.DrawTextCentered("Click anywhere to try again", { promptBox.x + 1.0f, promptBox.y + 1.0f, promptBox.width, promptBox.height }, 1.0f, ColorAlpha(BLACK, textAlpha * 0.8f));
+            m_brianneFont.DrawTextCentered("Click anywhere to try again", promptBox, 1.0f, ColorAlpha(RAYWHITE, textAlpha));
+        } else {
+            DrawText("Click anywhere to try again", 270, 528, 18, ColorAlpha(RAYWHITE, textAlpha));
+        }
     }
 }
 

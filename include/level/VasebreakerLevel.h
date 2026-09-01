@@ -112,6 +112,8 @@ private:
     Texture2D m_bgTex = {0};
     Texture2D m_chunksTex = {0};
     BitmapFont m_font;
+    BitmapFont m_brianneFont;
+    bool m_brianneLoaded = false;
 
     // In-game Pause Menu
     std::unique_ptr<InGameMenu> m_inGameMenu;

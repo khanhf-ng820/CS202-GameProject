@@ -53,6 +53,8 @@ protected:
 
     int m_levelNumber = 4;
     BitmapFont m_font;
+    BitmapFont m_brianneFont;
+    bool m_brianneLoaded = false;
     bool m_hasFog = false;
     float m_fogTimer = 0.0f;
     float m_fogStartX = 480.0f;
