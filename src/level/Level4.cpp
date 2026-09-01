@@ -1804,11 +1804,12 @@ void Level4::drawWinScreen() {
         m_font.DrawTextCentered(titleText, textTitle, 1.0f, ColorAlpha(GOLD, textAlpha));
 
         // 2. Subtitle: with BrianneTod16
+        const char* subText = m_hasFog ? "You defeated all zombies and saved your foggy graveyard lawn!" : "You defeated all zombies and saved your lawn!";
         Rectangle subRect = { bannerRect.x, bannerRect.y + 54.0f, bannerRect.width, 22.0f };
         if (m_brianneLoaded) {
-            m_brianneFont.DrawTextCentered("You survived the foggy graveyard horde!", subRect, 0.95f, ColorAlpha(WHITE, textAlpha));
+            m_brianneFont.DrawTextCentered(subText, subRect, 0.95f, ColorAlpha(WHITE, textAlpha));
         } else {
-            DrawText("You survived the foggy graveyard horde!", 235, 400, 17, ColorAlpha(WHITE, textAlpha));
+            DrawText(subText, 225, 400, 17, ColorAlpha(WHITE, textAlpha));
         }
 
         // 3. Cash Reward Line: with BrianneTod16 in bright coin gold
