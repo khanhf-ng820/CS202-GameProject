@@ -1,0 +1,1247 @@
+\documentclass[12pt,a4paper]{article}
+% ===== Packages =====
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[T5]{fontenc}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage[protrusion=false]{microtype}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{tocloft}
+\usepackage{indentfirst}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta}
+% ===== Page Geometry =====
+\geometry{
+    left=3cm,
+    right=2cm,
+    top=2.5cm,
+    bottom=2.5cm
+}
+\setlength{\headheight}{12.42429pt}
+\setlength{\emergencystretch}{2em}
+% ===== Hyperref Setup =====
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!70!black,
+    citecolor=blue!70!black,
+    urlcolor=blue!70!black,
+    pdfauthor={Tu Hoang Anh, Nguyen Phuc Khanh},
+    pdftitle={CS202 Programming Systems Final Project: Plants vs. Zombies},
+}
+% ===== Code Listing Style =====
+\definecolor{codebg}{RGB}{245,245,250}
+\definecolor{codeframe}{RGB}{200,200,210}
+\definecolor{codecomment}{RGB}{0,128,0}
+\definecolor{codekeyword}{RGB}{0,0,180}
+\definecolor{codestring}{RGB}{163,21,21}
+\lstdefinestyle{cppstyle}{
+    language=C++,
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{codekeyword}\bfseries,
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=8pt,
+    frame=single,
+    rulecolor=\color{codeframe},
+    breaklines=true,
+    breakatwhitespace=true,
+    tabsize=4,
+    showspaces=false,
+    showstringspaces=false,
+    captionpos=b,
+    aboveskip=10pt,
+    belowskip=10pt,
+    xleftmargin=15pt,
+    framexleftmargin=15pt,
+    columns=flexible,
+    morekeywords={override, nullptr, constexpr, noexcept, decltype, auto},
+    literate={::}{{\textcolor{codekeyword}{::}}}2
+             {->}{{\textcolor{codekeyword}{->}}}2,
+}
+\lstset{style=cppstyle}
+% ===== Header / Footer =====
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\footnotesize Final Project}
+\fancyhead[R]{\footnotesize University of Science -- Vietnam National University, HCMC}
+\fancyfoot[C]{\footnotesize Page \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+% ===== Section Formatting =====
+\titleformat{\section}
+    {\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}
+    {\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+    {\normalsize\bfseries}{\thesubsubsection}{1em}{}
+% ===== TOC dots =====
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+% ================================================================
+%                        DOCUMENT START
+% ================================================================
+\begin{document}
+% ===================== TITLE PAGE =====================
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+    \centering
+    {\large\bfseries VIETNAM NATIONAL UNIVERSITY, HO CHI MINH CITY}\\[4pt]
+    {\large\bfseries UNIVERSITY OF SCIENCE}\\[4pt]
+    {\large\bfseries FACULTY OF INFORMATION TECHNOLOGY}\\[6pt]
+    \rule{\textwidth}{1pt}\\[1.5cm]
+    {\LARGE\bfseries CS202 -- Programming System}\\[0.8cm]
+    {\Huge\bfseries Final Project}\\[0.6cm]
+    {\Large\bfseries Topic: Game Development}\\[0.4cm]
+    {\Large Course: Programming Systems}\\[2cm]
+    {\large\bfseries Group 53}\\[0.5cm]
+    {\large\bfseries Team Members:}\\[0.5cm]
+    \begin{tabular}{l l}
+        Từ Hoàng Anh      & (25125005) \\[4pt]
+        Nguyễn Phúc Khánh & (25125086) \\
+    \end{tabular}
+    \vfill
+    {\large Ho Chi Minh City, 2026}
+\end{titlepage}
+% ===================== TABLE OF CONTENTS =====================
+\hypersetup{pageanchor=true}
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+% ================================================================
+%                   2. GAMEPLAY OVERVIEW
+% ================================================================
+\section{Gameplay Overview}
+\textbf{Defend Your Lawn Against the Zombie Invasion!}
+Plants vs.\ Zombies is a 2D tower-defense game where players strategically place combat plants on a $5 \times 9$ lawn grid to stop waves of advancing zombies. Built from scratch using C++20 and the Raylib graphics library, this project faithfully recreates the original PopCap experience --- including multiple game modes, animated sprites via the PopCap Reanimation engine, a sun-based economy, and progressive level completion.
+% ----- 1.1 Core Gameplay Features -----
+\subsection{Core Gameplay Features}
+\subsubsection{Tower-Defense Combat System}
+\begin{itemize}[leftmargin=2em]
+    \item Place plants on a $5 \times 9$ grid to intercept zombies marching from right to left.
+    \item Over 20 unique plant types with distinct attack patterns: pea-shooters, catapults, area-of-effect explosives, melee defenders, and support units.
+    \item 7 zombie variants with individual health, speed, armor, and special abilities (pole-vaulting, newspaper-shielded, helmeted, etc.).
+    \item Real-time projectile-zombie collision detection applies knockback, slow, burn, and squash effects.
+    \item Lawn mowers serve as last-resort lane-clearing defenses.
+\end{itemize}
+\subsubsection{Sun Economy \& Resource Management}
+\begin{itemize}[leftmargin=2em]
+    \item Sun falls from the sky at timed intervals and can be clicked to collect.
+    \item Sunflowers produce additional sun periodically, enabling the player to grow their defense.
+    \item Each plant has a sun cost; the player must manage resources to balance cheap units and powerful ones.
+    \item Sun collection features a smooth flight animation toward the bank counter.
+\end{itemize}
+\subsubsection{Seed Deck Loadout System}
+\begin{itemize}[leftmargin=2em]
+    \item Before each level, the player selects up to 7 plants from their unlocked catalog via the \texttt{SeedSelectMenu}.
+    \item The chosen deck determines the \texttt{SeedPacket} cards shown in the in-game \texttt{SeedBank}.
+    \item Individual seed packets track per-card cooldown timers and sun affordability.
+    \item Crazy Dave's Shop (\texttt{ShopMenu}) allows players to spend coins to unlock additional plants.
+\end{itemize}
+\subsubsection{Multiple Game Modes}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Adventure Mode (Day):} Levels 1--3 with progressive wave difficulty and a \emph{Ready\ldots Set\ldots Plant!} intro.
+    \item \textbf{Adventure Mode (Night):} Levels 4--6 featuring gravestones, fog, and zombies rising from graves.
+    \item \textbf{Wall-nut Bowling:} A conveyor-belt mini-game where the player rolls bowling wall-nuts at zombies.
+    \item \textbf{Vasebreaker:} A puzzle mini-game where the player smashes vases with a mallet cursor to reveal plants or zombies.
+\end{itemize}
+\subsubsection{User Profiles \& Progression}
+\begin{itemize}[leftmargin=2em]
+    \item \texttt{ProfileManager} (Singleton) persists user profiles to JSON files on disk.
+    \item Each profile tracks the player's name, coin balance, unlocked plants, and the maximum level reached.
+    \item Level completion automatically unlocks the next adventure level.
+\end{itemize}
+
+% ================================================================
+%               LIST OF FEATURES (0.25 pts each)
+% ================================================================
+\section{List of Features}
+Each feature is worth \textbf{0.25 points}, for a maximum of \textbf{20.00 points} (80 features total). Features are organized into distinct categories below.
+
+\subsection{Core Engine \& Infrastructure (6 features)}
+\renewcommand{\arraystretch}{1.2}
+\begin{table}[htbp]
+\centering
+\footnotesize
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+1  & Custom Reanimation engine (PopCap \texttt{.reanim} XML parser \& renderer) & 0.25 \\
+2  & Progressive asset loading system with loading screen \& progress bar & 0.25 \\
+3  & Centralized AudioManager (BGM streams \& sound effects) & 0.25 \\
+4  & PopCap BitmapFont renderer (5 font families, kerning, rotation) & 0.25 \\
+5  & Resource Singleton with texture/image/reanim caching & 0.25 \\
+6  & Virtual canvas scaling (800$\times$600 $\to$ any window size) & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Core Engine \& Infrastructure (1.5 pts)}
+\end{table}
+
+\subsection{User Interface \& Menus (13 features)}
+\begin{table}[htbp]
+\centering
+\footnotesize
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+7  & Animated Main Menu with cloud animations \& zombie hand & 0.25 \\
+8  & Options Menu with resolution presets \& volume sliders & 0.25 \\
+9  & Crazy Dave's Shop with paginated seed packets \& coin purchases & 0.25 \\
+10 & Almanac encyclopedia with live animated plant/zombie previews & 0.25 \\
+11 & Level Select screen with Day/Night stage tabs \& locked levels & 0.25 \\
+12 & Pre-level Seed Deck Selection (drag-to-choose up to 7 plants) & 0.25 \\
+13 & In-game SeedBank HUD with cooldown timers \& sun counter & 0.25 \\
+14 & In-game pause menu with volume sliders \& restart/quit & 0.25 \\
+15 & User Profile system (create/delete users, JSON persistence) & 0.25 \\
+16 & User selection dialog (\emph{Who are you?} on first launch) & 0.25 \\
+17 & Help Menu screen & 0.25 \\
+18 & Quiz Menu (interactive knowledge quiz) & 0.25 \\
+19 & Loading screen with animated progress bar & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{User Interface \& Menus (3.25 pts)}
+\end{table}
+
+\subsection{Plants (20 features)}
+\begin{table}[htbp]
+\centering
+\tiny
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+20 & PeaShooter --- single-shot pea projectile & 0.25 \\
+21 & Repeater --- double-shot pea projectile & 0.25 \\
+22 & GatlingPea --- quad-shot rapid-fire peas & 0.25 \\
+23 & SnowPea --- freezing pea that slows zombies & 0.25 \\
+24 & FirePea --- fire pea with burning damage & 0.25 \\
+25 & Torchwood --- ignites passing peas into fire peas & 0.25 \\
+26 & SunFlower --- periodic sun production & 0.25 \\
+27 & Wallnut --- high-HP defensive barrier & 0.25 \\
+28 & CherryBomb --- area-of-effect explosion & 0.25 \\
+29 & Chomper --- devours a zombie whole & 0.25 \\
+30 & Jalapeno --- full-row fire lane attack & 0.25 \\
+31 & Squash --- jumps and squashes target zombie & 0.25 \\
+32 & PotatoMine --- underground proximity mine & 0.25 \\
+33 & Cornpult --- lobbed corn/butter projectile & 0.25 \\
+34 & Melonpult --- lobbed melon with splash damage & 0.25 \\
+35 & Cabbagepult --- lobbed cabbage projectile & 0.25 \\
+36 & IceShroom --- freezes all zombies on screen & 0.25 \\
+37 & Garlic --- redirects zombies to adjacent lanes & 0.25 \\
+38 & Gravebuster --- destroys gravestones & 0.25 \\
+39 & Caltrop / SpikeRock --- ground-based contact damage & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Plants (5.0 pts)}
+\end{table}
+
+\clearpage
+\subsection{Zombies (7 features)}
+\begin{table}[htbp]
+\centering
+\footnotesize
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+40 & ZombieNormal --- basic zombie with walk/eat/death animations & 0.25 \\
+41 & FlagZombie --- wave-announcing flag carrier & 0.25 \\
+42 & ConeheadZombie --- cone armor with detachment physics & 0.25 \\
+43 & BucketheadZombie --- bucket armor with denting stages & 0.25 \\
+44 & NewspaperZombie --- newspaper shield with enraged mode & 0.25 \\
+45 & FootballZombie --- helmeted fast zombie & 0.25 \\
+46 & PoleVaultingZombie --- vaults over first plant encountered & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Zombies (1.75 pts)}
+\end{table}
+
+\clearpage
+\subsection{Gameplay Systems (18 features)}
+\begin{table}[htbp]
+\centering
+\tiny
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+47 & 5$\times$9 grid plant placement with shovel removal & 0.25 \\
+48 & Sun economy (sky sun \& sunflower production \& collection flight) & 0.25 \\
+49 & Projectile system (straight, lobbed, snow, fire, melon, butter) & 0.25 \\
+50 & Projectile-zombie collision detection with row-based filtering & 0.25 \\
+51 & Zombie-plant eating with particle effects \& damage-over-time & 0.25 \\
+52 & Lawn Mower last-resort lane defense & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Gameplay Systems (Part 1/3)}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\tiny
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+53 & Zombie armor detachment (falling cone/bucket/helmet parts) & 0.25 \\
+54 & Slow effect (SnowPea tint \& speed reduction with timer) & 0.25 \\
+55 & Charred death animation (Jalapeno/CherryBomb fire kills) & 0.25 \\
+56 & Squashed death animation (Squash jump kills) & 0.25 \\
+57 & Particle effects system (splats, eating debris, explosions) & 0.25 \\
+58 & Wave-based zombie spawning with progressive difficulty & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Gameplay Systems (Part 2/3)}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\tiny
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+59 & \emph{Ready\ldots Set\ldots PLANT!} intro animation per level & 0.25 \\
+60 & Camera pan from zombie preview to lawn on level start & 0.25 \\
+61 & Progress bar showing wave advancement & 0.25 \\
+62 & Speed control (pause \& fast-forward toggle) & 0.25 \\
+63 & Victory screen with trophy/award drop animation & 0.25 \\
+64 & Defeat screen with zombie eating brains cutscene & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Gameplay Systems (Part 3/3)}
+\end{table}
+
+\subsection{Game Modes \& Levels (7 features)}
+\begin{table}[htbp]
+\centering
+\footnotesize
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+65 & Adventure Day levels 1--3 (inherited difficulty scaling) & 0.25 \\
+66 & Adventure Night levels 4--6 (gravestones, grave-rising, fog) & 0.25 \\
+67 & Wall-nut Bowling mini-game (conveyor belt, rolling physics) & 0.25 \\
+68 & Bowling: Giant Wall-nut (heavy, non-deflecting) & 0.25 \\
+69 & Bowling: Explode-o-nut (3$\times$3 area explosion on contact) & 0.25 \\
+70 & Vasebreaker mini-game (mallet cursor, vase smashing, shard FX) & 0.25 \\
+71 & Level completion unlocks next level in profile & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Game Modes \& Levels (1.75 pts)}
+\end{table}
+
+\subsection{Design Patterns (9 features)}
+\begin{table}[htbp]
+\centering
+\footnotesize
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+72 & Singleton Pattern (Resources, AudioManager, ProfileManager) & 0.25 \\
+73 & Template Method (Plant/Zombie abstract update/draw hierarchy) & 0.25 \\
+74 & State Pattern (AppState, LevelPhase, SquashState, VaseState) & 0.25 \\
+75 & Factory Method (createPlant, BowlingNut::Create) & 0.25 \\
+76 & Observer Pattern (SunItem collection $\to$ SeedBank callback) & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Design Patterns (Part 1/2: 1.25 pts)}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\begin{tabular}{clc}
+\toprule
+\textbf{\#} & \textbf{Feature} & \textbf{Pts} \\
+\midrule
+77 & Decorator Pattern (Torchwood igniting peas dynamically) & 0.25 \\
+78 & Mediator Pattern (Level central dispatcher for all interactions) & 0.25 \\
+79 & Flyweight Pattern (Texture atlas sharing for particles) & 0.25 \\
+80 & Composite Pattern (UI hierarchy \& Reanimation track trees) & 0.25 \\
+\bottomrule
+\end{tabular}
+\caption{Design Patterns (Part 2/2: 1.00 pts)}
+\end{table}
+\renewcommand{\arraystretch}{1.0}
+\newpage
+
+% ================================================================
+%              2. COMPLETE CODEBASE HIERARCHY
+% ================================================================
+\section{Complete Codebase Hierarchy}
+The project follows a modular directory structure organised by domain, with headers separated from sources:
+\begin{verbatim}
+CS202-GameProject/
++-- include/
+|   +-- core/           // Engine infrastructure
+|   |   +-- AudioManager.h
+|   |   +-- BitmapFont.h
+|   |   +-- ProfileManager.h
+|   |   +-- Reanimation.h
+|   |   +-- reanim.h
+|   |   +-- resources.h
+|   +-- entities/       // In-game objects
+|   |   +-- plants/     // 23 plant headers (Plant.h base + subclasses)
+|   |   +-- zombies/    // 8 zombie headers  (Zombie.h base + subclasses)
+|   |   +-- items/      // Projectile, SunItem, LawnMower, Vase, Particle
+|   +-- level/          // Gameplay levels
+|   |   +-- Level1.h .. Level6.h
+|   |   +-- BowlingLevel.h
+|   |   +-- VasebreakerLevel.h
+|   +-- ui/             // Menus & interface
+|       +-- MainMenu.h, OptionsMenu.h, ShopMenu.h
+|       +-- SeedBank.h, SeedPacket.h, SeedSelectMenu.h
+|       +-- AlmanacMenu.h, LevelSelectMenu.h
+|       +-- InGameMenu.h, QuizMenu.h, HelpMenu.h
+|       +-- LoadingScreen.h, UserDialog.h
+|       +-- UIHelpers.h
++-- src/                // Corresponding .cpp implementations
+|   +-- main.cpp
+|   +-- core/, entities/, level/, ui/
+|   +-- Projectile.cpp, particle.cpp
++-- assets/             // Sprites, reanim XMLs, sounds, fonts
++-- fonts/              // PopCap bitmap font atlases
++-- CMakeLists.txt      // Build configuration (raylib + raygui + nlohmann_json)
++-- build.sh            // One-step configure + build script
+\end{verbatim}
+
+---
+
+
+% =================================================================
+% CHAPTER 4: DESIGN PATTERNS ARCHITECTURE
+% =================================================================
+% =================================================================
+% CHƯƠNG 4: DESIGN PATTERNS ARCHITECTURE
+% =================================================================
+
+\section{Design Patterns Architecture}
+To guarantee scalability, maintainability, and optimal memory efficiency for the \textit{Plants vs. Zombies} game engine, the core architecture leverages seven classic Gang of Four (GoF) design patterns. Each pattern systematically addresses a specific challenge in resource management, physical trajectory computation, decoupled event notification, and entity creation.
+
+% -----------------------------------------------------------------
+% 4.1 SINGLETON PATTERN
+% -----------------------------------------------------------------
+\subsection{Singleton Pattern -- Core Infrastructure Management}
+
+\paragraph{Problem \& Architectural Context:}
+In a complex game engine, managing heavy subsystem resources—such as texture atlases, skeleton reanimation XML data (\texttt{.reanim}), background audio streams, sound effects, and user save profiles—requires a centralized access point. Instantiating duplicate managers across different scenes or levels leads to severe VRAM/RAM inflation, redundant GPU texture allocations, audio buffer desynchronization, and corrupted persistent profile states.
+
+\paragraph{Solution \& C++20 Implementation:}
+The Scott Meyers' Singleton pattern (thread-safe static local instance) is applied to \texttt{Resources}, \texttt{AudioManager}, and \texttt{ProfileManager}. Initializing the \texttt{static} instance inside \texttt{GetInstance()} guarantees thread safety (standardized in C++11 and higher) and enforces lazy initialization (instantiating the object only upon its first access). Copy constructors and assignment operators are explicitly deleted to forbid duplication.
+
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.6cm, minimum height=0.8cm, align=center, font=\footnotesize},
+    grow=down, level distance=2.0cm, sibling distance=3.8cm
+]
+\node {\texttt{Singleton Managers}}
+    child { node {\texttt{Resources} \\ (Global Assets)} }
+    child { node {\texttt{AudioManager} \\ (Audio Streams)} }
+    child { node {\texttt{ProfileManager} \\ (Save Profile)} };
+\end{tikzpicture}
+\end{center}
+
+\begin{lstlisting}[language=C++, caption={Singleton Pattern -- Resources and AudioManager Managers}]
+// filepath: include/core/resources.h
+class Resources {
+public:
+    // Thread-safe Scott Meyers' Singleton
+    static Resources& GetInstance() {
+        static Resources instance;
+        return instance;
+    }
+
+    // Explicitly delete copy constructor and copy assignment operator
+    Resources(const Resources&) = delete;
+    Resources& operator=(const Resources&) = delete;
+
+    Texture2D GetTexture(const std::string& name);
+    std::string GetAssetPath(const std::string& relativePath);
+
+private:
+    Resources() = default; // Private constructor prevents direct instantiation
+};
+
+// filepath: include/core/AudioManager.h
+class AudioManager {
+public:
+    static AudioManager& GetInstance() {
+        static AudioManager instance;
+        return instance;
+    }
+
+    void PlayMusic(const std::string& musicAsset);
+    void PlaySoundEffect(const std::string& soundAsset);
+
+private:
+    AudioManager() = default;
+};
+\end{lstlisting}
+
+\paragraph{Architectural Benefits \& SOLID Alignment:}
+\begin{itemize}
+    \item \textbf{Single Responsibility Principle (SRP):} Each manager is dedicated strictly to a single domain (e.g., texture/reanim assets vs. audio streaming pipelines).
+    \item \textbf{Memory Efficiency \& Zero Leaks:} Prevents redundant asset re-loading; guarantees clean lifetime management bound strictly to process execution.
+    \item \textbf{Thread Safety:} Guarantees thread-safe global access across all game levels without requiring manual mutex locking boilerplate in C++11+.
+\end{itemize}
+
+% -----------------------------------------------------------------
+% 4.2 STRATEGY PATTERN
+% -----------------------------------------------------------------
+\subsection{Strategy Pattern -- Dynamic Projectile Physics and Trajectories}
+
+\paragraph{Problem \& Architectural Context:}
+The gameplay engine supports distinct projectile behaviors across plant categories:
+\begin{itemize}
+    \item Linear forward trajectories (\textit{Straight}): PeaShooter, SnowPea, FirePea.
+    \item Parabolic lobbed arcs (\textit{Lobbed}): Cabbage-pult, Corn-pult, Melon-pult.
+\end{itemize}
+Hardcoding trajectory physics directly within \texttt{Projectile::update()} using monolithic \texttt{if-else} or \texttt{switch-case} branching violates the Open/Closed Principle (OCP) and makes introducing new projectile flight paths (e.g., homing or boomerang trajectories) error-prone.
+
+\paragraph{Solution \& C++20 Implementation:}
+The Strategy Pattern encapsulates trajectory computation into an \texttt{ITrajectoryStrategy} interface. The \texttt{Projectile} class holds a \texttt{std::unique\_ptr<ITrajectoryStrategy>} and delegates physical displacement calculations to concrete strategy implementations at runtime.
+
+\begin{center}
+\begin{tikzpicture}[
+    cnode/.style={draw, rounded corners, minimum width=3.5cm, minimum height=0.7cm, align=center, font=\footnotesize}
+]
+\node[cnode] (proj) at (0, 0) {\texttt{Projectile}};
+\node[cnode] (strat) at (5.5, 0) {\texttt{ITrajectoryStrategy} \\ (interface)};
+\node[cnode] (straight) at (2.5, -3.2) {\texttt{StraightTrajectory}};
+\node[cnode] (lobbed) at (8.5, -3.2) {\texttt{LobbedTrajectory}};
+
+\draw[-{Diamond}] (proj) -- (strat);
+\draw[dashed, -{Triangle}] (straight) -- (strat);
+\draw[dashed, -{Triangle}] (lobbed) -- (strat);
+\end{tikzpicture}
+\end{center}
+
+\begin{lstlisting}[language=C++, caption={Strategy Pattern -- ITrajectoryStrategy Interface and Concrete Strategies}]
+// filepath: include/entities/items/TrajectoryStrategy.h
+class ITrajectoryStrategy {
+public:
+    virtual ~ITrajectoryStrategy() = default;
+    virtual void updatePosition(float& x, float& y, float startX, float startY, 
+                               float speed, float range, float maxHeight, 
+                               float& progress, float dt) = 0;
+};
+
+// Linear motion strategy for straight projectiles (PeaShooter, SnowPea, FirePea)
+class StraightTrajectoryStrategy : public ITrajectoryStrategy {
+public:
+    void updatePosition(float& x, float& y, float startX, float startY, 
+                       float speed, float range, float maxHeight, 
+                       float& progress, float dt) override {
+        x += speed * dt; // Linear displacement along the horizontal axis
+    }
+};
+
+// Parabolic arc strategy for lobbed projectiles (Cabbage-pult, Melon-pult)
+class LobbedTrajectoryStrategy : public ITrajectoryStrategy {
+public:
+    void updatePosition(float& x, float& y, float startX, float startY, 
+                       float speed, float range, float maxHeight, 
+                       float& progress, float dt) override {
+        if (range <= 0.0f) range = 400.0f;
+        progress += (speed / range) * dt;
+        if (progress > 1.0f) progress = 1.0f;
+
+        // Parametric parabolic flight path equation
+        x = startX + progress * range;
+        float heightOffset = 4.0f * maxHeight * progress * (1.0f - progress);
+        y = startY - heightOffset;
+    }
+};
+\end{lstlisting}
+
+\paragraph{Architectural Benefits \& SOLID Alignment:}
+\begin{itemize}
+    \item \textbf{Open/Closed Principle (OCP):} New trajectory behaviors can be integrated seamlessly by creating new strategy subclasses without altering existing \texttt{Projectile} logic.
+    \item \textbf{Decoupling Physics from Entities:} Separates physical mathematical equations from rendering and entity state management, enabling isolated unit testing.
+\end{itemize}
+
+% -----------------------------------------------------------------
+% 4.3 OBSERVER PATTERN
+% -----------------------------------------------------------------
+\subsection{Observer Pattern -- Decoupled Event Notification Bus}
+
+\paragraph{Problem \& Architectural Context:}
+Key gameplay occurrences—such as collecting sun currency, eliminating a zombie, or losing a plant—require instantaneous responses from decoupled subsystems (HUD counters, audio triggers, achievement progress, wave spawners). Directly invoking UI or audio methods from inside physics collision loops introduces tight coupling and cyclic header dependencies.
+
+\paragraph{Solution \& C++20 Implementation:}
+An Event Bus is established using the Observer Pattern. The \texttt{IGameObserver} interface acts as the event subscriber contract, while \texttt{GameSubject} maintains subscriber lists and broadcasts events without requiring explicit knowledge of consumer concrete types.
+
+\begin{center}
+\begin{tikzpicture}[
+    cnode/.style={draw, rounded corners, minimum width=3.5cm, minimum height=0.7cm, align=center, font=\footnotesize}
+]
+\node[cnode] (subject) at (0, 0) {\texttt{GameSubject} \\ (Subject)};
+\node[cnode] (observer) at (5.5, 0) {\texttt{IGameObserver} \\ (interface)};
+\node[cnode] (audio_obs) at (5.5, -3.0) {\texttt{AudioGameObserver}};
+
+\draw[-{Diamond}] (subject) -- (observer);
+\draw[dashed, -{Triangle}] (audio_obs) -- (observer);
+\end{tikzpicture}
+\end{center}
+
+\begin{lstlisting}[language=C++, caption={Observer Pattern -- IGameObserver Interface and GameSubject Manager}]
+// filepath: include/utils/GameObserver.h
+class IGameObserver {
+public:
+    virtual ~IGameObserver() = default;
+    virtual void onSunCollected(int amount) {}
+    virtual void onZombieKilled(const std::string& zombieName) {}
+    virtual void onPlantDestroyed(int row, int col) {}
+};
+
+class GameSubject {
+private:
+    std::vector<IGameObserver*> m_observers;
+
+public:
+    void addObserver(IGameObserver* observer) {
+        if (observer && std::find(m_observers.begin(), m_observers.end(), observer) == m_observers.end()) {
+            m_observers.push_back(observer);
+        }
+    }
+    void removeObserver(IGameObserver* observer) {
+        m_observers.erase(std::remove(m_observers.begin(), m_observers.end(), observer), m_observers.end());
+    }
+    void notifySunCollected(int amount) {
+        for (auto* obs : m_observers) if (obs) obs->onSunCollected(amount);
+    }
+    void notifyZombieKilled(const std::string& zombieName) {
+        for (auto* obs : m_observers) if (obs) obs->onZombieKilled(zombieName);
+    }
+};
+\end{lstlisting}
+
+\paragraph{Architectural Benefits \& SOLID Alignment:}
+\begin{itemize}
+    \item \textbf{Dependency Inversion Principle (DIP):} Core game logic depends exclusively on abstract event interfaces (\texttt{IGameObserver}) rather than concrete UI/Audio implementations.
+    \item \textbf{Loose Coupling:} Event subscribers can be attached or detached dynamically at runtime without interrupting the game loop.
+\end{itemize}
+
+% -----------------------------------------------------------------
+% 4.4 COMMAND PATTERN
+% -----------------------------------------------------------------
+\subsection{Command Pattern -- Encapsulated Plant Placement Actions}
+
+\paragraph{Problem \& Architectural Context:}
+Planting on the 5x9 lawn grid requires pre-execution validation: verifying sun balance, checking seed packet cooldown status, and validating cell availability. Inlining grid mutation logic directly into mouse input callback functions clutters input handling code and prevents deferred execution.
+
+\paragraph{Solution \& C++20 Implementation:}
+The Command Pattern encapsulates plant placement requests into stand-alone \texttt{PlantPlacementCommand} objects. Placement actions are captured as executable closures (\texttt{std::function<void()>}), decoupling user input parsing from immediate game state mutation.
+
+\begin{center}
+\begin{tikzpicture}[
+    cnode/.style={draw, rounded corners, minimum width=3.5cm, minimum height=0.7cm, align=center, font=\footnotesize}
+]
+\node[cnode] (invoker) at (0, 0) {\texttt{Level1} \\ (Invoker / Client)};
+\node[cnode] (cmd) at (5.5, 0) {\texttt{ICommand} \\ (interface)};
+\node[cnode] (plant_cmd) at (5.5, -3.0) {\texttt{PlantPlacementCommand}};
+
+\draw[-{Diamond}] (invoker) -- (cmd);
+\draw[dashed, -{Triangle}] (plant_cmd) -- (cmd);
+\end{tikzpicture}
+\end{center}
+
+\begin{lstlisting}[language=C++, caption={Command Pattern -- PlantPlacementCommand}]
+// filepath: include/utils/PlantCommand.h
+class ICommand {
+public:
+    virtual ~ICommand() = default;
+    virtual void execute() = 0;
+};
+
+class PlantPlacementCommand : public ICommand {
+private:
+    std::function<void()> m_action;
+
+public:
+    explicit PlantPlacementCommand(std::function<void()> action) 
+        : m_action(std::move(action)) {}
+        
+    void execute() override {
+        if (m_action) {
+            m_action(); // Executes encapsulated grid placement logic
+        }
+    }
+};
+\end{lstlisting}
+
+\paragraph{Architectural Benefits \& SOLID Alignment:}
+\begin{itemize}
+    \item \textbf{Input vs. Execution Decoupling:} Completely separates raw mouse click event handling from grid state modification logic.
+    \item \textbf{Extensibility for Macro Queues \& Undo:} Provides an extensible foundation for action logging, network serialization, and potential undo/redo capabilities.
+\end{itemize}
+
+% -----------------------------------------------------------------
+% 4.5 BUILDER PATTERN
+% -----------------------------------------------------------------
+\subsection{Builder Pattern -- Fluent Zombie Wave Construction}
+
+\paragraph{Problem \& Architectural Context:}
+Level configurations require instantiating complex, heterogeneous zombie waves (consisting of Normal, Conehead, Buckethead, Football, Newspaper, and PoleVaulting zombies) at custom spatial offsets. Manually constructing every zombie instance via raw pointers or inline \texttt{make\_unique} calls inside level initialization leads to verbose, repetitive code prone to ownership bugs.
+
+\paragraph{Solution \& C++20 Implementation:}
+The Builder Pattern provides a method-chaining fluent interface (\texttt{ZombieWaveBuilder}) to construct wave compositions step by step. The \texttt{build()} method transfers exclusive ownership of the compiled \texttt{std::vector<std::unique\_ptr<Zombie>>} using C++ move semantics (\texttt{std::move}).
+
+\begin{center}
+\begin{tikzpicture}[
+    cnode/.style={draw, rounded corners, minimum width=3.5cm, minimum height=0.7cm, align=center, font=\footnotesize}
+]
+\node[cnode] (builder) at (0, 0) {\texttt{ZombieWaveBuilder}};
+\node[cnode] (zombie) at (5.5, 0) {\texttt{Zombie} \\ (abstract product)};
+\node[cnode] (normal) at (1.2, -3.5) {\texttt{ZombieNormal}};
+\node[cnode] (cone) at (5.5, -3.5) {\texttt{ConeheadZombie}};
+\node[cnode] (foot) at (9.8, -3.5) {\texttt{FootballZombie}};
+
+\draw[-{Diamond}] (builder) -- (zombie);
+\draw[dashed, -{Triangle}] (normal) -- (zombie);
+\draw[dashed, -{Triangle}] (cone) -- (zombie);
+\draw[dashed, -{Triangle}] (foot) -- (zombie);
+\end{tikzpicture}
+\end{center}
+
+\begin{lstlisting}[language=C++, caption={Builder Pattern -- ZombieWaveBuilder}]
+// filepath: include/utils/WaveBuilder.h
+class ZombieWaveBuilder {
+private:
+    std::vector<std::unique_ptr<Zombie>> m_zombies;
+    Resources& m_res;
+
+public:
+    explicit ZombieWaveBuilder(Resources& res) : m_res(res) {}
+    
+    ZombieWaveBuilder& addNormalZombie(float x, float y) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(m_res, x, y));
+        return *this;
+    }
+    ZombieWaveBuilder& addConeheadZombie(float x, float y) {
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(m_res, x, y));
+        return *this;
+    }
+    ZombieWaveBuilder& addFootballZombie(float x, float y) {
+        m_zombies.push_back(std::make_unique<FootballZombie>(m_res, x, y));
+        return *this;
+    }
+    
+    // Returns completed vector and transfers exclusive ownership via Move Semantics
+    std::vector<std::unique_ptr<Zombie>> build() {
+        return std::move(m_zombies);
+    }
+};
+\end{lstlisting}
+
+\paragraph{Architectural Benefits \& SOLID Alignment:}
+\begin{itemize}
+    \item \textbf{Fluent API Expressiveness:} Dramatically improves readability during level setup via clean method chaining.
+    \item \textbf{Memory Safety:} Prevents memory leaks by leveraging \texttt{std::unique\_ptr} smart pointers combined with strict C++ move semantics.
+\end{itemize}
+
+% -----------------------------------------------------------------
+% 4.6 FACADE PATTERN
+% -----------------------------------------------------------------
+\subsection{Facade Pattern -- Unified Engine Subsystem Interface}
+
+\paragraph{Problem \& Architectural Context:}
+High-level gameplay components (UI screens, level loops, entity update functions) frequently need to interact with multiple core engine subsystems (fetching textures from \texttt{Resources}, playing audio from \texttt{AudioManager}, querying save state from \texttt{ProfileManager}). Having every entity include and manage multiple separate singleton headers creates dense dependency webs (\textit{dependency clutter}).
+
+\paragraph{Solution \& C++20 Implementation:}
+The Facade Pattern introduces \texttt{GameEngineFacade}, serving as a unified entry point. This class exposes simplified, static wrapper methods that internally coordinate interactions across the low-level core subsystems.
+
+\begin{center}
+\begin{tikzpicture}[
+    cnode/.style={draw, rounded corners, minimum width=3.2cm, minimum height=0.7cm, align=center, font=\footnotesize}
+]
+\node[cnode] (facade) at (4, 0) {\texttt{GameEngineFacade} \\ (Facade)};
+\node[cnode] (res) at (0, -3.0) {\texttt{Resources}};
+\node[cnode] (audio) at (4, -3.0) {\texttt{AudioManager}};
+\node[cnode] (prof) at (8, -3.0) {\texttt{ProfileManager}};
+
+\draw[dashed, -{Stealth}] (facade) -- (res);
+\draw[dashed, -{Stealth}] (facade) -- (audio);
+\draw[dashed, -{Stealth}] (facade) -- (prof);
+\end{tikzpicture}
+\end{center}
+
+\begin{lstlisting}[language=C++, caption={Facade Pattern -- GameEngineFacade}]
+// filepath: include/core/GameEngineFacade.h
+class GameEngineFacade {
+public:
+    static void PlaySFX(const std::string& soundAsset) {
+        std::string fullPath = Resources::GetInstance().GetAssetPath(soundAsset);
+        AudioManager::GetInstance().PlaySoundEffect(fullPath);
+    }
+
+    static Texture2D GetTexture(const std::string& name) {
+        return Resources::GetInstance().GetTexture(name);
+    }
+
+    static ReanimDefinition LoadReanim(const std::string& filePath) {
+        return Resources::GetInstance().LoadReanim(filePath);
+    }
+
+    static ProfileManager& GetProfile() {
+        return ProfileManager::GetInstance();
+    }
+};
+\end{lstlisting}
+
+\paragraph{Architectural Benefits \& SOLID Alignment:}
+\begin{itemize}
+    \item \textbf{Reduced Coupling:} Client entities depend strictly on \texttt{GameEngineFacade.h} rather than multiple subsystem headers.
+    \item \textbf{Subsystem Encapsulation:} Hides multi-step asset resolution procedures (such as \texttt{GetAssetPath}) behind clean, single-call static methods.
+\end{itemize}
+
+% -----------------------------------------------------------------
+% 4.7 ADAPTER PATTERN
+% -----------------------------------------------------------------
+\subsection{Adapter Pattern -- Audio Subsystem Interface Adaptation}
+
+\paragraph{Problem \& Architectural Context:}
+Low-level framework components (such as Raylib audio calls or C-style procedural APIs) do not conform to object-oriented interface hierarchies. Coupling gameplay entity logic directly to a specific procedural library makes swapping or upgrading underlying audio backends difficult.
+
+\paragraph{Solution \& C++20 Implementation:}
+An abstract C++ interface \texttt{IAudioEngine} defines the target audio contract. The \texttt{RaylibAudioAdapter} class implements this interface by wrapping calls to \texttt{AudioManager} and Raylib's native procedural functions.
+
+\begin{center}
+\begin{tikzpicture}[
+    cnode/.style={draw, rounded corners, minimum width=3.4cm, minimum height=0.7cm, align=center, font=\footnotesize}
+]
+\node[cnode] (target) at (0, 0) {\texttt{IAudioEngine} \\ (target interface)};
+\node[cnode] (adapter) at (0, -3.2) {\texttt{RaylibAudioAdapter} \\ (Adapter)};
+\node[cnode] (adaptee) at (5.0, -3.2) {\texttt{AudioManager} \\ (Adaptee)};
+
+\draw[dashed, -{Triangle}] (adapter) -- (target);
+\draw[-{Diamond}] (adapter) -- (adaptee);
+\end{tikzpicture}
+\end{center}
+
+\begin{lstlisting}[language=C++, caption={Adapter Pattern -- RaylibAudioAdapter}]
+// filepath: include/core/AudioAdapter.h
+class IAudioEngine {
+public:
+    virtual ~IAudioEngine() = default;
+    virtual void playSound(const std::string& soundAsset) = 0;
+};
+
+// Adapter wrapping procedural audio calls into a C++ OOP interface
+class RaylibAudioAdapter : public IAudioEngine {
+public:
+    void playSound(const std::string& soundAsset) override {
+        AudioManager::GetInstance().PlaySoundEffect(soundAsset);
+    }
+};
+\end{lstlisting}
+
+\paragraph{Architectural Benefits \& SOLID Alignment:}
+\begin{itemize}
+    \item \textbf{Vendor Lock-in Immunity:} Allows swapping the audio backend (e.g., to FMOD, OpenAL, or \texttt{SDL\_mixer}) by authoring a new adapter class without modifying game logic code.
+    \item \textbf{Dependency Inversion Principle (DIP):} Game components interact strictly with the abstract \texttt{IAudioEngine} interface.
+\end{itemize}
+
+
+% ================================================================
+%              4. ENTITY SYSTEM HIERARCHY
+% ================================================================
+\section{Entity System Hierarchy}
+\subsection{Plant Hierarchy}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=1.6cm, minimum height=0.4cm, align=center, font=\tiny},
+    level 1/.style={sibling distance=1.7cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=0.9cm
+]
+\node {\texttt{Plant}}
+    child { node {\texttt{PeaSh.}} }
+    child { node {\texttt{SnowPea}} }
+    child { node {\texttt{Repeater}} }
+    child { node {\texttt{Gat.Pea}} }
+    child { node {\texttt{SunFl.}} }
+    child { node {\texttt{Wallnut}} }
+    child { node {\texttt{Cherry}} }
+    child { node {\texttt{Chomper}} }
+    child { node {$\ldots$ (14)} };
+\end{tikzpicture}
+\end{center}
+
+\noindent The 22 concrete plant subclasses also include: Cornpult, Melonpult, Cabbagepult, Jalapeno, Squash, FirePea, Torchwood, Garlic, PotatoMine, Caltrop, SpikeRock, Gravebuster, IceShroom, and additional support variants.
+\subsection{Zombie Hierarchy}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.4cm, minimum height=0.6cm, align=center, font=\footnotesize},
+    level 1/.style={sibling distance=3.6cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.4cm
+]
+\node {\texttt{Zombie} (abstract)}
+    child { node {\texttt{ZombieNormal}} }
+    child { node {\texttt{FlagZombie}} }
+    child { node {\texttt{ConeheadZombie}} }
+    child { node {\texttt{BucketheadZombie}} };
+\end{tikzpicture}
+\end{center}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.4cm, minimum height=0.6cm, align=center, font=\footnotesize},
+    level 1/.style={sibling distance=4cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.4cm
+]
+\node {\texttt{Zombie} (cont.)}
+    child { node {\texttt{NewspaperZombie}} }
+    child { node {\texttt{FootballZombie}} }
+    child { node {\texttt{PoleVaultingZombie}} };
+\end{tikzpicture}
+\end{center}
+Total: \textbf{7 concrete zombie subclasses}. Each overrides \texttt{update()}, \texttt{draw()}, and optionally \texttt{takeDamage()} for armor-specific behavior (falling cone, bucket, helmet, newspaper).
+\subsection{Item \& Auxiliary Entities}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3cm, minimum height=0.6cm, align=center, font=\footnotesize},
+    level 1/.style={sibling distance=4cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.4cm
+]
+\node {Items \& Auxiliaries}
+    child { node {\texttt{Projectile}} }
+    child { node {\texttt{SunItem}} }
+    child { node {\texttt{LawnMower}} }
+    child { node {\texttt{ParticleEffect}} };
+\end{tikzpicture}
+\end{center}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3cm, minimum height=0.6cm, align=center, font=\footnotesize},
+    level 1/.style={sibling distance=3.5cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.4cm
+]
+\node {\texttt{BowlingNut} (abstract)}
+    child { node {\texttt{NormalBowlingNut}} }
+    child { node {\texttt{GiantBowlingNut}} }
+    child { node {\texttt{ExplodeBowlingNut}} };
+\end{tikzpicture}
+\end{center}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=2.6cm, minimum height=0.6cm, align=center, font=\footnotesize},
+    level 1/.style={sibling distance=3cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.4cm
+]
+\node {\texttt{Vase} (base)}
+    child { node {\texttt{BrownVase}} }
+    child { node {\texttt{GreenVase}} };
+\end{tikzpicture}
+\end{center}
+% ================================================================
+%             5. STATE MANAGEMENT HIERARCHY
+% ================================================================
+\section{State Management Hierarchy}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.4cm, minimum height=0.6cm, align=center, font=\small},
+    level 1/.style={sibling distance=4cm},
+    level 2/.style={sibling distance=3.4cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.5cm
+]
+\node {\texttt{AppState}}
+    child { node {\texttt{Loading}} }
+    child { node {\texttt{MainMenu}}
+        child { node {\texttt{OptionsMenu}} }
+        child { node {\texttt{ShopMenu}} }
+        child { node {\texttt{AlmanacMenu}} }
+        child { node {\texttt{LevelSelectMenu}} }
+    };
+\end{tikzpicture}
+\end{center}
+\noindent Within each level, the \texttt{LevelPhase} state machine governs the gameplay flow:
+\[
+\texttt{SeedSelection} \longrightarrow \texttt{PanToLawn} \longrightarrow \texttt{ReadySetPlant} \longrightarrow \texttt{ActiveWave}
+\]
+% ================================================================
+%           6. RESOURCE MANAGEMENT HIERARCHY
+% ================================================================
+\section{Resource Management Hierarchy}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.2cm, minimum height=0.5cm, align=center, font=\small},
+    level 1/.style={sibling distance=3.3cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.3cm
+]
+\node {\texttt{Resources}}
+    child { node {Textures} }
+    child { node {Images} }
+    child { node {Reanim Defs} };
+\end{tikzpicture}
+\end{center}
+\noindent The loading system uses a progressive queue: \texttt{PrepareAssetLoadingQueue()} scans directories, \texttt{StepAssetLoadingQueue()} loads batches each frame, and \texttt{GetLoadingProgress()} drives the loading bar UI.
+% ================================================================
+%            7. ANIMATION SYSTEM HIERARCHY
+% ================================================================
+\section{Animation System Hierarchy}
+The project uses a custom recreation of PopCap's \textbf{Reanimation Engine} to render all plant and zombie sprites.
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.0cm, minimum height=0.5cm, align=center, font=\small},
+    level 1/.style={sibling distance=3.2cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.3cm
+]
+\node {\texttt{Reanimation}}
+    child { node {Definition} }
+    child { node {Track} }
+    child { node {Keyframe} };
+\end{tikzpicture}
+\end{center}
+\noindent Key capabilities:
+\begin{itemize}[leftmargin=2em]
+    \item Multi-track bone animation with per-frame transform interpolation.
+    \item Named animation ranges (\texttt{anim\_idle}, \texttt{anim\_shooting}, \texttt{anim\_death}, etc.).
+    \item Runtime track visibility toggling and texture overrides for dynamic armor removal.
+    \item Frame-accurate event detection (e.g., fire projectile at frame $N$ of shooting animation).
+\end{itemize}
+% ================================================================
+%             8. COMBAT SYSTEM HIERARCHY
+% ================================================================
+\section{Combat System Hierarchy}
+The combat system consists of four interconnected subsystems managed within each Level class:
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Projectile System:} \texttt{Projectile} objects with type flags (snow, fire, melon, butter, lobbed) and configurable speed, damage, scale, and trailing particle effects.
+    \item \textbf{Collision Detection:} Per-frame AABB collision checks between all \texttt{Projectile}s and \texttt{Zombie}s, applying damage, slow effects, fire ignition (via Torchwood), and splash damage for melons.
+    \item \textbf{Damage Model:} Armoured zombies (\texttt{ConeheadZombie}, \texttt{BucketheadZombie}, \texttt{FootballZombie}) override \texttt{takeDamage()} to detach armor parts (\texttt{FallingPart}) at HP thresholds before delegating to the base implementation.
+    \item \textbf{Lawn Mower Defense:} \texttt{LawnMower} objects sit at the left edge of each lane; when a zombie reaches them, they trigger and sweep across the lane, instantly killing all zombies in their path.
+\end{enumerate}
+\begin{lstlisting}[caption={Projectile class --- multi-type projectile with physics}]
+// filepath: include/entities/items/Projectile.h
+class Projectile {
+private:
+    float m_x, m_y, m_speed;
+    Texture2D m_tex;
+    bool m_active, m_isSnow, m_isFire, m_isMelon, m_isButter, m_isLobbed;
+    float m_range, m_maxHeight, m_scale;
+    int m_damage;
+    ParticleEffect efftrailing;
+    Reanimation m_fireAnim;
+public:
+    Projectile(float x, float y, float speed, Texture2D tex,
+               bool isSnow = false, bool isLobbed = false,
+               float scale = 1.0f, int damage = 20, ...);
+    void ignite(Texture2D fireTex = {0}); // Torchwood fire conversion
+    void onHit();
+    // ... getters for type checks
+};
+\end{lstlisting}
+% ================================================================
+%             9. WORLD SYSTEM HIERARCHY
+% ================================================================
+\section{Level \& World System Hierarchy}
+\subsection{Level Class Hierarchy}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.2cm, minimum height=0.6cm, align=center, font=\small},
+    level 1/.style={sibling distance=3.6cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.5cm
+]
+\node {\texttt{Level1} (Day Base)}
+    child { node {\texttt{Level2}} }
+    child { node {\texttt{Level3}} };
+\end{tikzpicture}
+\hspace{1cm}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.2cm, minimum height=0.6cm, align=center, font=\small},
+    level 1/.style={sibling distance=3.6cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.5cm
+]
+\node {\texttt{Level4} (Night Base)}
+    child { node {\texttt{Level5}} }
+    child { node {\texttt{Level6}} };
+\end{tikzpicture}
+\end{center}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=3.4cm, minimum height=0.6cm, align=center, font=\small},
+    level 1/.style={sibling distance=5cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.5cm
+]
+\node {Mini-games (standalone)}
+    child { node {\texttt{BowlingLevel}} }
+    child { node {\texttt{VasebreakerLevel}} };
+\end{tikzpicture}
+\end{center}
+\subsection{Night Level Extensions}
+\texttt{Level4} extends the day-level template with:
+\begin{itemize}[leftmargin=2em]
+    \item \texttt{GraveStone} structs placed on the grid, blocking planting and spawning rising zombies.
+    \item \texttt{RisingZombie} animation system for zombies emerging from graves.
+    \item Fog rendering (\texttt{drawFog()}) that gradually obscures the right side of the lawn.
+    \item \texttt{Gravebuster} plant interaction to destroy gravestones.
+\end{itemize}
+\subsection{Grid \& Collision Architecture}
+Each level owns:
+\begin{itemize}[leftmargin=2em]
+    \item \texttt{std::unique\_ptr<Plant> m\_grid[5][9]} --- the $5 \times 9$ lawn grid.
+    \item \texttt{std::vector<std::unique\_ptr<Zombie>{>} m\_zombies} --- active zombie pool.
+    \item \texttt{std::vector<Projectile> m\_projectiles} --- live projectiles.
+    \item \texttt{std::vector<SunItem> m\_suns} --- collectible sun items.
+    \item \texttt{std::vector<ParticleEffect> m\_effects} --- visual particles.
+    \item \texttt{std::vector<LawnMower> m\_lawnMowers} --- one per lane.
+\end{itemize}
+The \texttt{updateCollisions}\texttt{(dt)} method performs per-frame row-based AABB intersection to resolve projectile-zombie, zombie-plant, zombie-lawnmower, and area-of-effect interactions.
+% ================================================================
+%            10. UI SYSTEM HIERARCHY
+% ================================================================
+\section{UI System Hierarchy}
+\begin{center}
+\begin{tikzpicture}[
+    every node/.style={draw, rounded corners, minimum width=2.6cm, minimum height=0.6cm, align=center, font=\footnotesize},
+    level 1/.style={sibling distance=2.9cm},
+    edge from parent/.style={draw, ->, thick},
+    grow=down, level distance=1.4cm
+]
+\node {UI System}
+    child { node {\texttt{MainMenu}} }
+    child { node {\texttt{SeedBank}\\+\texttt{SeedPacket}} }
+    child { node {\texttt{SeedSelectMenu}} }
+    child { node {\texttt{AlmanacMenu}} }
+    child { node {\texttt{InGameMenu}} };
+\end{tikzpicture}
+\end{center}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{SeedBank + SeedPacket:} In-game HUD displaying the player's chosen deck, sun counter, cooldown timers, and shovel tool. Manages plant selection and sun deduction.
+    \item \textbf{SeedSelectMenu:} Pre-level deck builder. Displays all unlocked plants as selectable cards; the player drags up to 7 into their deck before pressing \emph{LET'S ROCK!}
+    \item \textbf{AlmanacMenu:} Interactive encyclopedia with live reanimation previews of every plant and zombie, including stats, descriptions, and flavor text.
+    \item \textbf{ShopMenu:} Crazy Dave's shop with paginated seed packet catalog, coin bank display, and purchase/unlock flow integrated with \texttt{ProfileManager}.
+    \item \textbf{InGameMenu:} Pause menu overlay with volume sliders, restart, and main menu buttons.
+    \item \textbf{LevelSelectMenu:} Day/Night stage selector with tombstone-style level cards and locked-level gating.
+    \item \textbf{BitmapFont:} PopCap-style bitmap font renderer supporting 5 font families with kerning, rotation, centering, and right-alignment.
+\end{itemize}
+% ================================================================
+%            11. ARCHITECTURAL ANALYSIS
+% ================================================================
+\section{Architectural Analysis}
+\subsection{Hierarchy Strengths}
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Clear Separation of Concerns}
+    \begin{itemize}
+        \item \texttt{core/} --- Engine infrastructure: resource loading, audio, fonts, animation, profiles.
+        \item \texttt{entities/} --- Game object behavior: plants, zombies, items.
+        \item \texttt{level/} --- Gameplay loop: grid, waves, collisions, win/lose.
+        \item \texttt{ui/} --- Menus and interface: main menu, seed selection, almanac, shop.
+    \end{itemize}
+    \item \textbf{Design Pattern Integration}
+    \begin{itemize}
+        \item \textit{Singleton Pattern:} Three centralized managers (Resources, AudioManager, ProfileManager).
+        \item \textit{Template Method / Polymorphism:} Pure-virtual \texttt{update}\texttt{()}/\texttt{draw}\texttt{()} in Plant and Zombie hierarchies.
+        \item \textit{State Pattern:} AppState for top-level flow; LevelPhase for intra-level flow; SquashState and VaseState for entity behavior.
+        \item \textit{Factory Method:} \texttt{createPlant}\texttt{()}, \texttt{BowlingNut::Create}\texttt{()} for type-driven instantiation.
+        \item \textit{Observer Pattern:} Sun collection notification chain between SunItem and SeedBank.
+    \end{itemize}
+    \item \textbf{Extensibility}
+    \begin{itemize}
+        \item Adding a new plant requires only a new \texttt{.h}/\texttt{.cpp} pair inheriting from \texttt{Plant} and a line in the factory --- zero changes to the level loop.
+        \item Day levels (Level2, Level3) and night levels (Level5, Level6) inherit from their respective bases with minimal overrides.
+        \item The Reanimation engine supports any PopCap \texttt{.reanim} file without code changes.
+    \end{itemize}
+    \item \textbf{Performance Considerations}
+    \begin{itemize}
+        \item Zero-allocation keyframe interpolation in hot animation loops.
+        \item Packed integer kerning map (\texttt{uint16\_t}) to avoid per-glyph string allocations in font rendering.
+        \item Progressive asset loading with batched file I/O to prevent frame drops during startup.
+        \item Lazy texture caching in UI components to bypass repeated string lookups.
+    \end{itemize}
+\end{enumerate}
+\subsection{Key Design Decisions}
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Raylib + C++20:} Lightweight graphics library with zero external dependencies beyond the C standard library, compiled via CMake with FetchContent for raylib, raygui, and nlohmann\_json.
+    \item \textbf{Custom Reanimation Engine:} Faithful recreation of PopCap's XML-based skeletal animation system, enabling direct use of original \texttt{.reanim} assets.
+    \item \textbf{Grid-Based Architecture:} The $5 \times 9$ \texttt{unique\_ptr<Plant>} grid provides O{(1)} plant placement and row-based collision filtering.
+    \item \textbf{Level Inheritance:} Day and Night base levels share 90\%+ logic; derived levels only override \texttt{spawnNextWave}\texttt{()} and \texttt{getUniqueLevelZombieTypes}\texttt{()} for content variation.
+    \item \textbf{Profile Persistence:} JSON-based user profiles (via nlohmann\_json) store progression independently from code, enabling multiple save slots.
+\end{enumerate}
+% =================================================================
+% SECTION: WORK DIVISION AND TEAM CONTRIBUTIONS
+% =================================================================
+
+\section{Work Division and Team Contributions}
+To ensure efficient development and maintain a clear separation of concerns, the project responsibilities were divided based on architectural domains: \textbf{Engine Architecture \& UI Subsystems} vs. \textbf{Gameplay Mechanics \& Entity Systems}. Both team members contributed equally to the research, implementation, and refinement of the codebase.
+
+\begin{table}[htbp]
+\centering
+\caption{Team Work Division Summary}\label{tab:work_division}
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.4cm}>{\centering\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}X>{\centering\arraybackslash}p{2.5cm}@{}}
+\toprule
+\textbf{Full Name} & \textbf{Student ID} & \textbf{Core Responsibilities \& Major Deliverables} & \textbf{Contribution} \\
+\midrule
+\textbf{Nguyễn Phúc Khánh} & 25125086 & 
+\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt]
+    \item Lead Architecture \& Build Automation (CMake, GitHub CI)
+    \item Core Infrastructure Managers (Resources, AudioManager)
+    \item Complete User Interface Suite (Menus, Shop, Almanac)
+    \item Special Game Modes (Wall-nut Bowling, Vasebreaker)
+\end{itemize} & 50\% \\
+\midrule
+\textbf{Từ Hoàng Anh} & 25125005 & 
+\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt]
+    \item Plant \& Zombie Entity Class Hierarchies (15+ Classes)
+    \item Physics Trajectory Strategy (Straight, Lobbed, Ignition)
+    \item Level Design, Grid Management \& Wave Timing (Day/Night)
+    \item Gameplay Balancing \& Interactive Visual Features
+\end{itemize} & 50\% \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{High-Level Domain Breakdown}
+
+\paragraph{Nguyễn Phúc Khánh (ID 25125086): Architecture, Subsystems \& UI Suite}
+\begin{itemize}
+    \item \textbf{Build System \& CI/CD:} Configured multi-platform CMake automation, dependency management via FetchContent, and automated GitHub Actions integration.
+    \item \textbf{Core Subsystem Infrastructure:} Implemented Scott Meyers' Singleton managers for thread-safe texture, audio, and user profile handling (\texttt{Resources}, \texttt{AudioManager}, \texttt{ProfileManager}).
+    \item \textbf{User Interface (UI) Suite:} Designed and implemented all game screens, including \texttt{LoadingScreen}, \texttt{MainMenu}, \texttt{OptionsMenu}, \texttt{ShopMenu} (Crazy Dave's Shop), \texttt{AlmanacMenu}, \texttt{SeedChooser}, and \texttt{LevelSelect}.
+    \item \textbf{Minigame Modes:} Developed the conveyor-belt physics for \texttt{Wall-nut Bowling} and the grid smashing/mallet mechanics for \texttt{Vasebreaker}.
+\end{itemize}
+
+\paragraph{Từ Hoàng Anh (ID 25125005): Gameplay Mechanics, Entities \& Level Design}
+\begin{itemize}
+    \item \textbf{Entity Hierarchies:} Engineered combat logic, states, and animation setups for all 15+ Plant subclasses and Zombie variants (Normal, Conehead, Buckethead, PoleVaulting).
+    \item \textbf{Physics \& Trajectories:} Developed linear and parabolic lobbed projectile flight paths (\texttt{ITrajectoryStrategy}) and element transformations (e.g., Torchwood pea ignition).
+    \item \textbf{Level Design \& Wave Engine:} Structured the main $5 \times 9$ lawn grid, wave spawning timers, sun currency collection (\texttt{SunItem}), and Night Mode environmental mechanics.
+    \item \textbf{Game Balancing \& Visual Polish:} Implemented zombie limb dismemberment physics, custom cloud environmental shaders/animations, quiz dialogs, and game difficulty tuning.
+\end{itemize}
+
+\section{Project Resources}
+\begin{itemize}
+    \item Demo video: \href{https://youtu.be/97fJ6doDHdQ}{YouTube Demo Video}
+    \item GitHub repository: \href{https://github.com/khanhf-ng820/CS202-GameProject}{CS202 Game Project}
+    \item Work distribution sheet: \href{https://docs.google.com/spreadsheets/d/1Gdbg5CkyEm50gdGvNHR7rK6dCerKZTqORMJKWjMAijY/edit?gid=1781385760\#gid=1781385760}{Work Distribution Sheet}
+\end{itemize}
+
+\end{document}
