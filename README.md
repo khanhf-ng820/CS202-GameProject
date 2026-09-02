@@ -327,8 +327,7 @@ classDiagram
         -unordered_map images
         -Texture2D background
         -Resources()
-        -~Resources()
-        +GetInstance()$ Resources&
+        +GetInstance() Resources$
         +GetTexture(name) Texture2D
         +LoadReanim(filePath) ReanimDefinition
         +GetAssetPath(relativePath) string
@@ -340,8 +339,7 @@ classDiagram
         -float m_musicVolume
         -float m_sfxVolume
         -AudioManager()
-        -~AudioManager()
-        +GetInstance()$ AudioManager&
+        +GetInstance() AudioManager$
         +PlayMusic(track) void
         +PlaySoundEffect(path) void
         +Update() void
@@ -353,8 +351,7 @@ classDiagram
         -UserProfile m_activeProfile
         -string m_activeUserName
         -ProfileManager()
-        -~ProfileManager()
-        +GetInstance()$ ProfileManager&
+        +GetInstance() ProfileManager$
         +SaveCurrentProfile() void
         +AddCoins(amount) void
         +UnlockPlant(name) void
@@ -362,11 +359,11 @@ classDiagram
     }
 
     class Level1 {
-        -Resources& res
+        -Resources res
     }
 
     class MainMenu {
-        -Resources& m_res
+        -Resources m_res
     }
 
     Level1 --> Resources : queries instance
@@ -422,21 +419,21 @@ classDiagram
         #float m_vx
         #float m_vy
         #float m_rotationAngle
-        +Create(plantType, x, y)$ unique_ptr~BowlingNut~
-        +update(dt, zombies, hitDebugTimers, res)* void
-        +draw()* void
+        +Create(plantType, x, y) BowlingNut$
+        +update(dt, zombies) void*
+        +draw() void*
         +isDead() bool
     }
 
     class NormalBowlingNut {
         +NormalBowlingNut(x, y)
-        +update(dt, zombies, hitDebugTimers, res) void
+        +update(dt, zombies) void
         +draw() void
     }
 
     class GiantBowlingNut {
         +GiantBowlingNut(x, y)
-        +update(dt, zombies, hitDebugTimers, res) void
+        +update(dt, zombies) void
         +draw() void
     }
 
@@ -444,12 +441,12 @@ classDiagram
         -bool m_isExploding
         -float m_explodeTimer
         +ExplodeBowlingNut(x, y)
-        +update(dt, zombies, hitDebugTimers, res) void
+        +update(dt, zombies) void
         +draw() void
     }
 
     class BowlingLevel {
-        -vector~unique_ptr~BowlingNut~~ m_bowlingNuts
+        -vector~BowlingNut~ m_bowlingNuts
         +update(dt) void
     }
 
@@ -490,17 +487,17 @@ std::unique_ptr<BowlingNut> BowlingNut::Create(const std::string& plantType, flo
 ```mermaid
 classDiagram
     class ZombieWaveBuilder {
-        -vector~unique_ptr~Zombie~~ m_zombies
-        -Resources& m_res
+        -vector~Zombie~ m_zombies
+        -Resources m_res
         +ZombieWaveBuilder(res)
-        +addNormalZombie(x, y) ZombieWaveBuilder&
-        +addConeheadZombie(x, y) ZombieWaveBuilder&
-        +addBucketheadZombie(x, y) ZombieWaveBuilder&
-        +addFlagZombie(x, y) ZombieWaveBuilder&
-        +addFootballZombie(x, y) ZombieWaveBuilder&
-        +addNewspaperZombie(x, y) ZombieWaveBuilder&
-        +addPoleVaultingZombie(x, y) ZombieWaveBuilder&
-        +build() vector~unique_ptr~Zombie~~
+        +addNormalZombie(x, y) ZombieWaveBuilder
+        +addConeheadZombie(x, y) ZombieWaveBuilder
+        +addBucketheadZombie(x, y) ZombieWaveBuilder
+        +addFlagZombie(x, y) ZombieWaveBuilder
+        +addFootballZombie(x, y) ZombieWaveBuilder
+        +addNewspaperZombie(x, y) ZombieWaveBuilder
+        +addPoleVaultingZombie(x, y) ZombieWaveBuilder
+        +build() vector~Zombie~
     }
 
     class Zombie {
@@ -508,12 +505,12 @@ classDiagram
         #float m_x
         #float m_y
         #int m_hp
-        +update(dt)* void
-        +draw()* void
+        +update(dt) void*
+        +draw() void*
     }
 
     class Level1 {
-        -vector~unique_ptr~Zombie~~ m_zombies
+        -vector~Zombie~ m_zombies
         +spawnNextWave() void
     }
 
@@ -574,7 +571,7 @@ for (auto& z : wave1Zombies) {
 classDiagram
     class ITrajectoryStrategy {
         <<interface>>
-        +updatePosition(x, y, startX, startY, speed, range, maxHeight, progress, dt)* void
+        +updatePosition(x, y, startX, startY, speed, range, maxHeight, progress, dt) void*
     }
 
     class StraightTrajectoryStrategy {
@@ -589,7 +586,7 @@ classDiagram
         -float m_x
         -float m_y
         -float m_progress
-        -shared_ptr~ITrajectoryStrategy~ m_strategy
+        -ITrajectoryStrategy m_strategy
         +update(dt) void
         +draw() void
         +onHit() void
@@ -668,7 +665,7 @@ classDiagram
     }
 
     class GameSubject {
-        -vector~IGameObserver*~ m_observers
+        -vector~IGameObserver~ m_observers
         +addObserver(observer) void
         +removeObserver(observer) void
         +notifySunCollected(amount) void
@@ -743,17 +740,17 @@ public:
 classDiagram
     class ICommand {
         <<interface>>
-        +execute()* void
+        +execute() void*
     }
 
     class PlantPlacementCommand {
-        -function~void()~ m_action
+        -Action m_action
         +PlantPlacementCommand(action)
         +execute() void
     }
 
     class Level1 {
-        -unique_ptr~Plant~ m_grid[5][9]
+        -Plant m_grid
         +createPlant(type, row, col, pixelX, pixelY) void
     }
 
@@ -818,7 +815,7 @@ cmd.execute();
 ```mermaid
 stateDiagram-v2
     [*] --> SeedSelection : Level Initialized
-    SeedSelection --> PanToLawn : Deck Confirmed (LET'S ROCK!)
+    SeedSelection --> PanToLawn : Deck Confirmed (LETS ROCK)
     PanToLawn --> ReadySetPlant : Camera Arrives at House (2.5s)
     ReadySetPlant --> ActiveWave : Ready-Set-Plant Animation Finished
     ActiveWave --> [*] : Level Won or Lost
@@ -847,7 +844,7 @@ stateDiagram-v2
         [*] --> UNDERGROUND : Planted
         UNDERGROUND --> ARMING : Sprout Emerges (14s)
         ARMING --> ARMED : Indicator Light Active
-        ARMED --> [*] : Zombie Contact -> SPUDOW!
+        ARMED --> [*] : Zombie Contact detonates SPUDOW
     }
 ```
 
@@ -868,7 +865,7 @@ stateDiagram-v2
 classDiagram
     class IAudioEngine {
         <<interface>>
-        +playSound(soundAsset)* void
+        +playSound(soundAsset) void*
     }
 
     class RaylibAudioAdapter {
@@ -876,12 +873,12 @@ classDiagram
     }
 
     class AudioManager {
-        +GetInstance()$ AudioManager&
+        +GetInstance() AudioManager$
         +PlaySoundEffect(path) void
     }
 
     class Client {
-        -IAudioEngine* m_audio
+        -IAudioEngine m_audio
     }
 
     IAudioEngine <|.. RaylibAudioAdapter
@@ -924,26 +921,26 @@ public:
 ```mermaid
 classDiagram
     class GameEngineFacade {
-        +PlaySFX(soundAsset)$ void
-        +GetTexture(name)$ Texture2D
-        +LoadReanim(filePath)$ ReanimDefinition
-        +GetProfile()$ ProfileManager&
+        +PlaySFX(soundAsset) void$
+        +GetTexture(name) Texture2D$
+        +LoadReanim(filePath) ReanimDefinition$
+        +GetProfile() ProfileManager$
     }
 
     class Resources {
-        +GetInstance()$ Resources&
+        +GetInstance() Resources$
         +GetAssetPath(relativePath) string
         +GetTexture(name) Texture2D
         +LoadReanim(filePath) ReanimDefinition
     }
 
     class AudioManager {
-        +GetInstance()$ AudioManager&
+        +GetInstance() AudioManager$
         +PlaySoundEffect(path) void
     }
 
     class ProfileManager {
-        +GetInstance()$ ProfileManager&
+        +GetInstance() ProfileManager$
     }
 
     GameEngineFacade --> Resources : delegates asset calls
