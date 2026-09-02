@@ -46,6 +46,7 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
     res.GetAssetPath("assets/reanim/PeaShooter.reanim")
     ```
     This function checks multiple parent directory steps (`../`, `../../`, etc.) automatically.
+*   **Submission Branch & Asset Retrieval:** `assets/` is excluded on the `submission` git branch (`git clone -b submission`). `CMakeLists.txt` is configured to download `assets.zip` from GitHub Releases automatically if `assets/` is missing at configure time. Never check in or bundle large asset zip files directly into git branches meant for assignment submission. Requires CMake 3.20+.
 
 ---
 
@@ -98,7 +99,7 @@ This codebase uses C++20 and Raylib. Keep your edits concise, and follow these p
 
 *   **Game State & Architecture:** Game state is managed via `MainMenu`, `OptionsMenu`, `ShopMenu` (Crazy Dave's Shop), and `Level1` (which handles the 5x9 grid, waves, economy via `SunItem`, and collisions). **Build on top of these existing systems** rather than reinventing them.
 *   **"Multiple Players" interpretation:** This is a planned feature for a **pre-level Seed Deck Loadout Screen**, where the player builds their active `currentDeck` from `unlockedPlants` before a level. (Currently, `SeedBank` provides a default static deck). Mention this interpretation explicitly in the design document.
-*   **OOP Design Patterns Tracker:** The rubric grades "Effective use of 5 design patterns" (25/100 points). Before adding subsystems, review `.agents/skills/design-patterns-tracker/SKILL.md` to map them onto needed patterns. Keep the status table updated in your commits.
+*   **OOP Design Patterns Reference:** 9 design patterns (`Singleton`, `Factory Method`, `Builder`, `Strategy`, `Observer`, `Command`, `State`, `Adapter`, `Facade`) are implemented and documented with Mermaid class diagrams in `README.md`. Consult `.agents/skills/design-patterns-tracker/SKILL.md` when maintaining pattern documentation.
 
 ---
 
