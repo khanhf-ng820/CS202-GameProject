@@ -20,12 +20,15 @@ design documentation deliverable (see the `design-doc-generator` skill).
 
 | Pattern | Status | Location | Notes |
 |---|---|---|---|
-| Singleton | **Done** | `Resources::GetInstance()` in `src/resources.cpp` | Classic Meyer's singleton (`static Resources instance;` in a function). Leave as-is. |
-| Factory Method | **Done** | `BowlingNut::Create(plantType, x, y)` in `src/entities/plants/BowlingNut.cpp` | Static factory method creating `NormalBowlingNut`, `GiantBowlingNut`, or `ExplodeBowlingNut` subclasses based on plant seed card type. |
-| State | **Partial** | `JalapenoState` enum (`EXPLODING_SWELL` / `EXPLODING_FIRE` / `DONE`) in `include/Jalapeno.h` | Good small-scale example already exists. Formalize a project-wide `GameState` (see `game-state-and-levels` skill) using the same enum-driven-branch approach, or promote to real State objects with a common interface if you want a cleaner textbook example for the design doc. |
-| Observer | **Not started** | — | Strong fit: "sun collected" → HUD update, "zombie died" → score/wave-tracker update, "plant destroyed" → grid cell freed for replanting. Decouples `main.cpp`'s draw/update loop from scoring and UI, which currently have no separation at all. |
-| Strategy | **Not started** | — | `Projectile`'s `m_isLobbed` bool plus `m_range`/`m_maxHeight` (in `include/Projectile.h`) is already an interchangeable-trajectory problem hiding as a flag. Extract a `TrajectoryStrategy` interface with `StraightStrategy` and `LobbedStrategy` implementations; `Melonpult`/`Cornpult` (lobbed) vs. `PeaShooter`/`SnowPea`/`Repeater`/`GatlingPea` (straight) are the natural test cases. |
-| Command (optional 6th) | **Not started** | — | Wrap "plant seed of type T at grid cell (r,c)" as a Command object with an `Execute()`. Makes the save/load feature in `game-state-and-levels` and an undo-last-placement feature almost free, and is an easy 6th pattern if a grader is strict about the 5. |
+| Singleton | **Done** | `Resources`, `AudioManager`, `ProfileManager` (`include/core/`) | Classic Meyer's singletons with static local instance and deleted copy/assign operators. |
+| Factory Method | **Done** | `BowlingNut::Create(...)` in `src/entities/plants/BowlingNut.cpp` | Static factory method creating `NormalBowlingNut`, `GiantBowlingNut`, or `ExplodeBowlingNut` subclasses based on plant seed card type. |
+| Builder | **Done** | `ZombieWaveBuilder` in `include/utils/WaveBuilder.h` | Fluent builder with method chaining and move semantics for assembling zombie wave vectors. |
+| Strategy | **Done** | `ITrajectoryStrategy` in `include/entities/items/TrajectoryStrategy.h` | `StraightTrajectoryStrategy` (linear) & `LobbedTrajectoryStrategy` (parabolic arc) for `Projectile`. |
+| Observer | **Done** | `GameSubject`, `IGameObserver`, `AudioGameObserver` in `include/utils/GameObserver.h` | Event dispatcher decoupling sun collection, zombie deaths, and plant loss from audio/HUD. |
+| Command | **Done** | `PlantPlacementCommand` in `include/utils/PlantCommand.h` | Encapsulates plant grid placement execution via captured callable action. |
+| State | **Done** | `LevelPhase` (`Level1.h`), `QuizState` (`QuizMenu.h`), `JalapenoState` (`Jalapeno.h`) | Discrete state machines governing phase flows, countdown fuses, and input debouncing. |
+| Adapter | **Done** | `RaylibAudioAdapter` in `include/core/AudioAdapter.h` | Adapts Raylib `AudioManager` API to generic `IAudioEngine` target interface. |
+| Facade | **Done** | `GameEngineFacade` in `include/core/GameEngineFacade.h` | Static unified facade simplifying calls across `Resources`, `AudioManager`, and `ProfileManager`. |
 
 ## Workflow for every new feature
 

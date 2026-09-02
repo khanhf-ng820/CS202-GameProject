@@ -89,3 +89,18 @@ Prefer running `build.sh` (`cmake -S . -B build
 -DCMAKE_POLICY_VERSION_MINIMUM=3.5` then `cmake --build build --config
 Release --parallel 4`) over ad-hoc `make`/`ninja` invocations, so local
 behavior matches what CI does.
+
+## Automated Asset Retrieval & Submission Packaging
+
+To meet course submission upload limits (< 20MB) while maintaining a seamless build experience:
+
+* **Automated Asset Retrieval in `CMakeLists.txt`:**
+  Assets are hosted as a compressed `.zip` archive on GitHub Releases (`https://github.com/khanhf-ng820/CS202-GameProject/releases/download/v1.0-assets/assets.zip`).
+  `CMakeLists.txt` checks `if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets")`. When missing, it invokes native `file(DOWNLOAD ... SHOW_PROGRESS TLS_VERIFY ON)` and `file(ARCHIVE_EXTRACT ...)`. If `assets/` already exists locally, the download is skipped.
+* **Submission Archive Packaging:**
+  When packaging a distribution or submission archive, always exclude `assets/*`, `build/*`, `graphify-out/*`, and `.git/*`:
+  ```bash
+  zip -r PvZGame_Submission.zip . -x "assets/*" "build/*" ".git/*" "graphify-out/*" ".DS_Store" "*/.DS_Store"
+  ```
+  This creates an archive of ~12MB, easily satisfying the 20MB constraint.
+
