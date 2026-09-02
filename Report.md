@@ -301,7 +301,7 @@ The project follows a modular directory structure organised by domain, with head
 
 # Design Patterns Architecture
 
-To guarantee scalability, maintainability, and optimal memory efficiency for the *Plants vs. Zombies* game engine, the core architecture leverages seven classic Gang of Four (GoF) design patterns. Each pattern systematically addresses a specific challenge in resource management, physical trajectory computation, decoupled event notification, and entity creation.
+To guarantee scalability, maintainability, and optimal memory efficiency for the *Plants vs. Zombies* game engine, the core architecture leverages classic Gang of Four (GoF) design patterns. Each pattern systematically addresses a specific challenge in resource management, physical trajectory computation, decoupled event notification, and entity creation.
 
 ## Singleton Pattern – Core Infrastructure Management
 
@@ -314,14 +314,56 @@ In a complex game engine, managing heavy subsystem resources—such as texture a
 The Scott Meyers’ Singleton pattern (thread-safe static local instance) is applied to `Resources`, `AudioManager`, and `ProfileManager`. Initializing the `static` instance inside `GetInstance()` guarantees thread safety (standardized in C++11 and higher) and enforces lazy initialization (instantiating the object only upon its first access). Copy constructors and assignment operators are explicitly deleted to forbid duplication.
 
 ```mermaid
-graph TD
-    n0["Singleton Managers"]
-    n1["Resources <br> (Global Assets)"]
-    n2["AudioManager <br> (Audio Streams)"]
-    n3["ProfileManager <br> (Save Profile)"]
-    n0 --> n1
-    n0 --> n2
-    n0 --> n3
+classDiagram
+    class Level1 {
+        -Resources res
+    }
+
+    class Resources {
+        -unordered_map textures
+        -unordered_map images
+        -Texture2D background
+        -Resources()
+        +GetInstance() Resources$
+        +GetTexture(name) Texture2D
+        +LoadReanim(filePath) ReanimDefinition
+        +GetAssetPath(relativePath) string
+        +IsPixelTransparent(name, x, y) bool
+    }
+
+    class AudioManager {
+        -Music m_currentMusic
+        -float m_musicVolume
+        -float m_sfxVolume
+        -AudioManager()
+        +GetInstance() AudioManager$
+        +PlayMusic(track) void
+        +PlaySoundEffect(path) void
+        +Update() void
+        +SetMusicVolume(volume) void
+        +SetSfxVolume(volume) void
+    }
+
+    class ProfileManager {
+        -UserProfile m_activeProfile
+        -string m_activeUserName
+        -ProfileManager()
+        +GetInstance() ProfileManager$
+        +SaveCurrentProfile() void
+        +AddCoins(amount) void
+        +UnlockPlant(name) void
+        +UnlockNextLevel(level) void
+    }
+
+    class MainMenu {
+        -Resources m_res
+    }
+
+    Level1 --> Resources : queries instance
+    Level1 --> AudioManager : triggers audio
+    Level1 --> ProfileManager : updates progress
+    MainMenu --> Resources : queries instance
+    MainMenu --> AudioManager : triggers audio
 ```
 
 ```cpp
@@ -392,6 +434,80 @@ private:
 
 - **Thread Safety:** Guarantees thread-safe global access across all game levels without requiring manual mutex locking boilerplate in C++11+.
 
+## Factory Method Pattern – Parameterized Entity Instantiation
+
+#### Problem & Architectural Context:
+
+In Wall-nut Bowling mode, the conveyor belt card dispenser selects cards at runtime. Instead of the level loop executing complex instantiation logic, `BowlingNut::Create` encapsulates velocity configuration, rotation speed, health, bounce physics, and explosion timers.
+
+#### Solution & C++20 Implementation:
+
+The static factory method `BowlingNut::Create` acts as a parameterized factory that instantiates and returns derived `BowlingNut` polymorphic objects (`NormalBowlingNut`, `GiantBowlingNut`, `ExplodeBowlingNut`) wrapped in `std::unique_ptr<BowlingNut>`.
+
+```mermaid
+classDiagram
+    class BowlingNut {
+        <<abstract>>
+        #float m_x
+        #float m_y
+        #float m_vx
+        #float m_vy
+        #float m_rotationAngle
+        +Create(plantType, x, y) BowlingNut$
+        +update(dt, zombies) void*
+        +draw() void*
+        +isDead() bool
+    }
+
+    class NormalBowlingNut {
+        +NormalBowlingNut(x, y)
+        +update(dt, zombies) void
+        +draw() void
+    }
+
+    class GiantBowlingNut {
+        +GiantBowlingNut(x, y)
+        +update(dt, zombies) void
+        +draw() void
+    }
+
+    class ExplodeBowlingNut {
+        -bool m_isExploding
+        -float m_explodeTimer
+        +ExplodeBowlingNut(x, y)
+        +update(dt, zombies) void
+        +draw() void
+    }
+
+    class BowlingLevel {
+        -vector~BowlingNut~ m_bowlingNuts
+        +update(dt) void
+    }
+
+    BowlingNut <|-- NormalBowlingNut
+    BowlingNut <|-- GiantBowlingNut
+    BowlingNut <|-- ExplodeBowlingNut
+    BowlingLevel ..> BowlingNut : calls Create()
+```
+
+```cpp
+// filepath: include/entities/plants/BowlingNut.h
+std::unique_ptr<BowlingNut> BowlingNut::Create(const std::string& plantType, float x, float y) {
+    if (plantType == "GiantWallnut") {
+        return std::make_unique<GiantBowlingNut>(x, y);
+    } else if (plantType == "ExplodeNut") {
+        return std::make_unique<ExplodeBowlingNut>(x, y);
+    }
+    return std::make_unique<NormalBowlingNut>(x, y);
+}
+```
+
+#### Architectural Benefits & SOLID Alignment:
+
+- **Encapsulation of Subclass Instantiation:** Hides specific constructor parameter initialization behind a clean static factory method.
+
+- **Open/Closed Principle (OCP):** New bowling nut variants can be introduced by extending `BowlingNut` without modifying level update logic.
+
 ## Strategy Pattern – Dynamic Projectile Physics and Trajectories
 
 #### Problem & Architectural Context:
@@ -409,14 +525,33 @@ Hardcoding trajectory physics directly within `Projectile::update()` using monol
 The Strategy Pattern encapsulates trajectory computation into an `ITrajectoryStrategy` interface. The `Projectile` class holds a `std::unique_ptr<ITrajectoryStrategy>` and delegates physical displacement calculations to concrete strategy implementations at runtime.
 
 ```mermaid
-graph TD
-    proj["Projectile"]
-    strat["ITrajectoryStrategy <br> (interface)"]
-    straight["StraightTrajectory"]
-    lobbed["LobbedTrajectory"]
-    proj --> strat
-    straight -.-> strat
-    lobbed -.-> strat
+classDiagram
+    class ITrajectoryStrategy {
+        <<interface>>
+        +updatePosition(x, y, startX, startY, speed, range, maxHeight, progress, dt) void*
+    }
+
+    class StraightTrajectoryStrategy {
+        +updatePosition(x, y, startX, startY, speed, range, maxHeight, progress, dt) void
+    }
+
+    class LobbedTrajectoryStrategy {
+        +updatePosition(x, y, startX, startY, speed, range, maxHeight, progress, dt) void
+    }
+
+    class Projectile {
+        -float m_x
+        -float m_y
+        -float m_progress
+        -ITrajectoryStrategy m_strategy
+        +update(dt) void
+        +draw() void
+        +onHit() void
+    }
+
+    ITrajectoryStrategy <|.. StraightTrajectoryStrategy
+    ITrajectoryStrategy <|.. LobbedTrajectoryStrategy
+    Projectile o-- ITrajectoryStrategy : delegates position update
 ```
 
 ```cpp
@@ -504,12 +639,38 @@ Key gameplay occurrences—such as collecting sun currency, eliminating a zombie
 An Event Bus is established using the Observer Pattern. The `IGameObserver` interface acts as the event subscriber contract, while `GameSubject` maintains subscriber lists and broadcasts events without requiring explicit knowledge of consumer concrete types.
 
 ```mermaid
-graph TD
-    subject["GameSubject <br> (Subject)"]
-    observer["IGameObserver <br> (interface)"]
-    audio_obs["AudioGameObserver"]
-    subject --> observer
-    audio_obs -.-> observer
+classDiagram
+    class IGameObserver {
+        <<interface>>
+        +onSunCollected(amount) void
+        +onZombieKilled(zombieName) void
+        +onPlantDestroyed(row, col) void
+    }
+
+    class AudioGameObserver {
+        +onSunCollected(amount) void
+        +onZombieKilled(zombieName) void
+    }
+
+    class GameSubject {
+        -vector~IGameObserver~ m_observers
+        +addObserver(observer) void
+        +removeObserver(observer) void
+        +notifySunCollected(amount) void
+        +notifyZombieKilled(zombieName) void
+        +notifyPlantDestroyed(row, col) void
+    }
+
+    class Level1 {
+        -GameSubject m_eventSubject
+        -AudioGameObserver m_audioObserver
+        +update(dt) void
+    }
+
+    IGameObserver <|.. AudioGameObserver
+    GameSubject o-- IGameObserver : notifies
+    Level1 *-- GameSubject : publishes events
+    Level1 *-- AudioGameObserver : subscribes
 ```
 
 ```cpp
@@ -587,12 +748,25 @@ Planting on the 5x9 lawn grid requires pre-execution validation: verifying sun b
 The Command Pattern encapsulates plant placement requests into stand-alone `PlantPlacementCommand` objects. Placement actions are captured as executable closures (`std::function<void()>`), decoupling user input parsing from immediate game state mutation.
 
 ```mermaid
-graph TD
-    invoker["Level1 <br> (Invoker / Client)"]
-    cmd["ICommand <br> (interface)"]
-    plant_cmd["PlantPlacementCommand"]
-    invoker --> cmd
-    plant_cmd -.-> cmd
+classDiagram
+    class ICommand {
+        <<interface>>
+        +execute() void*
+    }
+
+    class PlantPlacementCommand {
+        -Action m_action
+        +PlantPlacementCommand(action)
+        +execute() void
+    }
+
+    class Level1 {
+        -Plant m_grid
+        +createPlant(type, row, col, pixelX, pixelY) void
+    }
+
+    ICommand <|.. PlantPlacementCommand
+    Level1 ..> PlantPlacementCommand : instantiates and executes
 ```
 
 ```cpp
@@ -654,16 +828,37 @@ Level configurations require instantiating complex, heterogeneous zombie waves (
 The Builder Pattern provides a method-chaining fluent interface (`ZombieWaveBuilder`) to construct wave compositions step by step. The `build()` method transfers exclusive ownership of the compiled `std::vector<std::unique_ptr<Zombie>>` using C++ move semantics (`std::move`).
 
 ```mermaid
-graph TD
-    builder["ZombieWaveBuilder"]
-    zombie["Zombie <br> (abstract product)"]
-    normal["ZombieNormal"]
-    cone["ConeheadZombie"]
-    foot["FootballZombie"]
-    builder --> zombie
-    normal -.-> zombie
-    cone -.-> zombie
-    foot -.-> zombie
+classDiagram
+    class ZombieWaveBuilder {
+        -vector~Zombie~ m_zombies
+        -Resources m_res
+        +ZombieWaveBuilder(res)
+        +addNormalZombie(x, y) ZombieWaveBuilder
+        +addConeheadZombie(x, y) ZombieWaveBuilder
+        +addBucketheadZombie(x, y) ZombieWaveBuilder
+        +addFlagZombie(x, y) ZombieWaveBuilder
+        +addFootballZombie(x, y) ZombieWaveBuilder
+        +addNewspaperZombie(x, y) ZombieWaveBuilder
+        +addPoleVaultingZombie(x, y) ZombieWaveBuilder
+        +build() vector~Zombie~
+    }
+
+    class Zombie {
+        <<abstract>>
+        #float m_x
+        #float m_y
+        #int m_hp
+        +update(dt) void*
+        +draw() void*
+    }
+
+    class Level1 {
+        -vector~Zombie~ m_zombies
+        +spawnNextWave() void
+    }
+
+    ZombieWaveBuilder *-- Zombie : constructs
+    Level1 ..> ZombieWaveBuilder : uses to construct waves
 ```
 
 ```cpp
@@ -728,6 +923,60 @@ public:
 
 - **Memory Safety:** Prevents memory leaks by leveraging `std::unique_ptr` smart pointers combined with strict C++ move semantics.
 
+## State Pattern – Lifecycle and Operational Flow Management
+
+#### Problem & Architectural Context:
+
+Level progression (`LevelPhase`), entity activation lifecycles (Jalapeno fuse $\to$ lane incineration, Potato Mine arming), interactive vase breaking (`VaseState`), and trivia quiz screens (`QuizState`) require strict state transitions. Inlining state flags using complex boolean conditions leads to race conditions and invalid state jumps.
+
+#### Solution & C++20 Implementation:
+
+Finite state machines manage operational phases across level orchestration, menu flows, and entity animation lifecycles.
+
+#### State Transition Diagram:
+
+```mermaid
+stateDiagram-v2
+    [*] --> SeedSelection : Level Initialized
+    SeedSelection --> PanToLawn : Deck Confirmed (LETS ROCK)
+    PanToLawn --> ReadySetPlant : Camera Arrives at House (2.5s)
+    ReadySetPlant --> ActiveWave : Ready-Set-Plant Animation Finished
+    ActiveWave --> [*] : Level Won or Lost
+
+    note right of ActiveWave
+      Active gameplay loop:
+      - Sun generation
+      - Plant attacks
+      - Wave timer countdowns
+      - Huge wave flag rushes
+    end note
+```
+
+#### Entity Lifecycle Diagram (Jalapeno & Potato Mine):
+
+```mermaid
+stateDiagram-v2
+    state JalapenoState {
+        [*] --> EXPLODING_SWELL : Planted
+        EXPLODING_SWELL --> EXPLODING_FIRE : Fuse Timer Reached (0.6s)
+        EXPLODING_FIRE --> DONE : Flame Row Extinguished (0.8s)
+        DONE --> [*] : Despawned from Grid
+    }
+
+    state PotatoMineState {
+        [*] --> UNDERGROUND : Planted
+        UNDERGROUND --> ARMING : Sprout Emerges (14s)
+        ARMING --> ARMED : Indicator Light Active
+        ARMED --> [*] : Zombie Contact detonates SPUDOW
+    }
+```
+
+#### Architectural Benefits & SOLID Alignment:
+
+- **Guaranteed Transition Invariants:** Prevents illegal state transitions and duplicate clicks during execution windows.
+
+- **Single Responsibility Principle (SRP):** Encapsulates state-specific execution logic within discrete state handlers.
+
 ## Facade Pattern – Unified Engine Subsystem Interface
 
 #### Problem & Architectural Context:
@@ -739,14 +988,33 @@ High-level gameplay components (UI screens, level loops, entity update functions
 The Facade Pattern introduces `GameEngineFacade`, serving as a unified entry point. This class exposes simplified, static wrapper methods that internally coordinate interactions across the low-level core subsystems.
 
 ```mermaid
-graph TD
-    facade["GameEngineFacade <br> (Facade)"]
-    res["Resources"]
-    audio["AudioManager"]
-    prof["ProfileManager"]
-    facade -.-> res
-    facade -.-> audio
-    facade -.-> prof
+classDiagram
+    class GameEngineFacade {
+        +PlaySFX(soundAsset) void$
+        +GetTexture(name) Texture2D$
+        +LoadReanim(filePath) ReanimDefinition$
+        +GetProfile() ProfileManager$
+    }
+
+    class Resources {
+        +GetInstance() Resources$
+        +GetAssetPath(relativePath) string
+        +GetTexture(name) Texture2D
+        +LoadReanim(filePath) ReanimDefinition
+    }
+
+    class AudioManager {
+        +GetInstance() AudioManager$
+        +PlaySoundEffect(path) void
+    }
+
+    class ProfileManager {
+        +GetInstance() ProfileManager$
+    }
+
+    GameEngineFacade --> Resources : delegates asset calls
+    GameEngineFacade --> AudioManager : delegates audio calls
+    GameEngineFacade --> ProfileManager : delegates profile calls
 ```
 
 ```cpp
@@ -804,12 +1072,28 @@ Low-level framework components (such as Raylib audio calls or C-style procedural
 An abstract C++ interface `IAudioEngine` defines the target audio contract. The `RaylibAudioAdapter` class implements this interface by wrapping calls to `AudioManager` and Raylib’s native procedural functions.
 
 ```mermaid
-graph TD
-    target["IAudioEngine <br> (target interface)"]
-    adapter["RaylibAudioAdapter <br> (Adapter)"]
-    adaptee["AudioManager <br> (Adaptee)"]
-    adapter -.-> target
-    adapter --> adaptee
+classDiagram
+    class IAudioEngine {
+        <<interface>>
+        +playSound(soundAsset) void*
+    }
+
+    class RaylibAudioAdapter {
+        +playSound(soundAsset) void
+    }
+
+    class AudioManager {
+        +GetInstance() AudioManager$
+        +PlaySoundEffect(path) void
+    }
+
+    class Client {
+        -IAudioEngine m_audio
+    }
+
+    IAudioEngine <|.. RaylibAudioAdapter
+    RaylibAudioAdapter --> AudioManager : delegates to PlaySoundEffect()
+    Client --> IAudioEngine : uses
 ```
 
 ```cpp
