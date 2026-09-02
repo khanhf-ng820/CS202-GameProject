@@ -150,29 +150,20 @@ static std::vector<std::string> ParseStringList(const std::string& body) {
 
 // ---------------------------------------------------------------------------
 // Helper: read the entire body following a "Define <Name>" block.
-// The body spans from the next line after "Define <Name>" until the next
-// "Define" or non-continuation line.
+// Each PopCap descriptor block terminates with a closing parenthesis and semicolon ');'.
+// Reading forward without seekg/tellg prevents stream invalidation (failbit)
+// on Windows CRLF text streams.
 // ---------------------------------------------------------------------------
 static std::string ReadDefineBody(std::ifstream& file) {
     std::string body;
     std::string line;
-    std::streampos prevPos = file.tellg();
     while (std::getline(file, line)) {
         std::string trimmed = Trim(line);
-        if (trimmed.empty()) {
-            prevPos = file.tellg();
-            continue;
-        }
-        // If the line starts with a new command keyword, we've gone too far
-        if (trimmed.rfind("Define", 0) == 0 ||
-            trimmed.rfind("CreateLayer", 0) == 0 ||
-            trimmed.rfind("LayerSet", 0) == 0 ||
-            trimmed.rfind("SetDefault", 0) == 0) {
-            file.seekg(prevPos);
+        if (trimmed.empty()) continue;
+        body += " " + trimmed;
+        if (trimmed.find(");") != std::string::npos || (!trimmed.empty() && trimmed.back() == ';')) {
             break;
         }
-        body += " " + trimmed;
-        prevPos = file.tellg();
     }
     return body;
 }
