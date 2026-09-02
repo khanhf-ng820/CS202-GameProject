@@ -1,4 +1,6 @@
 #include "Level1.h"
+#include "PlantCommand.h"
+#include "WaveBuilder.h"
 #include "UIHelpers.h"
 #include "AudioManager.h"
 #include "ProfileManager.h"
@@ -47,6 +49,7 @@ Level1::Level1(Resources& res, RenderTexture2D targetScreen, int levelNumber)
       m_winTimer(0.0f), m_awardY(-150.0f), m_awardRaysRotation(0.0f), m_winMusicPlayed(false),
       m_loseTimer(0.0f), m_screamSoundPlayed(false), m_loseMusicPlayed(false)
 {
+    m_eventSubject.addObserver(&m_audioObserver);
     m_inGameMenu = std::make_unique<InGameMenu>(res);
 
     // Load House of Terror bitmap font for level labels
@@ -223,53 +226,56 @@ void Level1::spawnSunFromSky() {
 }
 
 void Level1::createPlant(const std::string& type, int row, int col, int pixelX, int pixelY) {
-    if (type == "PeaShooter") {
-        m_grid[row][col] = std::make_unique<PeaShooter>(res, pixelX, pixelY);
-    } else if (type == "SunFlower") {
-        m_grid[row][col] = std::make_unique<SunFlower>(res, pixelX, pixelY);
-    } else if (type == "Wallnut") {
-        m_grid[row][col] = std::make_unique<Wallnut>(res, pixelX, pixelY);
-    } else if (type == "SnowPea") {
-        m_grid[row][col] = std::make_unique<SnowPea>(res, pixelX, pixelY);
-    } else if (type == "Repeater") {
-        m_grid[row][col] = std::make_unique<Repeater>(res, pixelX, pixelY);
-    } else if (type == "CherryBomb") {
-        m_grid[row][col] = std::make_unique<CherryBomb>(res, pixelX, pixelY);
-    } else if (type == "Chomper") {
-        m_grid[row][col] = std::make_unique<Chomper>(res, pixelX, pixelY);
-    } else if (type == "Jalapeno") {
-        m_grid[row][col] = std::make_unique<Jalapeno>(res, pixelX, pixelY);
-    } else if (type == "FirePea") {
-        m_grid[row][col] = std::make_unique<FirePea>(res, pixelX, pixelY);
-    } else if (type == "GatlingPea") {
-        m_grid[row][col] = std::make_unique<GatlingPea>(res, pixelX, pixelY);
-    } else if (type == "Cornpult") {
-        m_grid[row][col] = std::make_unique<Cornpult>(res, pixelX, pixelY);
-    } else if (type == "Melonpult") {
-        m_grid[row][col] = std::make_unique<Melonpult>(res, pixelX, pixelY);
-    } else if (type == "Torchwood") {
-        m_grid[row][col] = std::make_unique<Torchwood>(res, pixelX, pixelY);
-    } else if (type == "PotatoMine") {
-        m_grid[row][col] = std::make_unique<PotatoMine>(res, pixelX, pixelY);
-    } else if (type == "Squash") {
-        m_grid[row][col] = std::make_unique<Squash>(res, pixelX, pixelY);
-    } else if (type == "Cabbagepult") {
-        m_grid[row][col] = std::make_unique<Cabbagepult>(res, pixelX, pixelY);
-    } else if (type == "IceShroom") {
-        m_grid[row][col] = std::make_unique<IceShroom>(res, pixelX, pixelY);
-    } else if (type == "Gravebuster") {
-        m_grid[row][col] = std::make_unique<Gravebuster>(res, pixelX, pixelY);
-    } else if (type == "Garlic") {
-        m_grid[row][col] = std::make_unique<Garlic>(res, pixelX, pixelY);
-    } else if (type == "Caltrop") {
-        m_grid[row][col] = std::make_unique<Caltrop>(res, pixelX, pixelY);
-    } else if (type == "SpikeRock") {
-        m_grid[row][col] = std::make_unique<SpikeRock>(res, pixelX, pixelY);
-    } else if (type == "Plantern") {
-        m_grid[row][col] = std::make_unique<Plantern>(res, pixelX, pixelY);
-    } else if (type == "TwinSunflower") {
-        m_grid[row][col] = std::make_unique<TwinSunflower>(res, pixelX, pixelY);
-    }
+    PlantPlacementCommand cmd([this, type, row, col, pixelX, pixelY]() {
+        if (type == "PeaShooter") {
+            m_grid[row][col] = std::make_unique<PeaShooter>(res, pixelX, pixelY);
+        } else if (type == "SunFlower") {
+            m_grid[row][col] = std::make_unique<SunFlower>(res, pixelX, pixelY);
+        } else if (type == "Wallnut") {
+            m_grid[row][col] = std::make_unique<Wallnut>(res, pixelX, pixelY);
+        } else if (type == "SnowPea") {
+            m_grid[row][col] = std::make_unique<SnowPea>(res, pixelX, pixelY);
+        } else if (type == "Repeater") {
+            m_grid[row][col] = std::make_unique<Repeater>(res, pixelX, pixelY);
+        } else if (type == "CherryBomb") {
+            m_grid[row][col] = std::make_unique<CherryBomb>(res, pixelX, pixelY);
+        } else if (type == "Chomper") {
+            m_grid[row][col] = std::make_unique<Chomper>(res, pixelX, pixelY);
+        } else if (type == "Jalapeno") {
+            m_grid[row][col] = std::make_unique<Jalapeno>(res, pixelX, pixelY);
+        } else if (type == "FirePea") {
+            m_grid[row][col] = std::make_unique<FirePea>(res, pixelX, pixelY);
+        } else if (type == "GatlingPea") {
+            m_grid[row][col] = std::make_unique<GatlingPea>(res, pixelX, pixelY);
+        } else if (type == "Cornpult") {
+            m_grid[row][col] = std::make_unique<Cornpult>(res, pixelX, pixelY);
+        } else if (type == "Melonpult") {
+            m_grid[row][col] = std::make_unique<Melonpult>(res, pixelX, pixelY);
+        } else if (type == "Torchwood") {
+            m_grid[row][col] = std::make_unique<Torchwood>(res, pixelX, pixelY);
+        } else if (type == "PotatoMine") {
+            m_grid[row][col] = std::make_unique<PotatoMine>(res, pixelX, pixelY);
+        } else if (type == "Squash") {
+            m_grid[row][col] = std::make_unique<Squash>(res, pixelX, pixelY);
+        } else if (type == "Cabbagepult") {
+            m_grid[row][col] = std::make_unique<Cabbagepult>(res, pixelX, pixelY);
+        } else if (type == "IceShroom") {
+            m_grid[row][col] = std::make_unique<IceShroom>(res, pixelX, pixelY);
+        } else if (type == "Gravebuster") {
+            m_grid[row][col] = std::make_unique<Gravebuster>(res, pixelX, pixelY);
+        } else if (type == "Garlic") {
+            m_grid[row][col] = std::make_unique<Garlic>(res, pixelX, pixelY);
+        } else if (type == "Caltrop") {
+            m_grid[row][col] = std::make_unique<Caltrop>(res, pixelX, pixelY);
+        } else if (type == "SpikeRock") {
+            m_grid[row][col] = std::make_unique<SpikeRock>(res, pixelX, pixelY);
+        } else if (type == "Plantern") {
+            m_grid[row][col] = std::make_unique<Plantern>(res, pixelX, pixelY);
+        } else if (type == "TwinSunflower") {
+            m_grid[row][col] = std::make_unique<TwinSunflower>(res, pixelX, pixelY);
+        }
+    });
+    cmd.execute();
 }
 
 void Level1::triggerFinalWave() {
@@ -300,7 +306,11 @@ void Level1::spawnNextWave() {
     };
 
     if (m_currentWave == 1) {
-        m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(2)));
+        ZombieWaveBuilder builder(res);
+        auto wave1Zombies = builder.addNormalZombie(spawnX, laneY(2)).build();
+        for (auto& z : wave1Zombies) {
+            m_zombies.push_back(std::move(z));
+        }
     } else if (m_currentWave == 2) {
         m_zombies.push_back(std::make_unique<ZombieNormal>(res, spawnX, laneY(1)));
     } else if (m_currentWave == 3) {

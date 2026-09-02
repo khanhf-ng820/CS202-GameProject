@@ -5,6 +5,8 @@
 #include "particle.h"
 #include "Reanimation.h"
 
+#include "TrajectoryStrategy.h"
+
 class Projectile {
 private:
     float m_x, m_y;
@@ -19,6 +21,8 @@ private:
     bool m_isLobbed;
     float m_range;
     float m_maxHeight;
+    float m_progress = 0.0f;
+    std::shared_ptr<ITrajectoryStrategy> m_strategy;
     float m_scale;
     int m_damage;
     ParticleEffect efftrailing;
@@ -36,6 +40,11 @@ public:
         : m_x(x), m_y(y), m_startX(x), m_startY(y), m_speed(speed), m_tex(tex), m_active(true), m_isSnow(isSnow), m_isLobbed(isLobbed), m_scale(scale), m_damage(damage), m_res(res ? res : &Resources::GetInstance()) {
         m_range = range;      // Tầm bắn xa của đạn cầu vồng
         m_maxHeight = 150.0f; // Chiều cao tối đa vòng cung
+        if (m_isLobbed) {
+            m_strategy = std::make_shared<LobbedTrajectoryStrategy>();
+        } else {
+            m_strategy = std::make_shared<StraightTrajectoryStrategy>();
+        }
         efftrailing.setActive(true);
         if (isSnow && m_res) {
             efftrailing.setTexture(m_res->GetTexture("SnowFlakes"));

@@ -98,7 +98,7 @@ public:
             } else {
                 m_y = std::max(m_targetLaneY, m_y - shiftSpeed * dt);
             }
-            if (std::abs(m_y - m_targetLaneY) < 0.5f) {
+            if (std::abs(m_y - m_targetLaneY) < 1.0f) {
                 m_y = m_targetLaneY;
                 m_isChangingLane = false;
             }
