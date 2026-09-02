@@ -112,14 +112,13 @@ void Projectile::onHit() {
 
 void Projectile::update(float dt) {
     if (!m_isImpacting) {
-        m_x += m_speed * dt;
-        if (m_isLobbed) {
-            float progress = (m_range > 0.0f) ? ((m_x - m_startX) / m_range) : 1.0f;
-            if (progress >= 1.0f) {
-                onHit(); // Splat/impact on ground/target
-            } else {
-                m_y = m_startY - m_maxHeight * sinf(progress * 3.14159265f);
+        if (m_strategy) {
+            m_strategy->updatePosition(m_x, m_y, m_startX, m_startY, m_speed, m_range, m_maxHeight, m_progress, dt);
+            if (m_isLobbed && m_progress >= 1.0f) {
+                onHit();
             }
+        } else {
+            m_x += m_speed * dt;
         }
         if (m_x > 1300) {
             m_active = false;

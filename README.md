@@ -282,31 +282,107 @@ A real-time diagnostic visualizer allowing developers to spawn any plant or zomb
 
 ---
 
-## Design and Implementation of 5 OOP Design Patterns
+## Design and Implementation of OOP Design Patterns
 
-To satisfy project requirements and maintain clean, decoupled software architecture, five design patterns are implemented across the engine:
+The codebase implements nine Object-Oriented Design Patterns across creational, structural, and behavioral categories to maintain modularity, testability, and separation of concerns.
 
 ```
-[1. Singleton Pattern] -----> Resources, AudioManager, ProfileManager
-[2. Factory Pattern]   -----> BowlingNut::Create, PlantFactory, ZombieFactory
-[3. State Pattern]     -----> LevelPhase, QuizState, JalapenoState, IGameState
-[4. Observer Pattern]  -----> EventManager, IObserver (Decoupled HUD/Audio)
-[5. Strategy Pattern]  -----> ITrajectoryStrategy (Interchangeable Flight Math)
+Creational Patterns:
+  [Singleton]       -----> Resources, AudioManager, ProfileManager
+  [Factory Method]  -----> BowlingNut::Create()
+  [Builder]         -----> ZombieWaveBuilder
+
+Behavioral Patterns:
+  [Strategy]        -----> ITrajectoryStrategy (StraightTrajectoryStrategy, LobbedTrajectoryStrategy)
+  [Observer]        -----> GameSubject, IGameObserver, AudioGameObserver
+  [Command]         -----> ICommand, PlantPlacementCommand
+  [State]           -----> LevelPhase, QuizState, JalapenoState, PotatoMineState, VaseState
+
+Structural Patterns:
+  [Adapter]         -----> IAudioEngine, RaylibAudioAdapter
+  [Facade]          -----> GameEngineFacade
 ```
 
 ---
 
 ### 1. Singleton Pattern (Creational)
 
-* **Current Implementation**: Implemented in `Resources::GetInstance()` (`include/core/resources.h`), `AudioManager::GetInstance()` (`include/core/AudioManager.h`), and `ProfileManager::GetInstance()` (`include/core/ProfileManager.h`).
-* **Design Structure**: Implemented using the Meyer's Singleton idiom, utilizing static local instance initialization within `GetInstance()`. Constructors and destructors are private, and copy constructors and assignment operators are explicitly deleted.
-* **Technical Rationale**: Centralizes GPU texture buffers, audio streams, and profile save states into single global access points, preventing redundant resource loading into GPU memory and avoiding race conditions during save file I/O.
+* **Concrete Implementations**:
+  * `Resources` (`include/core/resources.h`, `src/core/resources.cpp`)
+  * `AudioManager` (`include/core/AudioManager.h`, `src/core/AudioManager.cpp`)
+  * `ProfileManager` (`include/core/ProfileManager.h`, `src/core/ProfileManager.cpp`)
+* **Design Structure**:
+  Implemented using the Meyer's Singleton idiom, utilizing static local instance initialization within `GetInstance()`. Constructors and destructors are declared private, and copy constructors and copy assignment operators are explicitly deleted.
+* **Architectural Rationale**:
+  * **GPU Resource Integrity**: Loading textures, font atlases, and `.reanim` XML definitions into GPU VRAM must happen exactly once. Multiple instances of `Resources` would duplicate memory buffers, degrade frame rates, and cause GPU resource leakage.
+  * **Audio Stream Synchronization**: Raylib requires a single streaming pump call (`UpdateMusicStream`) per frame. Centralizing audio in `AudioManager` prevents competing stream updates and race conditions.
+  * **Data Consistency**: Player profile save files (coins, unlocked plants, max level) are serialized through `ProfileManager`, ensuring single-threaded I/O operations without file locking conflicts.
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class Resources {
+        -unordered_map textures
+        -unordered_map images
+        -Texture2D background
+        -Resources()
+        -~Resources()
+        +GetInstance()$ Resources&
+        +GetTexture(name) Texture2D
+        +LoadReanim(filePath) ReanimDefinition
+        +GetAssetPath(relativePath) string
+        +IsPixelTransparent(name, x, y) bool
+    }
+
+    class AudioManager {
+        -Music m_currentMusic
+        -float m_musicVolume
+        -float m_sfxVolume
+        -AudioManager()
+        -~AudioManager()
+        +GetInstance()$ AudioManager&
+        +PlayMusic(track) void
+        +PlaySoundEffect(path) void
+        +Update() void
+        +SetMusicVolume(volume) void
+        +SetSfxVolume(volume) void
+    }
+
+    class ProfileManager {
+        -UserProfile m_activeProfile
+        -string m_activeUserName
+        -ProfileManager()
+        -~ProfileManager()
+        +GetInstance()$ ProfileManager&
+        +SaveCurrentProfile() void
+        +AddCoins(amount) void
+        +UnlockPlant(name) void
+        +UnlockNextLevel(level) void
+    }
+
+    class Level1 {
+        -Resources& res
+    }
+
+    class MainMenu {
+        -Resources& m_res
+    }
+
+    Level1 --> Resources : queries instance
+    Level1 --> AudioManager : triggers audio
+    Level1 --> ProfileManager : updates progress
+    MainMenu --> Resources : queries instance
+    MainMenu --> AudioManager : triggers audio
+```
+
+#### Code Implementation
 
 ```cpp
 class Resources {
 public:
     static Resources& GetInstance() {
-        static Resources instance;
+        static Resources instance; // Guaranteed lazy initialization and destruction
         return instance;
     }
 
@@ -315,6 +391,7 @@ public:
 
     Texture2D GetTexture(const std::string& name) const;
     ReanimDefinition LoadReanim(const std::string& filePath);
+    std::string GetAssetPath(const std::string& relativePath);
 
 private:
     Resources() = default;
@@ -326,144 +403,574 @@ private:
 
 ### 2. Factory Method Pattern (Creational)
 
-* **Current Implementation**: Implemented in `BowlingNut::Create(plantType, x, y)` (`src/entities/plants/BowlingNut.cpp`), instantiating `NormalBowlingNut`, `GiantBowlingNut`, or `ExplodeBowlingNut` based on seed card identifiers.
-* **Architecture Extension**: Generalized `PlantFactory` and `ZombieFactory` static creation interfaces replacing manual conditional construction blocks.
-* **Technical Rationale**: Encapsulates entity instantiation, health assignment, animation path binding, and sun cost lookup, honoring the Open-Closed Principle (OCP) when adding new plant or zombie subclasses.
+* **Concrete Implementation**:
+  * `BowlingNut::Create(const std::string& plantType, float x, float y)` (`include/entities/plants/BowlingNut.h`, `src/entities/plants/BowlingNut.cpp`)
+* **Design Structure**:
+  The static factory method `BowlingNut::Create` acts as a parameterized factory that instantiates and returns derived `BowlingNut` polymorphic objects (`NormalBowlingNut`, `GiantBowlingNut`, `ExplodeBowlingNut`) wrapped in `std::unique_ptr<BowlingNut>`.
+* **Architectural Rationale**:
+  * **Encapsulation of Subclass Instantiation**: In Wall-nut Bowling mode, the conveyor belt card dispenser selects cards at runtime. Instead of the level loop executing complex instantiation logic, `Create()` encapsulates velocity configuration, rotation speed, health, bounce physics, and explosion timers.
+  * **Open-Closed Principle (OCP)**: New bowling nut variants (such as slow-motion nuts or magnetized nuts) can be added by extending `BowlingNut` and updating the factory switch without modifying `BowlingLevel.cpp`.
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class BowlingNut {
+        <<abstract>>
+        #float m_x
+        #float m_y
+        #float m_vx
+        #float m_vy
+        #float m_rotationAngle
+        +Create(plantType, x, y)$ unique_ptr~BowlingNut~
+        +update(dt, zombies, hitDebugTimers, res)* void
+        +draw()* void
+        +isDead() bool
+    }
+
+    class NormalBowlingNut {
+        +NormalBowlingNut(x, y)
+        +update(dt, zombies, hitDebugTimers, res) void
+        +draw() void
+    }
+
+    class GiantBowlingNut {
+        +GiantBowlingNut(x, y)
+        +update(dt, zombies, hitDebugTimers, res) void
+        +draw() void
+    }
+
+    class ExplodeBowlingNut {
+        -bool m_isExploding
+        -float m_explodeTimer
+        +ExplodeBowlingNut(x, y)
+        +update(dt, zombies, hitDebugTimers, res) void
+        +draw() void
+    }
+
+    class BowlingLevel {
+        -vector~unique_ptr~BowlingNut~~ m_bowlingNuts
+        +update(dt) void
+    }
+
+    BowlingNut <|-- NormalBowlingNut
+    BowlingNut <|-- GiantBowlingNut
+    BowlingNut <|-- ExplodeBowlingNut
+    BowlingLevel ..> BowlingNut : calls Create()
+```
+
+#### Code Implementation
 
 ```cpp
-enum class PlantType { PeaShooter, SnowPea, SunFlower, Wallnut, CherryBomb, Chomper, Jalapeno, Cornpult, Melonpult, FirePea };
-
-class PlantFactory {
-public:
-    static std::unique_ptr<Plant> CreatePlant(PlantType type, int x, int y) {
-        Resources& res = Resources::GetInstance();
-        switch (type) {
-            case PlantType::PeaShooter: return std::make_unique<PeaShooter>(res, x, y);
-            case PlantType::SnowPea:    return std::make_unique<SnowPea>(res, x, y);
-            case PlantType::SunFlower:  return std::make_unique<SunFlower>(res, x, y);
-            case PlantType::Wallnut:    return std::make_unique<Wallnut>(res, x, y);
-            case PlantType::CherryBomb: return std::make_unique<CherryBomb>(res, x, y);
-            case PlantType::Chomper:    return std::make_unique<Chomper>(res, x, y);
-            case PlantType::Jalapeno:   return std::make_unique<Jalapeno>(res, x, y);
-            case PlantType::Cornpult:   return std::make_unique<Cornpult>(res, x, y);
-            case PlantType::Melonpult:  return std::make_unique<Melonpult>(res, x, y);
-            case PlantType::FirePea:    return std::make_unique<FirePea>(res, x, y);
-            default:                    return nullptr;
-        }
+std::unique_ptr<BowlingNut> BowlingNut::Create(const std::string& plantType, float x, float y) {
+    if (plantType == "GiantWallnut") {
+        return std::make_unique<GiantBowlingNut>(x, y);
+    } else if (plantType == "ExplodeNut") {
+        return std::make_unique<ExplodeBowlingNut>(x, y);
     }
-};
+    return std::make_unique<NormalBowlingNut>(x, y);
+}
 ```
 
 ---
 
-### 3. State Pattern (Behavioral)
+### 3. Builder Pattern (Creational)
 
-* **Current Implementation**: Implemented across level phases (`LevelPhase::SeedSelection`, `PanToLawn`, `ReadySetPlant`, `ActiveWave` in `Level1.h`), quiz phases (`QuizState::Rules`, `Playing`, `AnswerFeedback`, `Summary` in `QuizMenu.h`), and entity life cycles (`JalapenoState::EXPLODING_SWELL`, `EXPLODING_FIRE`, `DONE` in `Jalapeno.h`).
-* **Architecture Extension**: Polymorphic `IGameState` interface and `GameStateManager` context for managing high-level application screen transitions.
-* **Technical Rationale**: Eliminates deeply nested switch-case update blocks in `main.cpp`, giving each game phase encapsulated `Enter()`, `Update()`, `Draw()`, and `Exit()` routines.
+* **Concrete Implementation**:
+  * `ZombieWaveBuilder` (`include/utils/WaveBuilder.h`)
+  * Integrated in `Level1::spawnNextWave()` (`src/level/Level1.cpp`)
+* **Design Structure**:
+  `ZombieWaveBuilder` provides a fluent interface with method chaining (`addNormalZombie`, `addConeheadZombie`, `addBucketheadZombie`, `addFlagZombie`, etc.) to construct complex collections of `std::unique_ptr<Zombie>`, finalized via `build()`.
+* **Architectural Rationale**:
+  * **Fluent Step-by-Step Assembly**: Zombie waves in Plants vs. Zombies consist of diverse combinations of zombies spawning at staggered lane coordinates. Constructing each zombie manually requires repetitive resource passing and coordinate calculation.
+  * **Ownership Transfer via Move Semantics**: `build()` transfers ownership of the allocated `std::vector<std::unique_ptr<Zombie>>` directly into the level's active entity vector via `std::move`, eliminating unnecessary copies.
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class ZombieWaveBuilder {
+        -vector~unique_ptr~Zombie~~ m_zombies
+        -Resources& m_res
+        +ZombieWaveBuilder(res)
+        +addNormalZombie(x, y) ZombieWaveBuilder&
+        +addConeheadZombie(x, y) ZombieWaveBuilder&
+        +addBucketheadZombie(x, y) ZombieWaveBuilder&
+        +addFlagZombie(x, y) ZombieWaveBuilder&
+        +addFootballZombie(x, y) ZombieWaveBuilder&
+        +addNewspaperZombie(x, y) ZombieWaveBuilder&
+        +addPoleVaultingZombie(x, y) ZombieWaveBuilder&
+        +build() vector~unique_ptr~Zombie~~
+    }
+
+    class Zombie {
+        <<abstract>>
+        #float m_x
+        #float m_y
+        #int m_hp
+        +update(dt)* void
+        +draw()* void
+    }
+
+    class Level1 {
+        -vector~unique_ptr~Zombie~~ m_zombies
+        +spawnNextWave() void
+    }
+
+    ZombieWaveBuilder *-- Zombie : constructs
+    Level1 ..> ZombieWaveBuilder : uses to construct waves
+```
+
+#### Code Implementation
 
 ```cpp
-class IGameState {
-public:
-    virtual ~IGameState() = default;
-    virtual void Enter() = 0;
-    virtual void Update(float dt) = 0;
-    virtual void Draw() = 0;
-    virtual void Exit() = 0;
-};
-
-class GameStateManager {
+class ZombieWaveBuilder {
 private:
-    std::unique_ptr<IGameState> m_currentState;
+    std::vector<std::unique_ptr<Zombie>> m_zombies;
+    Resources& m_res;
+
 public:
-    void ChangeState(std::unique_ptr<IGameState> newState) {
-        if (m_currentState) m_currentState->Exit();
-        m_currentState = std::move(newState);
-        if (m_currentState) m_currentState->Enter();
+    explicit ZombieWaveBuilder(Resources& res) : m_res(res) {}
+
+    ZombieWaveBuilder& addNormalZombie(float x, float y) {
+        m_zombies.push_back(std::make_unique<ZombieNormal>(m_res, x, y));
+        return *this;
     }
-    void Update(float dt) { if (m_currentState) m_currentState->Update(dt); }
-    void Draw() { if (m_currentState) m_currentState->Draw(); }
+
+    ZombieWaveBuilder& addConeheadZombie(float x, float y) {
+        m_zombies.push_back(std::make_unique<ConeheadZombie>(m_res, x, y));
+        return *this;
+    }
+
+    std::vector<std::unique_ptr<Zombie>> build() {
+        return std::move(m_zombies);
+    }
 };
+
+// Usage in Level1::spawnNextWave():
+ZombieWaveBuilder builder(res);
+auto wave1Zombies = builder.addNormalZombie(spawnX, laneY(2)).build();
+for (auto& z : wave1Zombies) {
+    m_zombies.push_back(std::move(z));
+}
 ```
 
 ---
 
-### 4. Observer Pattern (Behavioral)
+### 4. Strategy Pattern (Behavioral)
 
-* **Design Structure**: Centralized `EventManager` acting as Subject/Dispatcher with an `IObserver` callback interface.
-* **Technical Rationale**: Decouples gameplay triggers from dependent secondary subsystems:
-  * Collecting a sun notifies `HUDManager` to increment the currency balance and `AudioManager` to play the collection sound without `SunItem` holding references to either class.
-  * A zombie dying notifies wave progress trackers and score tallies.
-  * A plant dying notifies `GridManager` to free the grid cell for replanting.
+* **Concrete Implementation**:
+  * `ITrajectoryStrategy`, `StraightTrajectoryStrategy`, `LobbedTrajectoryStrategy` (`include/entities/items/TrajectoryStrategy.h`)
+  * Integrated into `Projectile` (`include/entities/items/Projectile.h`, `src/Projectile.cpp`)
+* **Design Structure**:
+  `ITrajectoryStrategy` defines the interface for projectile spatial movement. `StraightTrajectoryStrategy` executes linear horizontal translation, while `LobbedTrajectoryStrategy` evaluates a parametric parabolic arc. `Projectile` acts as the Context holding a `std::shared_ptr<ITrajectoryStrategy>`.
+* **Architectural Rationale**:
+  * **Decoupling Math from Rendering**: Straight peas (PeaShooter, SnowPea, FirePea, GatlingPea) and lobbed projectiles (Cabbage, Corn, Melon) share common collision and particle logic but differ entirely in spatial movement equations.
+  * **Elimination of Conditional Branching**: Encapsulating flight math into interchangeable strategy classes eliminates hardcoded `if (m_isLobbed)` branches inside the hot per-frame `Projectile::update()` loop.
 
-```cpp
-enum class GameEvent { SunCollected, ZombieKilled, PlantDestroyed, LawnmowerTriggered };
+#### Class Diagram
 
-struct EventData { int value; int gridX; int gridY; };
-
-class IObserver {
-public:
-    virtual ~IObserver() = default;
-    virtual void OnNotify(GameEvent event, const EventData& data) = 0;
-};
-
-class EventManager {
-private:
-    std::unordered_map<GameEvent, std::vector<IObserver*>> m_listeners;
-public:
-    static EventManager& GetInstance() {
-        static EventManager instance;
-        return instance;
+```mermaid
+classDiagram
+    class ITrajectoryStrategy {
+        <<interface>>
+        +updatePosition(x, y, startX, startY, speed, range, maxHeight, progress, dt)* void
     }
-    void Subscribe(GameEvent event, IObserver* observer) {
-        m_listeners[event].push_back(observer);
+
+    class StraightTrajectoryStrategy {
+        +updatePosition(x, y, startX, startY, speed, range, maxHeight, progress, dt) void
     }
-    void Notify(GameEvent event, const EventData& data) {
-        if (m_listeners.find(event) != m_listeners.end()) {
-            for (auto* obs : m_listeners[event]) obs->OnNotify(event, data);
-        }
+
+    class LobbedTrajectoryStrategy {
+        +updatePosition(x, y, startX, startY, speed, range, maxHeight, progress, dt) void
     }
-};
+
+    class Projectile {
+        -float m_x
+        -float m_y
+        -float m_progress
+        -shared_ptr~ITrajectoryStrategy~ m_strategy
+        +update(dt) void
+        +draw() void
+        +onHit() void
+    }
+
+    ITrajectoryStrategy <|.. StraightTrajectoryStrategy
+    ITrajectoryStrategy <|.. LobbedTrajectoryStrategy
+    Projectile o-- ITrajectoryStrategy : delegates position update
 ```
 
----
-
-### 5. Strategy Pattern (Behavioral)
-
-* **Design Structure**: `ITrajectoryStrategy` interface defining position calculation algorithms over time, utilized by `Projectile`.
-* **Technical Rationale**: Replaces boolean flag branching (`m_isLobbed`) in `Projectile.h` with interchangeable strategy algorithms for linear travel (`StraightTrajectoryStrategy`), parabolic catapult flight (`LobbedTrajectoryStrategy`), and radial splash damage (`AoeExplosionStrategy`).
+#### Code Implementation
 
 ```cpp
 class ITrajectoryStrategy {
 public:
     virtual ~ITrajectoryStrategy() = default;
-    virtual Vector2 CalculatePosition(Vector2 start, Vector2 target, float speed, float t) = 0;
-    virtual bool HasHitTarget(Vector2 current, Vector2 target) = 0;
+    virtual void updatePosition(float& x, float& y, float startX, float startY, float speed, float range, float maxHeight, float& progress, float dt) = 0;
 };
 
 class StraightTrajectoryStrategy : public ITrajectoryStrategy {
 public:
-    Vector2 CalculatePosition(Vector2 start, Vector2 target, float speed, float t) override {
-        return { start.x + speed * t, start.y };
-    }
-    bool HasHitTarget(Vector2 current, Vector2 target) override {
-        return current.x >= 800.0f;
+    void updatePosition(float& x, float& y, float startX, float startY, float speed, float range, float maxHeight, float& progress, float dt) override {
+        x += speed * dt;
     }
 };
 
 class LobbedTrajectoryStrategy : public ITrajectoryStrategy {
-private:
-    float m_maxHeight = 120.0f;
 public:
-    Vector2 CalculatePosition(Vector2 start, Vector2 target, float speed, float t) override {
-        float totalDist = target.x - start.x;
-        float currDist = speed * t;
-        float progress = (totalDist > 0) ? (currDist / totalDist) : 1.0f;
-        float currentY = start.y - (4.0f * m_maxHeight * progress * (1.0f - progress));
-        return { start.x + currDist, currentY };
+    void updatePosition(float& x, float& y, float startX, float startY, float speed, float range, float maxHeight, float& progress, float dt) override {
+        if (range <= 0.0f) range = 400.0f;
+        progress += (speed / range) * dt;
+        if (progress > 1.0f) progress = 1.0f;
+
+        x = startX + progress * range;
+        float heightOffset = 4.0f * maxHeight * progress * (1.0f - progress);
+        y = startY - heightOffset;
     }
-    bool HasHitTarget(Vector2 current, Vector2 target) override {
-        return current.x >= target.x;
+};
+
+// Delegated update in Projectile::update(dt):
+if (m_strategy) {
+    m_strategy->updatePosition(m_x, m_y, m_startX, m_startY, m_speed, m_range, m_maxHeight, m_progress, dt);
+    if (m_isLobbed && m_progress >= 1.0f) {
+        onHit();
+    }
+}
+```
+
+---
+
+### 5. Observer Pattern (Behavioral)
+
+* **Concrete Implementation**:
+  * `IGameObserver`, `GameSubject`, `AudioGameObserver` (`include/utils/GameObserver.h`)
+  * Integrated into `Level1` (`include/level/Level1.h`, `src/level/Level1.cpp`)
+* **Design Structure**:
+  `GameSubject` manages a dynamic collection of `IGameObserver*` subscribers. When key gameplay events occur (sun collected, zombie eliminated, plant destroyed), `GameSubject` broadcasts notifications to all registered observers.
+* **Architectural Rationale**:
+  * **Decoupled System Interactions**: In gameplay loops, actions in the physics/entity layer trigger reactions across audio, UI, scoring, and level tracking.
+  * **Loose Coupling**: With the Observer pattern, entity objects do not need direct references to HUD elements or audio managers. Subsystems subscribe independently to `GameSubject` events.
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class IGameObserver {
+        <<interface>>
+        +onSunCollected(amount) void
+        +onZombieKilled(zombieName) void
+        +onPlantDestroyed(row, col) void
+    }
+
+    class AudioGameObserver {
+        +onSunCollected(amount) void
+        +onZombieKilled(zombieName) void
+    }
+
+    class GameSubject {
+        -vector~IGameObserver*~ m_observers
+        +addObserver(observer) void
+        +removeObserver(observer) void
+        +notifySunCollected(amount) void
+        +notifyZombieKilled(zombieName) void
+        +notifyPlantDestroyed(row, col) void
+    }
+
+    class Level1 {
+        -GameSubject m_eventSubject
+        -AudioGameObserver m_audioObserver
+        +update(dt) void
+    }
+
+    IGameObserver <|.. AudioGameObserver
+    GameSubject o-- IGameObserver : notifies
+    Level1 *-- GameSubject : publishes events
+    Level1 *-- AudioGameObserver : subscribes
+```
+
+#### Code Implementation
+
+```cpp
+class IGameObserver {
+public:
+    virtual ~IGameObserver() = default;
+    virtual void onSunCollected(int amount) {}
+    virtual void onZombieKilled(const std::string& zombieName) {}
+    virtual void onPlantDestroyed(int row, int col) {}
+};
+
+class GameSubject {
+private:
+    std::vector<IGameObserver*> m_observers;
+
+public:
+    void addObserver(IGameObserver* observer) {
+        if (observer && std::find(m_observers.begin(), m_observers.end(), observer) == m_observers.end()) {
+            m_observers.push_back(observer);
+        }
+    }
+
+    void notifySunCollected(int amount) {
+        for (auto* obs : m_observers) {
+            if (obs) obs->onSunCollected(amount);
+        }
+    }
+
+    void notifyZombieKilled(const std::string& zombieName) {
+        for (auto* obs : m_observers) {
+            if (obs) obs->onZombieKilled(zombieName);
+        }
+    }
+};
+```
+
+---
+
+### 6. Command Pattern (Behavioral)
+
+* **Concrete Implementation**:
+  * `ICommand`, `PlantPlacementCommand` (`include/utils/PlantCommand.h`)
+  * Integrated into `Level1::createPlant()` (`src/level/Level1.cpp`)
+* **Design Structure**:
+  `ICommand` defines the abstract interface with `execute()`. `PlantPlacementCommand` encapsulates the concrete plant placement routine as a closure via `std::function<void()>`.
+* **Architectural Rationale**:
+  * **Encapsulation of User Actions**: Wrapping plant grid placement into command objects decouples the click-detection UI from grid modification.
+  * **Foundation for Action Queues and Replays**: Command encapsulation allows storing command histories for undo/redo actions, replay recording, and multiplayer network synchronization.
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class ICommand {
+        <<interface>>
+        +execute()* void
+    }
+
+    class PlantPlacementCommand {
+        -function~void()~ m_action
+        +PlantPlacementCommand(action)
+        +execute() void
+    }
+
+    class Level1 {
+        -unique_ptr~Plant~ m_grid[5][9]
+        +createPlant(type, row, col, pixelX, pixelY) void
+    }
+
+    ICommand <|.. PlantPlacementCommand
+    Level1 ..> PlantPlacementCommand : instantiates and executes
+```
+
+#### Code Implementation
+
+```cpp
+class ICommand {
+public:
+    virtual ~ICommand() = default;
+    virtual void execute() = 0;
+};
+
+class PlantPlacementCommand : public ICommand {
+private:
+    std::function<void()> m_action;
+
+public:
+    explicit PlantPlacementCommand(std::function<void()> action)
+        : m_action(action) {}
+
+    void execute() override {
+        if (m_action) {
+            m_action();
+        }
+    }
+};
+
+// Execution in Level1::createPlant():
+PlantPlacementCommand cmd([this, type, row, col, pixelX, pixelY]() {
+    if (type == "PeaShooter") {
+        m_grid[row][col] = std::make_unique<PeaShooter>(res, pixelX, pixelY);
+    } else if (type == "SunFlower") {
+        m_grid[row][col] = std::make_unique<SunFlower>(res, pixelX, pixelY);
+    }
+    // Additional plant types...
+});
+cmd.execute();
+```
+
+---
+
+### 7. State Pattern (Behavioral)
+
+* **Concrete Implementations**:
+  * `LevelPhase` in `Level1.h` (`SeedSelection`, `PanToLawn`, `ReadySetPlant`, `ActiveWave`)
+  * `QuizState` in `QuizMenu.h` (`Rules`, `Playing`, `AnswerFeedback`, `Summary`)
+  * `JalapenoState` in `Jalapeno.h` (`EXPLODING_SWELL`, `EXPLODING_FIRE`, `DONE`)
+  * `PotatoMineState` in `PotatoMine.h` (`UNDERGROUND`, `ARMING`, `ARMED`)
+  * `VaseState` in `Vase.h` (`Intact`, `PendingBreak`, `Broken`)
+* **Design Structure**:
+  Finite state machines manage operational phases across level orchestration, menu flows, and entity animation lifecycles.
+* **Architectural Rationale**:
+  * **Guaranteed Transition Invariants**: Entities like Jalapeno and Potato Mine must execute strictly ordered states (fuse swelling $\rightarrow$ lane incineration $\rightarrow$ removal; unearthing delay $\rightarrow$ armed detonation). State machines prevent illegal transitions and race conditions during rapid user input.
+  * **Input Protection**: In Vasebreaker mode, setting `VaseState::PendingBreak` on mallet click prevents duplicate strikes and redundant particle bursts during the hammer swing window.
+
+#### State Transition Diagram
+
+```mermaid
+stateDiagram-v2
+    [*] --> SeedSelection : Level Initialized
+    SeedSelection --> PanToLawn : Deck Confirmed (LET'S ROCK!)
+    PanToLawn --> ReadySetPlant : Camera Arrives at House (2.5s)
+    ReadySetPlant --> ActiveWave : Ready-Set-Plant Animation Finished
+    ActiveWave --> [*] : Level Won or Lost
+
+    note right of ActiveWave
+      Active gameplay loop:
+      - Sun generation
+      - Plant attacks
+      - Wave timer countdowns
+      - Huge wave flag rushes
+    end note
+```
+
+#### Entity Lifecycle Diagram (Jalapeno & Potato Mine)
+
+```mermaid
+stateDiagram-v2
+    state JalapenoState {
+        [*] --> EXPLODING_SWELL : Planted
+        EXPLODING_SWELL --> EXPLODING_FIRE : Fuse Timer Reached (0.6s)
+        EXPLODING_FIRE --> DONE : Flame Row Extinguished (0.8s)
+        DONE --> [*] : Despawned from Grid
+    }
+
+    state PotatoMineState {
+        [*] --> UNDERGROUND : Planted
+        UNDERGROUND --> ARMING : Sprout Emerges (14s)
+        ARMING --> ARMED : Indicator Light Active
+        ARMED --> [*] : Zombie Contact -> SPUDOW!
+    }
+```
+
+---
+
+### 8. Adapter Pattern (Structural)
+
+* **Concrete Implementation**:
+  * `IAudioEngine`, `RaylibAudioAdapter` (`include/core/AudioAdapter.h`)
+* **Design Structure**:
+  `IAudioEngine` acts as the target interface defining generic audio playback (`playSound`). `RaylibAudioAdapter` adapts Raylib's native `AudioManager::GetInstance().PlaySoundEffect()` to conform to `IAudioEngine`.
+* **Architectural Rationale**:
+  * **Framework Decoupling**: Direct dependencies on Raylib audio APIs across dozens of game classes create tight coupling. The adapter provides a generic audio interface that facilitates mock testing and simplifies potential future migrations to other multimedia frameworks (such as SDL2 or FMOD).
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class IAudioEngine {
+        <<interface>>
+        +playSound(soundAsset)* void
+    }
+
+    class RaylibAudioAdapter {
+        +playSound(soundAsset) void
+    }
+
+    class AudioManager {
+        +GetInstance()$ AudioManager&
+        +PlaySoundEffect(path) void
+    }
+
+    class Client {
+        -IAudioEngine* m_audio
+    }
+
+    IAudioEngine <|.. RaylibAudioAdapter
+    RaylibAudioAdapter --> AudioManager : delegates to PlaySoundEffect()
+    Client --> IAudioEngine : uses
+```
+
+#### Code Implementation
+
+```cpp
+// Target interface
+class IAudioEngine {
+public:
+    virtual ~IAudioEngine() = default;
+    virtual void playSound(const std::string& soundAsset) = 0;
+};
+
+// Adapter adapting Raylib's AudioManager to IAudioEngine
+class RaylibAudioAdapter : public IAudioEngine {
+public:
+    void playSound(const std::string& soundAsset) override {
+        AudioManager::GetInstance().PlaySoundEffect(soundAsset);
+    }
+};
+```
+
+---
+
+### 9. Facade Pattern (Structural)
+
+* **Concrete Implementation**:
+  * `GameEngineFacade` (`include/core/GameEngineFacade.h`)
+* **Design Structure**:
+  `GameEngineFacade` provides a static, simplified facade interface over three distinct core subsystems: `Resources`, `AudioManager`, and `ProfileManager`.
+* **Architectural Rationale**:
+  * **Simplified Subsystem Access**: High-level gameplay systems frequently need to trigger sounds, query textures, and update player profiles simultaneously. `GameEngineFacade` wraps these disparate singleton interactions into unified static calls, shielding high-level components from complex subsystem initialization details.
+
+#### Class Diagram
+
+```mermaid
+classDiagram
+    class GameEngineFacade {
+        +PlaySFX(soundAsset)$ void
+        +GetTexture(name)$ Texture2D
+        +LoadReanim(filePath)$ ReanimDefinition
+        +GetProfile()$ ProfileManager&
+    }
+
+    class Resources {
+        +GetInstance()$ Resources&
+        +GetAssetPath(relativePath) string
+        +GetTexture(name) Texture2D
+        +LoadReanim(filePath) ReanimDefinition
+    }
+
+    class AudioManager {
+        +GetInstance()$ AudioManager&
+        +PlaySoundEffect(path) void
+    }
+
+    class ProfileManager {
+        +GetInstance()$ ProfileManager&
+    }
+
+    GameEngineFacade --> Resources : delegates asset calls
+    GameEngineFacade --> AudioManager : delegates audio calls
+    GameEngineFacade --> ProfileManager : delegates profile calls
+```
+
+#### Code Implementation
+
+```cpp
+class GameEngineFacade {
+public:
+    static void PlaySFX(const std::string& soundAsset) {
+        std::string fullPath = Resources::GetInstance().GetAssetPath(soundAsset);
+        AudioManager::GetInstance().PlaySoundEffect(fullPath);
+    }
+
+    static Texture2D GetTexture(const std::string& name) {
+        return Resources::GetInstance().GetTexture(name);
+    }
+
+    static ReanimDefinition LoadReanim(const std::string& filePath) {
+        return Resources::GetInstance().LoadReanim(filePath);
+    }
+
+    static ProfileManager& GetProfile() {
+        return ProfileManager::GetInstance();
     }
 };
 ```
@@ -474,30 +981,44 @@ public:
 
 ### Prerequisites
 
-* CMake 3.5 or higher
+* CMake 3.20 or higher
 * C++20 compliant compiler (GCC, Clang, or MSVC)
 * Raylib dependencies (OpenGL graphics drivers)
 
-### Building the Project
+### 1. Cloning the Repository
 
-#### macOS/Linux:
+Clone the `submission` branch:
 
 ```bash
-# Run the automated build script (applies mandatory CMAKE_POLICY_VERSION_MINIMUM shim)
-cmake -S . -B build "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
-cmake --build build --config Release --parallel 4
+git clone -b submission https://github.com/khanhf-ng820/CS202-GameProject.git
+cd CS202-GameProject
+```
 
-# Run executable
+> [!NOTE]
+> **Automatic Asset Download**: The `submission` branch excludes the large `assets/` folder to remain lightweight. On your first build, CMake will automatically download `assets.zip` from GitHub Releases and extract it into `assets/` before compiling. No manual asset extraction is required.
+
+### 2. Building and Running the Project
+
+#### macOS / Linux:
+
+```bash
+# Run the automated build script (configures CMake and builds the project)
+bash build.sh
+
+# Or compile incrementally for subsequent builds
+bash remake.sh
+
+# Run the game executable
 ./build/PvZGame
 ```
 
 #### Windows:
 
 ```powershell
-# Run the automated build script (applies mandatory CMAKE_POLICY_VERSION_MINIMUM shim)
+# Configure CMake with policy shim and build Release executable
 cmake -S . -B build "-DCMAKE_POLICY_VERSION_MINIMUM=3.5"
 cmake --build build --config Release --parallel 4
 
-# Run executable
+# Run the game executable
 .\build\PvZGame.exe
 ```

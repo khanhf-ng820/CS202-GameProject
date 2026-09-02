@@ -12,6 +12,7 @@
 #include "Reanimation.h"
 #include "LawnMower.h"
 #include "BitmapFont.h"
+#include "GameObserver.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -44,6 +45,8 @@ protected:
     LevelPhase m_phase;
     SeedSelectMenu m_seedSelectMenu;
     SeedBank m_seedBank;
+    GameSubject m_eventSubject;
+    AudioGameObserver m_audioObserver;
     
     // Camera pan tracking
     float m_cameraCropX = 500.0f;
