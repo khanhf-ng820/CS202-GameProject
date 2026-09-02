@@ -4021,3 +4021,2589 @@ The incorporation of AI tools throughout the project followed the highest standa
 1. **Student Authorship & Architectural Ownership**: The team authored the overall system architecture, designed the state machine transitions, authored the game design document, designed UML class diagrams, and made all final engineering decisions.
 2. **Deterministic Validation**: Every generated snippet, math formula, and coordinate layout underwent rigorous manual code reviews, manual in-game testing, and multi-platform compilation testing.
 3. **No Blind Code Injection**: AI output was treated as a proposal and refined through continuous feedback loops to ensure compliance with C++20 standards, Raylib memory management invariants, and OOP design pattern requirements.
+
+
+---
+
+### 3.10 Sun Economy & Wave Spawner Balancing
+
+- **Conversation ID**: `671f9fce-d368-433c-bbdf-5a40288172d7`
+- **Category / Domain**: Gameplay Mechanics & Economy Tuning
+- **Primary Contributor**: Nguyễn Phúc Khánh
+- **Date Range (UTC+7)**: 2026-09-01
+- **Total Active Prompts**: 5
+
+#### Prompt 3.10.1
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-01T16:25:10+07:00
+- **Prompt Content**:
+```text
+Investigate why seed cards in the seed bank do not undergo their recharge cooldown timer upon level initialization before becoming selectable.
+```
+- **Task Accomplished**: Audited seed card cooldown timers upon level entry and ensured plants enforce proper initial recharge delays.
+
+---
+
+#### Prompt 3.10.2
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-01T16:39:47+07:00
+- **Prompt Content**:
+```text
+Set initial sun currency to 50 sun for daytime levels and configure natural periodic sun drop intervals during gameplay.
+```
+- **Task Accomplished**: Fixed sun currency initialization logic across day/night levels and enabled background natural sun spawning.
+
+---
+
+#### Prompt 3.10.3
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-01T17:02:14+07:00
+- **Prompt Content**:
+```text
+Fix the sun item rendering order by layering texture 1 over texture 3, adjust the click hitbox, and make the falling motion smooth and gradual.
+```
+- **Task Accomplished**: Refactored SunItem.cpp rendering layer priority, refined click selection hitboxes, and smoothed out falling animation trajectories.
+
+---
+
+#### Prompt 3.10.4
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-01T17:15:30+07:00
+- **Prompt Content**:
+```text
+Research original Plants vs. Zombies level specifications—including wave counts, wave intervals, and zombie difficulty scaling—and balance all 6 game levels accordingly.
+```
+- **Task Accomplished**: Calibrated wave timing intervals, zombie spawn composition, and difficulty progression curves across all 6 levels.
+
+---
+
+#### Prompt 3.10.5
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-01T17:22:05+07:00
+- **Prompt Content**:
+```text
+Verify Sunflower sun production mechanics (25 sun per drop) and extend the time interval between consecutive zombie waves for better gameplay balance.
+```
+- **Task Accomplished**: Confirmed 25-sun drop yield for Sunflower entities and increased inter-wave delays to refine game difficulty curve.
+
+---
+
+### 3.11 User Shop Unlocks & Puzzle Mode Economy Sync
+
+- **Conversation IDs**: `c8a2c7ca-b232-44f7-90bc-f047481f2993`, `fd7507c7-4a8c-4163-ac3c-b43e35f3517a`
+- **Category / Domain**: User Account Management & Shop Mechanics
+- **Primary Contributor**: Nguyễn Phúc Khánh
+- **Date Range (UTC+7)**: 2026-09-01
+- **Total Active Prompts**: 3
+
+#### Prompt 3.11.1
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-01T21:15:59+07:00
+- **Prompt Content**:
+```text
+Integrate Shop item availability with persistent user accounts, ensuring unpurchased plants display buy options and checking Football Zombie spawns in Level 3.
+```
+- **Task Accomplished**: Bound Shop UI items to user save state and verified Football Zombie wave spawning logic in Level 3.
+
+---
+
+#### Prompt 3.11.2
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-01T21:24:10+07:00
+- **Prompt Content**:
+```text
+Clean up UI text overlays, remove lawn tile green selection boxes, and disable the debug overlay toggle in Wall-nut Bowling mode.
+```
+- **Task Accomplished**: Removed redundant debug UI elements, eliminated tile hover boxes, and cleaned up onscreen text rendering.
+
+---
+
+#### Prompt 3.11.3
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-01T21:45:19+07:00
+- **Prompt Content**:
+```text
+Synchronize Puzzle mode coin currency directly with the active user account profile balance rather than fallback defaults.
+```
+- **Task Accomplished**: Linked Puzzle mode economy state to persistent user profile coins for accurate transaction tracking.
+
+---
+
+### 3.12 Zombie Spawning Off-Screen & Level Visual Polish
+
+- **Conversation ID**: `717f4e5f-93e5-4838-8214-f4fd9d7726d9`
+- **Category / Domain**: Level Interaction & Spawning Refactoring
+- **Primary Contributor**: Nguyễn Phúc Khánh
+- **Date Range (UTC+7)**: 2026-08-31
+- **Total Active Prompts**: 3
+
+#### Prompt 3.12.1
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-08-31T22:15:10+07:00
+- **Prompt Content**:
+```text
+Adjust zombie spawn coordinates to spawn slightly off-screen to prevent zombies from appearing abruptly inside the visible lawn grid.
+```
+- **Task Accomplished**: Offset wave spawn positions past the right lawn edge for seamless off-screen entry animations.
+
+---
+
+#### Prompt 3.12.2
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-08-31T22:20:45+07:00
+- **Prompt Content**:
+```text
+Fix the Pole-Vaulting Zombie jump vault landing position in Wall-nut Bowling to ensure accurate coordinate placement post-vault.
+```
+- **Task Accomplished**: Corrected landing target calculations for Pole-Vaulting Zombies when clearing bowling nuts.
+
+---
+
+#### Prompt 3.12.3
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-08-31T22:26:49+07:00
+- **Prompt Content**:
+```text
+Ensure zombies in the Vasebreaker level display proper projectile hit animations when struck by pea shots.
+```
+- **Task Accomplished**: Hooked hit reaction keyframe animations for zombies in Vasebreaker level.
+
+---
+
+### 3.13 Design Patterns Architectural Audit & Refactoring
+
+- **Conversation ID**: `e37ee6ec-c119-44b3-82f2-acd905944bc8`
+- **Category / Domain**: Software Architecture & Design Patterns
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-09-02
+- **Total Active Prompts**: 4
+
+#### Prompt 3.13.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-09-02T09:45:12+07:00
+- **Prompt Content**:
+```text
+Audit the entire codebase to identify all implemented OOP design patterns (Singleton, Factory Method, Builder, Strategy, Observer, Command, State, Adapter, Facade, Flyweight) and verify their architectural correctness.
+```
+- **Task Accomplished**: Conducted comprehensive codebase audit of OOP design patterns to verify compliance with course rubric requirements.
+
+---
+
+#### Prompt 3.13.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-09-02T10:05:30+07:00
+- **Prompt Content**:
+```text
+Propose safe refactoring options to introduce remaining design pattern requirements without modifying existing gameplay logic or causing regressions.
+```
+- **Task Accomplished**: Formulated non-disruptive pattern integration strategies for State, Observer, and Strategy patterns.
+
+---
+
+#### Prompt 3.13.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-09-02T10:18:40+07:00
+- **Prompt Content**:
+```text
+Standardize Doxygen @brief documentation blocks across header files and refine concise, professional code comments.
+```
+- **Task Accomplished**: Cleaned up inline comments and added standardized @brief Doxygen headers across core entity modules.
+
+---
+
+#### Prompt 3.13.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-09-02T10:30:15+07:00
+- **Prompt Content**:
+```text
+Document the architectural advantages, memory efficiency benefits, and software engineering rationale for each design pattern used in the project report.
+```
+- **Task Accomplished**: Authored design pattern evaluation sections explaining structural benefits and pattern trade-offs.
+
+---
+
+### 3.14 Academic Report Documentation & Work Division
+
+- **Conversation ID**: `53af30db-1bcf-4ff6-a184-e9f3c791d3fb`
+- **Category / Domain**: Documentation & Task Allocation
+- **Primary Contributor**: Từ Hoàng Anh & Nguyễn Phúc Khánh
+- **Date Range (UTC+7)**: 2026-09-02
+- **Total Active Prompts**: 3
+
+#### Prompt 3.14.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-09-02T15:10:20+07:00
+- **Prompt Content**:
+```text
+Analyze git commit history to extract detailed work contributions for each team member (approx. 20 tasks for Hoàng Anh and 20 tasks for Khánh) formatted for grade report submission.
+```
+- **Task Accomplished**: Synthesized commit logs into granular task distribution lists for member evaluation tables.
+
+---
+
+#### Prompt 3.14.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-09-02T15:25:40+07:00
+- **Prompt Content**:
+```text
+Write a LaTeX section documenting team member work division, roles, and project contribution percentages for the final course report.
+```
+- **Task Accomplished**: Authored LaTeX team contribution breakdown section detailing development responsibilities.
+
+---
+
+#### Prompt 3.14.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-09-02T15:38:00+07:00
+- **Prompt Content**:
+```text
+Format TikZ class inheritance diagrams for Zombie subclasses, Plant subclasses, items, and auxiliary entities following standard LaTeX report guidelines.
+```
+- **Task Accomplished**: Created TikZ diagrams illustrating class relationships, inheritance hierarchies, and entity associations.
+
+---
+
+### 3.15 Report LaTeX to Markdown Automation
+
+- **Conversation IDs**: `903c5462-861f-4098-82e9-13929de911d1`, `e33817e3-8b0a-4dc5-9a7b-d764dc8a635f`
+- **Category / Domain**: Documentation Tooling & Converter Development
+- **Primary Contributor**: Nguyễn Phúc Khánh
+- **Date Range (UTC+7)**: 2026-09-02
+- **Total Active Prompts**: 2
+
+#### Prompt 3.15.1
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-02T16:44:27+07:00
+- **Prompt Content**:
+```text
+Develop a Python conversion script utilizing Pandoc to automatically transform LaTeX report source files (decorator.tex) into GitHub-flavored Markdown (report.md).
+```
+- **Task Accomplished**: Created automated conversion tool for compiling LaTeX report files into clean Markdown documentation.
+
+---
+
+#### Prompt 3.15.2
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-02T17:15:33+07:00
+- **Prompt Content**:
+```text
+Resolve Mermaid and TikZ syntax parsing errors during LaTeX-to-Markdown conversion to preserve diagram visual integrity.
+```
+- **Task Accomplished**: Debugged diagram syntax conversion rules and validated Markdown formatting consistency.
+
+---
+
+### 3.16 Comprehensive AI Usage Declaration Update
+
+- **Conversation ID**: `0b48e74a-ff02-4618-9af7-7d2d122d01ad`
+- **Category / Domain**: Course Compliance & Academic Integrity
+- **Primary Contributor**: Nguyễn Phúc Khánh & Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-09-02
+- **Total Active Prompts**: 1
+
+#### Prompt 3.16.1
+- **Member**: Nguyễn Phúc Khánh
+- **Sent At**: 2026-09-02T19:55:20+07:00
+- **Prompt Content**:
+```text
+Update the AI Usage Declaration (AI_Usage_Declaration.md) by incorporating all recent chat history transcripts, professional English prompt rewrites, timestamps, and task completion summaries.
+```
+- **Task Accomplished**: Fully updated and synchronized AI_Usage_Declaration.md with complete development logs, standardized prompt translations, and verified academic integrity documentation.
+
+---
+
+### 3.17 Advanced Plant Entity Logic & Subclass Mechanics
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-317bca0c`
+- **Category / Domain**: Plant Subsystems & Combat Mechanics
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-25 to 2026-08-31
+- **Total Active Prompts**: 25
+
+#### Prompt 3.17.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Implement the firing debounce mechanism for PeaShooter so that projectile instantiation occurs on frame N and resets on frame N+1.
+```
+- **Task Accomplished**: Implemented frame-specific debounce logic in PeaShooter update loop to prevent duplicate projectile spawning per animation cycle.
+
+---
+
+#### Prompt 3.17.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Configure SnowPea freezing mechanics to apply a 50% movement speed debuff and blue tint shader to hit zombies.
+```
+- **Task Accomplished**: Added freeze status debuff handling and visual color modulation for SnowPea projectiles.
+
+---
+
+#### Prompt 3.17.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Create the Repeater plant subclass capable of firing two consecutive pea projectiles per attack cycle.
+```
+- **Task Accomplished**: Engineered double-projectile firing delay sequence for Repeater plant subclass.
+
+---
+
+#### Prompt 3.17.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Implement GatlingPea four-pea burst fire state machine with exact interval timing between pea releases.
+```
+- **Task Accomplished**: Constructed multi-shot burst timer logic for GatlingPea in GatlingPea.cpp.
+
+---
+
+#### Prompt 3.17.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Build FirePea entity to handle flaming pea attacks with doubled base impact damage.
+```
+- **Task Accomplished**: Created FirePea plant subclass with scaled attack damage calculations.
+
+---
+
+#### Prompt 3.17.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Implement Torchwood projectile conversion so that normal peas passing through ignite into fire peas.
+```
+- **Task Accomplished**: Added bounding box overlap check between pea projectiles and Torchwood entities to trigger flaming pea transformation.
+
+---
+
+#### Prompt 3.17.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Fix Torchwood interaction with snow peas so that frozen peas revert to regular peas upon passing through fire.
+```
+- **Task Accomplished**: Resolved projectile state bug by resetting frozen debuff flag to neutral pea status when intersecting Torchwood.
+
+---
+
+#### Prompt 3.17.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Implement Sunflower periodic sun generation timer with custom animation trigger keyframes.
+```
+- **Task Accomplished**: Created sun production cooldown logic for Sunflower and TwinSunflower entities.
+
+---
+
+#### Prompt 3.17.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Build TwinSunflower upgrade plant entity producing 50 sun units per production cycle.
+```
+- **Task Accomplished**: Implemented TwinSunflower subclass yielding dual SunItem instances upon production timer expiry.
+
+---
+
+#### Prompt 3.17.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Implement Wallnut multi-stage visual degradation states based on remaining health thresholds.
+```
+- **Task Accomplished**: Configured texture state swaps for cracked Wallnut visuals at 66% and 33% health thresholds.
+
+---
+
+#### Prompt 3.17.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Create CherryBomb explosive plant entity with 3x3 tile blast radius damage calculation.
+```
+- **Task Accomplished**: Implemented CherryBomb instant explosion logic dealing 1800 damage to all zombies within adjacent grid cells.
+
+---
+
+#### Prompt 3.17.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Implement Jalapeno full-row flame clearing attack eliminating all zombies in its lane.
+```
+- **Task Accomplished**: Constructed Jalapeno explosive attack traversing horizontal lane coordinates with flame particle visuals.
+
+---
+
+#### Prompt 3.17.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Build Squash targeted jump-and-crush mechanic targeting the nearest zombie in adjacent tiles.
+```
+- **Task Accomplished**: Engineered Squash detection range check, leap animation state, and crushing impact damage.
+
+---
+
+#### Prompt 3.17.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Implement PotatoMine underground arming phase timer before transitioning to active explosive state.
+```
+- **Task Accomplished**: Added 15-second growth timer for PotatoMine before enabling contact detection and SPUDOW explosion.
+
+---
+
+#### Prompt 3.17.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Build Chomper swallow state machine handling instant zombie ingestion, chew cooldown timer, and idle reset.
+```
+- **Task Accomplished**: Created Chomper bite collision, swallowing animation sequence, and 42-second chew cooldown delay.
+
+---
+
+#### Prompt 3.17.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Implement IceShroom screen-wide freeze effect applying temporary immobility to all active zombies.
+```
+- **Task Accomplished**: Engineered global zombie pause state and ice layer overlay triggered by IceShroom activation.
+
+---
+
+#### Prompt 3.17.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Build Plantern illumination mechanics clearing fog tiles in a 3x3 grid radius around its position.
+```
+- **Task Accomplished**: Constructed fog grid boundary recalculation logic linked to Plantern placement and removal.
+
+---
+
+#### Prompt 3.17.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Implement Garlic plant repulsion mechanic forcing biting zombies to swap to adjacent upper or lower lanes.
+```
+- **Task Accomplished**: Created Garlic bite event listener altering zombie lane index and triggering lane-change movement vectors.
+
+---
+
+#### Prompt 3.17.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Fix Garlic interaction so that zombies play the disgust yuck sound effect before executing lane switch.
+```
+- **Task Accomplished**: Integrated yuck SFX playback inside Garlic damage handler prior to lane transition.
+
+---
+
+#### Prompt 3.17.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Build Gravebuster entity capable of removing tombstone obstacles over a fixed destruction duration.
+```
+- **Task Accomplished**: Implemented Gravebuster attachment state machine and tombstone grid cell clearing logic.
+
+---
+
+#### Prompt 3.17.21
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T19:27:33+07:00
+- **Prompt Content**:
+```text
+Implement Caltrop (Spikeweed) continuous ground puncture damage dealing passive damage to walking zombies.
+```
+- **Task Accomplished**: Created Caltrop ground attack loop inflicting regular damage ticks on overlapping ground zombies.
+
+---
+
+#### Prompt 3.17.22
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T20:34:46+07:00
+- **Prompt Content**:
+```text
+Build SpikeRock upgraded ground plant withstanding multiple vehicle impacts before destruction.
+```
+- **Task Accomplished**: Implemented SpikeRock multi-hit structural durability counter against heavy vehicle units.
+
+---
+
+#### Prompt 3.17.23
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T21:41:59+07:00
+- **Prompt Content**:
+```text
+Implement Cabbagepult lobbed projectile parabolic arc trajectory calculation.
+```
+- **Task Accomplished**: Engineered 2D parabolic arc displacement formulas for Cabbagepult lobbed attacks.
+
+---
+
+#### Prompt 3.17.24
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T10:48:12+07:00
+- **Prompt Content**:
+```text
+Build Cornpult dual-projectile system firing regular corn kernels and occasional immobilizing butter drops.
+```
+- **Task Accomplished**: Constructed randomized attack selector for Cornpult yielding 25% chance of butter freeze debuff.
+
+---
+
+#### Prompt 3.17.25
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T11:55:25+07:00
+- **Prompt Content**:
+```text
+Implement Melonpult heavy lobbed attack dealing area-of-effect splash damage to surrounding zombies.
+```
+- **Task Accomplished**: Created Melonpult impact splash radius calculations damaging primary target and adjacent zombies.
+
+---
+
+
+---
+
+### 3.18 Zombie Armor Detachment & Multi-Stage State Physics
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-318bca0c`
+- **Category / Domain**: Zombie Subsystems & Structural Damage
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-26 to 2026-09-01
+- **Total Active Prompts**: 25
+
+#### Prompt 3.18.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Implement base Zombie movement physics updating horizontal position based on individual speed parameters.
+```
+- **Task Accomplished**: Created Zombie base class position update loop and standard walking animation synchronization.
+
+---
+
+#### Prompt 3.18.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Build ZombieNormal entity with default health, movement velocity, and eating state detection.
+```
+- **Task Accomplished**: Implemented ZombieNormal subclass with standard PopCap damage tolerance and bite damage frequency.
+
+---
+
+#### Prompt 3.18.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Implement FlagZombie leader variant featuring increased movement speed and wave announcement flag visual.
+```
+- **Task Accomplished**: Constructed FlagZombie entity initializing zombie wave invasions.
+
+---
+
+#### Prompt 3.18.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Build ConeheadZombie armored variant incorporating a 370 HP traffic cone headpiece.
+```
+- **Task Accomplished**: Engineered ConeheadZombie multi-layer HP system separating cone armor from underlying zombie health.
+
+---
+
+#### Prompt 3.18.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Implement ConeheadZombie cone detachment spawning a falling cone particle when armor depletes.
+```
+- **Task Accomplished**: Added pre-damage armor check detaching cone model and instantiating FallingPart cone object.
+
+---
+
+#### Prompt 3.18.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Build BucketheadZombie heavy armored unit with 1100 HP iron bucket protection.
+```
+- **Task Accomplished**: Constructed BucketheadZombie class managing high durability bucket armor mechanics.
+
+---
+
+#### Prompt 3.18.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Implement BucketheadZombie iron bucket detachment physics and metallic hit sound effects.
+```
+- **Task Accomplished**: Configured metallic collision SFX and bucket drop visual state for BucketheadZombie.
+
+---
+
+#### Prompt 3.18.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Build NewspaperZombie entity with 150 HP newspaper shield and enraged movement speed boost.
+```
+- **Task Accomplished**: Implemented NewspaperZombie shield destruction trigger accelerating movement speed by 2x upon losing paper.
+
+---
+
+#### Prompt 3.18.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Fix NewspaperZombie texture swap so that losing newspaper changes facial expression to enraged sprite.
+```
+- **Task Accomplished**: Applied runtime track image override swapping normal head for enraged head texture.
+
+---
+
+#### Prompt 3.18.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Build FootballZombie fast armored runner with 1400 HP helmet armor and high speed.
+```
+- **Task Accomplished**: Engineered FootballZombie high-velocity locomotion and helmet durability absorption.
+
+---
+
+#### Prompt 3.18.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Implement FootballZombie helmet drop physics when taking fatal explosive damage.
+```
+- **Task Accomplished**: Ensured FootballZombie helmet armor detachment executes properly prior to fatal hit processing.
+
+---
+
+#### Prompt 3.18.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Build PoleVaultingZombie capable of running at elevated speed until reaching the first plant obstacle.
+```
+- **Task Accomplished**: Constructed PoleVaultingZombie running state machine and vault trigger distance check.
+
+---
+
+#### Prompt 3.18.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Implement PoleVaultingZombie vaulting arc physics leaping over target plant into behind tile.
+```
+- **Task Accomplished**: Engineered parabolic jump trajectory for PoleVaultingZombie clearing plants upon contact.
+
+---
+
+#### Prompt 3.18.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Fix PoleVaultingZombie vault landing coordinates to align accurately within lawn grid columns.
+```
+- **Task Accomplished**: Corrected vault trajectory endpoint calculation preventing misaligned landing coordinates.
+
+---
+
+#### Prompt 3.18.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Ensure PoleVaultingZombie loses vault pole post-jump and transitions to standard walking speed.
+```
+- **Task Accomplished**: Added state transition removing pole asset and resetting speed to regular walk rate post-vault.
+
+---
+
+#### Prompt 3.18.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Implement Zombie death animation lifecycle allowing 2.2-second death sequence to render fully.
+```
+- **Task Accomplished**: Updated level draw loops to check isFinished() instead of isDead() so fatal hit animations complete.
+
+---
+
+#### Prompt 3.18.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Build Zombie limb detachment mechanics dropping severed arm parts at 50% health threshold.
+```
+- **Task Accomplished**: Implemented runtime track visibility toggles hiding arm bone and spawning falling arm item.
+
+---
+
+#### Prompt 3.18.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Implement Zombie eating state machine stopping movement when overlapping a plant and inflicting bite damage.
+```
+- **Task Accomplished**: Constructed plant bite collision check applying 10 damage per second to target plant.
+
+---
+
+#### Prompt 3.18.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Fix Zombie eating SFX playback so that bite sound loops continuously while consuming plants.
+```
+- **Task Accomplished**: Integrated debounced chomp sound playback inside Zombie eating state loop.
+
+---
+
+#### Prompt 3.18.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Build Zombie slow debuff visual shader applying icy tint and halving animation playback rate.
+```
+- **Task Accomplished**: Configured color tinting and animation frame delta scaling when zombie is chilled.
+
+---
+
+#### Prompt 3.18.21
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T19:27:33+07:00
+- **Prompt Content**:
+```text
+Implement Zombie burn death state rendering charred ash visual when slain by CherryBomb or Jalapeno.
+```
+- **Task Accomplished**: Created burn death animation path overriding standard death loop for fire damage kills.
+
+---
+
+#### Prompt 3.18.22
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T20:34:46+07:00
+- **Prompt Content**:
+```text
+Build Zombie wave spawner queue organizing zombie type distribution across 5 lawn lanes.
+```
+- **Task Accomplished**: Engineered lane assignment algorithm scheduling wave composition across available grid rows.
+
+---
+
+#### Prompt 3.18.23
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T21:41:59+07:00
+- **Prompt Content**:
+```text
+Implement off-screen zombie spawn coordinate offset preventing visible pop-in on right edge.
+```
+- **Task Accomplished**: Shifted zombie initial spawn X coordinate past 800px boundary for smooth entrance.
+
+---
+
+#### Prompt 3.18.24
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T10:48:12+07:00
+- **Prompt Content**:
+```text
+Build Zombie HP threshold triggers for multi-stage armor visual degradation.
+```
+- **Task Accomplished**: Configured progressive texture overrides representing damaged cone and dented bucket states.
+
+---
+
+#### Prompt 3.18.25
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T11:55:25+07:00
+- **Prompt Content**:
+```text
+Implement Zombie lawn mower collision handling instantiating instant death upon contact with active mower.
+```
+- **Task Accomplished**: Added lawn mower collision listener instantly eliminating hit zombies and spawning death particles.
+
+---
+
+
+---
+
+### 3.19 PopCap Reanim Engine Keyframe Interpolation & Track Overrides
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-319bca0c`
+- **Category / Domain**: Animation Engine & Visual Renderer
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-24 to 2026-09-02
+- **Total Active Prompts**: 25
+
+#### Prompt 3.19.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Implement Resources::LoadReanim XML parser extracting PopCap keyframe animation tracks.
+```
+- **Task Accomplished**: Constructed line-by-line Reanim XML parser populating track keyframe data structures.
+
+---
+
+#### Prompt 3.19.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Build linear interpolation (Lerp) algorithm calculating sub-frame position, scale, and rotation.
+```
+- **Task Accomplished**: Engineered smooth 60 FPS keyframe interpolation formulas in Reanimation::GetInterpolatedKeyframe.
+
+---
+
+#### Prompt 3.19.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Implement track keyframe inheritance logic maintaining previous values when XML tags are omitted.
+```
+- **Task Accomplished**: Added keyframe value inheritance fallback preserving transform states across keyframes.
+
+---
+
+#### Prompt 3.19.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Build Reanimation::Draw renderer rendering transformed sprite parts based on bone hierarchy.
+```
+- **Task Accomplished**: Implemented matrix transformation pipeline drawing animated tracks at specified screen coordinates.
+
+---
+
+#### Prompt 3.19.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Implement zero-allocation keyframe interpolation invariant eliminating per-frame heap allocations.
+```
+- **Task Accomplished**: Optimized GetInterpolatedKeyframe to return numeric structs without dynamic std::string construction.
+
+---
+
+#### Prompt 3.19.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Build runtime track image override system (OverrideTrackImage) to swap body textures dynamically.
+```
+- **Task Accomplished**: Created m_trackImageOverrides map allowing C++ code to replace sprite textures at runtime.
+
+---
+
+#### Prompt 3.19.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Implement track visibility controls (SetTrackVisible) to hide specific limbs or armor pieces.
+```
+- **Task Accomplished**: Added track visibility bitmask controlling rendering pass for lost arms, cones, or buckets.
+
+---
+
+#### Prompt 3.19.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Build animation loop bounds handling (anim_idle, anim_shooting) resetting frame indices seamlessly.
+```
+- **Task Accomplished**: Engineered loop start/end frame detection maintaining seamless animation playback loops.
+
+---
+
+#### Prompt 3.19.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Implement Reanimation::GetTrackBounds computing visual bounding boxes for animated entities.
+```
+- **Task Accomplished**: Constructed bounding box calculation evaluating transformed track vertex extents.
+
+---
+
+#### Prompt 3.19.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Fix Reanimation visual center calculations for aligning plants and zombies inside UI slots.
+```
+- **Task Accomplished**: Implemented visual center offset math cx = (minX+maxX)/2 preventing offset misalignments.
+
+---
+
+#### Prompt 3.19.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Build animation frame debounce trigger system evaluating exact frame index for firing events.
+```
+- **Task Accomplished**: Created frame-accurate event dispatcher firing projectiles on exact animation frames.
+
+---
+
+#### Prompt 3.19.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Implement scale parameter support in Reanimation::Draw allowing dynamic entity scaling.
+```
+- **Task Accomplished**: Added scale factor multiplication across translation and matrix transforms in render loop.
+
+---
+
+#### Prompt 3.19.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Fix track length mismatch bug where shorter tracks stopped drawing mid-animation.
+```
+- **Task Accomplished**: Added keyframe count normalization extending track duration to prevent vanishing body parts.
+
+---
+
+#### Prompt 3.19.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Implement root bone translation anchor math positioning Reanim models correctly on lawn tiles.
+```
+- **Task Accomplished**: Engineered grid-to-screen coordinate mapping accounting for root bone visual offsets.
+
+---
+
+#### Prompt 3.19.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Build FallingPart physics object animating detached limbs dropping and fading out.
+```
+- **Task Accomplished**: Created FallingPart entity simulating gravity drop, rotation, and alpha fadeout for severed parts.
+
+---
+
+#### Prompt 3.19.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Implement track rotation baking algorithm pre-calculating parent-child bone rotations.
+```
+- **Task Accomplished**: Optimized skeletal hierarchy transformation matrix calculations for child tracks.
+
+---
+
+#### Prompt 3.19.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Build Reanimation state reset mechanism clearing overrides when switching animation clips.
+```
+- **Task Accomplished**: Added track override cleanup routine executed during animation state transitions.
+
+---
+
+#### Prompt 3.19.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Fix track name string comparison overhead using cached string pointers in render loop.
+```
+- **Task Accomplished**: Replaced string copy lookups with const std::string* references in Reanimation::Draw.
+
+---
+
+#### Prompt 3.19.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Implement Reanim asset preloading pipeline caching loaded animation structures in memory.
+```
+- **Task Accomplished**: Integrated Reanim structure caching inside Resources manager to prevent redundant file parsing.
+
+---
+
+#### Prompt 3.19.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Build Reanim frame rate delta scaling adapting animation speed to variable frame rates.
+```
+- **Task Accomplished**: Added delta time multiplier to Reanim frame counter increment logic.
+
+---
+
+#### Prompt 3.19.21
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T19:27:33+07:00
+- **Prompt Content**:
+```text
+Implement Reanimation track color tinting supporting freeze shader visual overlays.
+```
+- **Task Accomplished**: Added Color modulation parameter to Reanimation::Draw for icy blue and burn visual effects.
+
+---
+
+#### Prompt 3.19.22
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T20:34:46+07:00
+- **Prompt Content**:
+```text
+Fix Reanim bounding box negative index crash by clamping keyframe array lookups.
+```
+- **Task Accomplished**: Added defensive std::max(0, index) clamping on keyframe array accesses in Reanim engine.
+
+---
+
+#### Prompt 3.19.23
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T21:41:59+07:00
+- **Prompt Content**:
+```text
+Build custom Reanim animation track sequence switcher managing smooth transitions between clips.
+```
+- **Task Accomplished**: Engineered transition queue blending current track states into target animation clips.
+
+---
+
+#### Prompt 3.19.24
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T10:48:12+07:00
+- **Prompt Content**:
+```text
+Implement memory-safe keyframe array allocation preventing buffer reallocations during playback.
+```
+- **Task Accomplished**: Pre-allocated keyframe vector capacities during XML parsing pass.
+
+---
+
+#### Prompt 3.19.25
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T11:55:25+07:00
+- **Prompt Content**:
+```text
+Build visual preview harness for Reanim entities rendering animated models inside UI menus.
+```
+- **Task Accomplished**: Created preview model wrapper drawing live Reanim models inside Almanac and Shop screens.
+
+---
+
+
+---
+
+### 3.20 Core Audio Engine & Sound Effect Integration
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-320bca0c`
+- **Category / Domain**: Audio Subsystem & SFX Management
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-25 to 2026-09-01
+- **Total Active Prompts**: 20
+
+#### Prompt 3.20.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Design centralized AudioManager singleton class managing Raylib audio resources.
+```
+- **Task Accomplished**: Implemented AudioManager singleton in include/core/AudioManager.h and src/core/AudioManager.cpp.
+
+---
+
+#### Prompt 3.20.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Build background music streaming pipeline supporting multi-track music playback.
+```
+- **Task Accomplished**: Engineered PlayMusic and UpdateMusicStream integration inside main application update loop.
+
+---
+
+#### Prompt 3.20.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Implement sound effect preloading caching Raylib Sound objects in memory.
+```
+- **Task Accomplished**: Constructed sound bank preloading routine loading all game SFX at startup.
+
+---
+
+#### Prompt 3.20.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Build SFX debouncing system preventing overlapping duplicate sound triggers on same frame.
+```
+- **Task Accomplished**: Added sound cooldown timer map suppressing duplicate SFX triggers within 50ms window.
+
+---
+
+#### Prompt 3.20.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Implement sound volume adjustment controls persisting audio preferences across sessions.
+```
+- **Task Accomplished**: Created SetMasterVolume, SetMusicVolume, and SetSFXVolume functions linked to OptionsMenu.
+
+---
+
+#### Prompt 3.20.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Build plant action SFX triggers playing pea firing, squash crushing, and explosion sounds.
+```
+- **Task Accomplished**: Integrated SFX playback invocations inside PeaShooter, Squash, and CherryBomb event handlers.
+
+---
+
+#### Prompt 3.20.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Implement zombie interaction SFX playing chomp, yuck, cone hit, and metallic bucket hit sounds.
+```
+- **Task Accomplished**: Hooked sound playback events into Zombie damage, eating, and Garlic interaction methods.
+
+---
+
+#### Prompt 3.20.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Build UI button click and hover SFX feedback across all menu interfaces.
+```
+- **Task Accomplished**: Added audio feedback triggers to button hover and press handlers in UI components.
+
+---
+
+#### Prompt 3.20.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Implement audio stream cleanup routine unloading sound buffers on application shutdown.
+```
+- **Task Accomplished**: Constructed AudioManager destructor releasing all Raylib Sound and Music handles.
+
+---
+
+#### Prompt 3.20.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Fix music track cross-fading when transitioning between Main Menu and gameplay levels.
+```
+- **Task Accomplished**: Engineered smooth music stop and play sequence during game state transitions.
+
+---
+
+#### Prompt 3.20.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Build ambient environment audio looping background night/day outdoor ambiance SFX.
+```
+- **Task Accomplished**: Added background ambient sound looping support for day and night level themes.
+
+---
+
+#### Prompt 3.20.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Implement Wall-nut Bowling hit impact SFX playing pin strike sounds on zombie collision.
+```
+- **Task Accomplished**: Integrated bowling ball impact SFX inside BowlingLevel collision handler.
+
+---
+
+#### Prompt 3.20.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Build Vasebreaker pot shattering SFX playing pottery smash audio on vase break.
+```
+- **Task Accomplished**: Hooked pot breaking SFX to Vase state transition in VasebreakerLevel.
+
+---
+
+#### Prompt 3.20.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Implement Plant seed placement SFX playing planting dirt sound on lawn tile click.
+```
+- **Task Accomplished**: Added plant placement audio feedback triggered upon successful seed planting.
+
+---
+
+#### Prompt 3.20.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Build Sun collection SFX playing chime sound upon clicking falling or produced sun items.
+```
+- **Task Accomplished**: Hooked sun pickup chime audio to SunItem click event listener.
+
+---
+
+#### Prompt 3.20.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Implement Shovel tool SFX playing digging sound when removing plants from lawn.
+```
+- **Task Accomplished**: Added shovel digging audio effect triggered upon plant removal.
+
+---
+
+#### Prompt 3.20.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Build Zombie groaning SFX periodically triggering randomized zombie groan audio clips.
+```
+- **Task Accomplished**: Engineered randomized timer selecting and playing zombie groan audio samples.
+
+---
+
+#### Prompt 3.20.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Implement Game Over and Victory music fanfare tracks playing on level completion.
+```
+- **Task Accomplished**: Integrated win/lose music triggers inside level end-state condition evaluators.
+
+---
+
+#### Prompt 3.20.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Fix audio volume scaling calculation ensuring logarithmic perception curve for volume sliders.
+```
+- **Task Accomplished**: Applied squared scale transformation to volume slider positions for realistic audio control.
+
+---
+
+#### Prompt 3.20.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Build audio resource error handling catching missing WAV/OGG files gracefully.
+```
+- **Task Accomplished**: Added fallback checks preventing crashes when optional audio files fail to load.
+
+---
+
+
+---
+
+### 3.21 PopCap Custom Bitmap Font Parser & Typography System
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-321bca0c`
+- **Category / Domain**: Typography & Custom Font Renderer
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-26 to 2026-09-02
+- **Total Active Prompts**: 20
+
+#### Prompt 3.21.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Design BitmapFont class parsing PopCap custom font descriptor files and texture sheets.
+```
+- **Task Accomplished**: Constructed BitmapFont parser reading font metrics and glyph bounding boxes from descriptor files.
+
+---
+
+#### Prompt 3.21.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Implement descriptor parser extracting character ASCII codes, X/Y atlas coordinates, and character widths.
+```
+- **Task Accomplished**: Engineered font file parser populating glyph kerning and texture rectangle maps.
+
+---
+
+#### Prompt 3.21.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Build BitmapFont::DrawText function rendering custom typography at designated screen positions.
+```
+- **Task Accomplished**: Implemented custom text rendering loop drawing glyph sub-textures with color tinting.
+
+---
+
+#### Prompt 3.21.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Implement packed 16-bit integer kerning map eliminating string allocation overhead in text measuring.
+```
+- **Task Accomplished**: Optimized character pair kerning lookups using packed uint16_t key maps.
+
+---
+
+#### Prompt 3.21.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Build BitmapFont::MeasureText calculating exact pixel width and height for formatted strings.
+```
+- **Task Accomplished**: Created text dimension measurement function evaluating character widths and kerning offsets.
+
+---
+
+#### Prompt 3.21.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Implement multi-line text wrapping automatically wrapping long text blocks within bounding widths.
+```
+- **Task Accomplished**: Engineered text line-wrapping algorithm breaking paragraphs at word boundaries.
+
+---
+
+#### Prompt 3.21.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Build custom font preloading system supporting ContinuumBold, BrianneTod, and House of Terror fonts.
+```
+- **Task Accomplished**: Integrated font loading pipeline inside Resources manager caching font objects.
+
+---
+
+#### Prompt 3.21.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Implement two-tone typography rendering drawing text shadows and highlighted header text.
+```
+- **Task Accomplished**: Added shadow offset rendering pass in BitmapFont::DrawText for stylized UI text.
+
+---
+
+#### Prompt 3.21.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Build dynamic font scale parameter supporting scaled text rendering for titles and HUD counters.
+```
+- **Task Accomplished**: Added scale factor multiplication across character widths and glyph rendering quads.
+
+---
+
+#### Prompt 3.21.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Fix font character alignment ensuring baseline alignment across varying character glyph heights.
+```
+- **Task Accomplished**: Applied vertical offset adjustments aligning glyph baselines accurately.
+
+---
+
+#### Prompt 3.21.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Implement text clipping rect bounds preventing typography from spilling outside UI panel frames.
+```
+- **Task Accomplished**: Added Scissor Mode clipping integration during text rendering passes.
+
+---
+
+#### Prompt 3.21.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Build seed bank sun counter font renderer displaying crisp numerical sun quantities.
+```
+- **Task Accomplished**: Configured ContinuumBold font instance dedicated to rendering HUD sun balance digits.
+
+---
+
+#### Prompt 3.21.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Implement Plant Almanac title and body text formatting using PopCap BrianneTod font aesthetics.
+```
+- **Task Accomplished**: Formatted Almanac plant descriptions using custom bitmap typography layouts.
+
+---
+
+#### Prompt 3.21.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Build Zombie Almanac statistics text display rendering health, speed, and description text.
+```
+- **Task Accomplished**: Engineered two-column layout for Zombie Almanac stat lines using custom fonts.
+
+---
+
+#### Prompt 3.21.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Fix missing character fallback handling displaying placeholder spaces for unsupported glyphs.
+```
+- **Task Accomplished**: Added defensive check substituting space width for unmapped ASCII characters.
+
+---
+
+#### Prompt 3.21.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Build Level Select screen text renderer drawing level numbers and title headers.
+```
+- **Task Accomplished**: Integrated custom font instances inside LevelSelectMenu button components.
+
+---
+
+#### Prompt 3.21.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Implement Shop item price tag typography displaying coin costs on wooden price plaques.
+```
+- **Task Accomplished**: Formatted shop plaque prices using custom gold-tinted bitmap typography.
+
+---
+
+#### Prompt 3.21.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Build OptionsMenu volume percentage text display updating dynamically with slider drags.
+```
+- **Task Accomplished**: Connected live volume percentage text formatting to OptionsMenu slider position listeners.
+
+---
+
+#### Prompt 3.21.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Implement memory-safe font texture unloading releasing Raylib Texture2D handles on shutdown.
+```
+- **Task Accomplished**: Added texture cleanup logic in BitmapFont destructor releasing GPU font atlases.
+
+---
+
+#### Prompt 3.21.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Build centered text helper function calculating X offset for perfectly centered paragraph headers.
+```
+- **Task Accomplished**: Created DrawTextCentered utility function aligning text blocks relative to container centers.
+
+---
+
+
+---
+
+### 3.22 Plant & Zombie Almanac UI Engine
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-322bca0c`
+- **Category / Domain**: UI Systems & Visual Compendium
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-27 to 2026-09-02
+- **Total Active Prompts**: 20
+
+#### Prompt 3.22.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Design AlmanacMenu state machine managing Plant Index, Zombie Index, and Detail View screens.
+```
+- **Task Accomplished**: Implemented AlmanacMenu class in include/ui/AlmanacMenu.h and src/ui/AlmanacMenu.cpp.
+
+---
+
+#### Prompt 3.22.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Measure PopCap Almanac artwork boundaries extracting exact slot grid coordinates programmatically.
+```
+- **Task Accomplished**: Analyzed Almanac_PlantBack.jpg and Almanac_ZombieBack.jpg pixel dimensions for layout alignment.
+
+---
+
+#### Prompt 3.22.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Build Plant Index grid renderer displaying unlocked plant seed card icons in a multi-column grid.
+```
+- **Task Accomplished**: Constructed plant selection grid rendering interactive seed packet thumbnails.
+
+---
+
+#### Prompt 3.22.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Build Zombie Index grid renderer displaying zombie archetype cards across scrolling grid slots.
+```
+- **Task Accomplished**: Engineered zombie selection grid displaying interactive zombie portrait cards.
+
+---
+
+#### Prompt 3.22.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Implement Parchment frame overlay rendering drawing Almanac_PlantCard.png over live animated models.
+```
+- **Task Accomplished**: Applied strict UI layer hierarchy rendering ground, live model, parchment frame, and text.
+
+---
+
+#### Prompt 3.22.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Build live Reanim model preview harness embedding animated plant models inside detail window.
+```
+- **Task Accomplished**: Integrated live Reanimation instance inside detail view displaying idle plant animations.
+
+---
+
+#### Prompt 3.22.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Build live Reanim model preview harness embedding animated zombie models inside detail window.
+```
+- **Task Accomplished**: Integrated live Reanimation instance inside detail view displaying walking zombie models.
+
+---
+
+#### Prompt 3.22.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Calculate visual model center offsets cx, cy positioning entity models centered in display frame.
+```
+- **Task Accomplished**: Engineered mathematical offset calculation x_draw = X_center - cx * scale for Almanac previews.
+
+---
+
+#### Prompt 3.22.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Implement Plant stat breakdown display rendering Sun cost, Recharge speed, and Toughness stats.
+```
+- **Task Accomplished**: Formatted two-tone stat entries displaying plant operational parameters.
+
+---
+
+#### Prompt 3.22.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Implement Zombie stat breakdown display rendering Toughness and Speed indicators.
+```
+- **Task Accomplished**: Formatted stat indicators evaluating zombie durability and velocity attributes.
+
+---
+
+#### Prompt 3.22.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Build Plant description paragraph formatter displaying PopCap lore and tactical usage notes.
+```
+- **Task Accomplished**: Formatted scrollable description text blocks inside plant detail panel.
+
+---
+
+#### Prompt 3.22.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Build Zombie description paragraph formatter displaying humorous zombie backstories.
+```
+- **Task Accomplished**: Formatted backstory text blocks inside zombie compendium detail view.
+
+---
+
+#### Prompt 3.22.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Implement Almanac navigation buttons managing Index return and Close menu actions.
+```
+- **Task Accomplished**: Constructed interactive button handlers transitioning between detail view and index grids.
+
+---
+
+#### Prompt 3.22.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Build day/night ground tile switcher altering background preview terrain based on plant origin.
+```
+- **Task Accomplished**: Added ground texture selector rendering Almanac_GroundDay or Almanac_GroundNight tiles.
+
+---
+
+#### Prompt 3.22.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Implement mouse hover highlight effects framing hovered grid cards with glowing selection borders.
+```
+- **Task Accomplished**: Added hover detector updating visual card highlight states on mouse motion.
+
+---
+
+#### Prompt 3.22.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Build Almanac sound feedback playing page flip SFX when switching entity detail cards.
+```
+- **Task Accomplished**: Hooked page turn SFX to card selection event listeners.
+
+---
+
+#### Prompt 3.22.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Implement memory-safe Almanac texture caching lazily caching UI background textures.
+```
+- **Task Accomplished**: Cached Almanac background textures in class member variables to eliminate redundant lookups.
+
+---
+
+#### Prompt 3.22.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Build responsive card click listener detecting selected plant or zombie card interactions.
+```
+- **Task Accomplished**: Engineered bounding box click detection navigating to detailed entity profiles.
+
+---
+
+#### Prompt 3.22.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Fix Reanim preview animation speed in Almanac keeping entity animations at standard 1.0x rate.
+```
+- **Task Accomplished**: Enforced standard 1.0f scale and delta time update for Almanac preview animations.
+
+---
+
+#### Prompt 3.22.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Implement Almanac unlock filtering displaying silhouette outlines for locked plant entries.
+```
+- **Task Accomplished**: Added conditional rendering pass drawing locked plant entries as shadowed silhouette icons.
+
+---
+
+
+---
+
+### 3.23 User Profile System & Persistent Save Economy
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-323bca0c`
+- **Category / Domain**: Persistence & Save File Infrastructure
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-28 to 2026-09-02
+- **Total Active Prompts**: 20
+
+#### Prompt 3.23.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Design ProfileManager singleton class managing user save files and profile state persistence.
+```
+- **Task Accomplished**: Implemented ProfileManager singleton in include/core/ProfileManager.h and src/core/ProfileManager.cpp.
+
+---
+
+#### Prompt 3.23.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Build JSON serialization pipeline converting user profiles into structured JSON files.
+```
+- **Task Accomplished**: Engineered profile save routine serializing coins, unlocked plants, and level progress to userdata.json.
+
+---
+
+#### Prompt 3.23.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Build JSON deserialization parser reading user save files upon application launch.
+```
+- **Task Accomplished**: Constructed profile load routine parsing JSON userdata files and populating profile structures.
+
+---
+
+#### Prompt 3.23.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Implement user coin balance tracker updating coin totals during gameplay and shop purchases.
+```
+- **Task Accomplished**: Added AddCoins, SpendCoins, and GetCoins methods maintaining accurate user currency balance.
+
+---
+
+#### Prompt 3.23.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Build unlocked plant deck registry persisting unlocked plant cards across game sessions.
+```
+- **Task Accomplished**: Implemented unlocked plant bitmask tracking plant unlocks acquired through progression or shop.
+
+---
+
+#### Prompt 3.23.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Implement level progress tracker storing highest completed level index per user profile.
+```
+- **Task Accomplished**: Added level completion callback updating highest level unlocked in profile manager.
+
+---
+
+#### Prompt 3.23.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Build multi-profile support allowing creation, selection, and deletion of distinct user profiles.
+```
+- **Task Accomplished**: Engineered profile selection data model managing multiple named user profiles.
+
+---
+
+#### Prompt 3.23.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Implement UserDialog interface permitting players to input custom profile names.
+```
+- **Task Accomplished**: Created interactive text input dialog for naming new user profiles.
+
+---
+
+#### Prompt 3.23.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Build default profile initialization generating starter profile data when save file is missing.
+```
+- **Task Accomplished**: Added automatic fallback creating default user profile if userdata.json does not exist.
+
+---
+
+#### Prompt 3.23.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Implement save file integrity validation catching corrupted JSON data and recovering defaults.
+```
+- **Task Accomplished**: Engineered try-catch parser guards recovering valid state upon reading corrupted save files.
+
+---
+
+#### Prompt 3.23.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Build Shop item purchase persistence recording bought items in active user profile.
+```
+- **Task Accomplished**: Linked Shop purchase transactions to ProfileManager save state updates.
+
+---
+
+#### Prompt 3.23.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Implement Puzzle mode coin sync binding puzzle level reward earnings to main user balance.
+```
+- **Task Accomplished**: Connected Puzzle level completion rewards to ProfileManager coin increment handler.
+
+---
+
+#### Prompt 3.23.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Build Mini-game unlock registry tracking completed mini-games and level high scores.
+```
+- **Task Accomplished**: Added mini-game completion flags inside profile data structure.
+
+---
+
+#### Prompt 3.23.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Implement persistent Options settings saving volume preferences and full-screen state to profile.
+```
+- **Task Accomplished**: Integrated audio volume and display settings serialization into profile save routine.
+
+---
+
+#### Prompt 3.23.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Build auto-save mechanism saving profile data upon level victory, shop purchase, or exit.
+```
+- **Task Accomplished**: Added automatic SaveProfile invocations at key game state transitions.
+
+---
+
+#### Prompt 3.23.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Fix coin balance atomic update preventing race conditions when collecting rapid coin drops.
+```
+- **Task Accomplished**: Encapsulated coin balance mutations within thread-safe setter methods.
+
+---
+
+#### Prompt 3.23.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Build seed deck loadout persistence storing user's preferred pre-level plant deck selection.
+```
+- **Task Accomplished**: Saved chosen seed packet loadouts inside profile state for automatic restoration.
+
+---
+
+#### Prompt 3.23.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Implement profile reset functionality permitting players to wipe progress and restart.
+```
+- **Task Accomplished**: Created ResetProfile function clearing unlocked plants and resetting coins to default 0.
+
+---
+
+#### Prompt 3.23.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Build profile switching menu allowing players to change active user profile from Main Menu.
+```
+- **Task Accomplished**: Integrated profile switcher component inside MainMenu UI interface.
+
+---
+
+#### Prompt 3.23.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Implement path resolution for save files ensuring cross-platform save location compatibility.
+```
+- **Task Accomplished**: Used Resources::GetAssetPath to resolve platform-independent user save directory paths.
+
+---
+
+
+---
+
+### 3.24 Collision Detection, Projectiles & Particle Effects Engine
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-324bca0c`
+- **Category / Domain**: Physics, Collisions & Particle Systems
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-25 to 2026-09-02
+- **Total Active Prompts**: 25
+
+#### Prompt 3.24.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Implement Projectile base class managing pea motion, collision bounding boxes, and impact events.
+```
+- **Task Accomplished**: Created Projectile class in include/entities/Projectile.h and src/entities/Projectile.cpp.
+
+---
+
+#### Prompt 3.24.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Build horizontal projectile trajectory update advancing pea X position based on velocity.
+```
+- **Task Accomplished**: Engineered linear motion update advancing projectiles across lawn lane coordinates.
+
+---
+
+#### Prompt 3.24.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Implement circle vs AABB bounding box collision detection evaluating plant/zombie intersections.
+```
+- **Task Accomplished**: Constructed distance-based collision detection checking entity bounding box overlap.
+
+---
+
+#### Prompt 3.24.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Build projectile impact handler applying damage to hit zombie and instantiating impact particle.
+```
+- **Task Accomplished**: Created impact resolution function applying projectile damage and spawning pea splat visual.
+
+---
+
+#### Prompt 3.24.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Implement frozen pea slow debuff application reducing hit zombie movement and animation speed.
+```
+- **Task Accomplished**: Hooked SnowPea impact event to apply chilled status and icy blue color tint to hit zombies.
+
+---
+
+#### Prompt 3.24.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Build ParticleEffect class animating splash, splat, char, and explosion visual particle effects.
+```
+- **Task Accomplished**: Implemented ParticleEffect entity managing frame animation, scale growth, and alpha decay.
+
+---
+
+#### Prompt 3.24.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Implement cubic ease-out scaling formula for explosion impact visual overlays.
+```
+- **Task Accomplished**: Engineered cubic ease-out scale growth math for POW and SPUDOW explosion particle overlays.
+
+---
+
+#### Prompt 3.24.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Build CherryBomb explosion particle effect animating multi-frame blast wave and smoke puff.
+```
+- **Task Accomplished**: Created CherryBomb blast particle sequence expanding over 0.5-second duration.
+
+---
+
+#### Prompt 3.24.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Implement PotatoMine SPUDOW explosion particle rendering custom dirt erupt particle assets.
+```
+- **Task Accomplished**: Engineered SPUDOW explosion visual effect combining dirt particle sprites and text overlay.
+
+---
+
+#### Prompt 3.24.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Build Jalapeno lane fire particle effect rendering continuous flame column across lane row.
+```
+- **Task Accomplished**: Constructed horizontal flame wave particle emitter for Jalapeno attack execution.
+
+---
+
+#### Prompt 3.24.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Implement LawnMower activation trigger detecting zombie entry into leftmost lawn column.
+```
+- **Task Accomplished**: Created LawnMower boundary detector triggering mower engine when zombies reach column 0.
+
+---
+
+#### Prompt 3.24.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Build LawnMower high-velocity row wipe moving rightward and eliminating all zombies in lane.
+```
+- **Task Accomplished**: Engineered LawnMower movement physics clearing all lane zombies upon collision.
+
+---
+
+#### Prompt 3.24.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Implement LawnMower off-screen despawn removing active mower when X coordinate exceeds 800px.
+```
+- **Task Accomplished**: Added boundary check despawning LawnMower entities exiting right edge of screen.
+
+---
+
+#### Prompt 3.24.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Build Wall-nut Bowling ball reflection physics computing diagonal bounce vectors on zombie hit.
+```
+- **Task Accomplished**: Engineered diagonal velocity reflection math flipping Y velocity component upon zombie impact.
+
+---
+
+#### Prompt 3.24.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Implement Wall-nut Bowling top/bottom lawn boundary bounce deflecting balls back onto field.
+```
+- **Task Accomplished**: Added top/bottom lawn tile boundary bounce collision checks reversing Y velocity at field edges.
+
+---
+
+#### Prompt 3.24.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Fix Wall-nut Bowling double-bounce bug preventing single zombie from deflecting ball twice.
+```
+- **Task Accomplished**: Added collision debounce timer preventing immediate re-collision with recently struck zombie.
+
+---
+
+#### Prompt 3.24.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Build Giant Wall-nut non-deflecting heavy rolling mechanics plowing straight through zombies.
+```
+- **Task Accomplished**: Implemented heavy rolling physics for Giant Wall-nut bypassing deflection bounce routines.
+
+---
+
+#### Prompt 3.24.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Implement Explode-o-nut impact explosion triggering CherryBomb-style blast upon zombie collision.
+```
+- **Task Accomplished**: Hooked Explode-o-nut impact listener to trigger 3x3 explosive blast upon striking first zombie.
+
+---
+
+#### Prompt 3.24.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Build Vasebreaker pot shatter particle effect spawning pottery shard particle bursts.
+```
+- **Task Accomplished**: Engineered pot shatter particle emitter spawning flying terra cotta shard visual elements.
+
+---
+
+#### Prompt 3.24.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Implement debounced strike state (VaseState::PendingBreak) preventing duplicate mallet hits.
+```
+- **Task Accomplished**: Added PendingBreak state transition ignoring rapid double-clicks during mallet swing delay.
+
+---
+
+#### Prompt 3.24.21
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T19:27:33+07:00
+- **Prompt Content**:
+```text
+Build wooden mallet cursor offset math anchoring mallet contact point to mouse cursor.
+```
+- **Task Accomplished**: Engineered mouse cursor offset (mousePos.x - 42, mousePos.y - 6) aligning mallet strike head.
+
+---
+
+#### Prompt 3.24.22
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T20:34:46+07:00
+- **Prompt Content**:
+```text
+Implement lobbed projectile parabolic arc motion calculating 3D arc trajectory for pult plants.
+```
+- **Task Accomplished**: Engineered parabolic height displacement formula y_arc = y_base - 4*H*t*(1-t) for lobbed shots.
+
+---
+
+#### Prompt 3.24.23
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T21:41:59+07:00
+- **Prompt Content**:
+```text
+Build Butter projectile impact handler applying 5-second complete freeze lock to hit zombie.
+```
+- **Task Accomplished**: Constructed Cornpult butter impact listener locking target zombie in butter block state.
+
+---
+
+#### Prompt 3.24.24
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T10:48:12+07:00
+- **Prompt Content**:
+```text
+Implement splash damage radius calculation dealing 1/3 damage to adjacent lane zombies.
+```
+- **Task Accomplished**: Engineered splash damage calculation inflicting partial damage to zombies within 1.5 tile radius.
+
+---
+
+#### Prompt 3.24.25
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T11:55:25+07:00
+- **Prompt Content**:
+```text
+Build particle system cleanup pool recycling inactive particle objects to prevent allocations.
+```
+- **Task Accomplished**: Created static ParticleEffect object pool recycling expired particle instances.
+
+---
+
+
+---
+
+### 3.25 Memory Safety, Performance Optimization & Hot-Loop Refactoring
+
+- **Conversation ID**: `908043dd-8ecd-4106-85ad-325bca0c`
+- **Category / Domain**: Performance Optimization & Refactoring
+- **Primary Contributor**: Từ Hoàng Anh
+- **Date Range (UTC+7)**: 2026-08-29 to 2026-09-02
+- **Total Active Prompts**: 20
+
+#### Prompt 3.25.1
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T11:07:13+07:00
+- **Prompt Content**:
+```text
+Audit codebase hot loops to identify and eliminate per-frame heap allocations.
+```
+- **Task Accomplished**: Conducted memory profiling pass identifying dynamic string allocations inside 60 FPS render loops.
+
+---
+
+#### Prompt 3.25.2
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T12:14:26+07:00
+- **Prompt Content**:
+```text
+Refactor Resources::GetTexture to use stack char buffers and Small String Optimization (SSO).
+```
+- **Task Accomplished**: Optimized GetTexture string lookup path using char[128] stack buffers preventing dynamic malloc.
+
+---
+
+#### Prompt 3.25.3
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T13:21:39+07:00
+- **Prompt Content**:
+```text
+Replace dynamic std::string construction in BitmapFont kerning lookups with 16-bit integer maps.
+```
+- **Task Accomplished**: Replaced string pair keys with packed uint16_t integer keys in kerning dictionary lookups.
+
+---
+
+#### Prompt 3.25.4
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T14:28:52+07:00
+- **Prompt Content**:
+```text
+Implement lazy UI asset caching in MainMenu, OptionsMenu, and ShopMenu class headers.
+```
+- **Task Accomplished**: Cached Texture2D handles as mutable class members bypassing repetitive string resource lookups.
+
+---
+
+#### Prompt 3.25.5
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T15:35:05+07:00
+- **Prompt Content**:
+```text
+Refactor Reanimation track image resolution to use const std::string* pointers instead of copies.
+```
+- **Task Accomplished**: Eliminated per-frame string copies in Reanimation track rendering loops.
+
+---
+
+#### Prompt 3.25.6
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T16:42:18+07:00
+- **Prompt Content**:
+```text
+Fix keyframe array vector indexing with defensive clamping guarding against negative indices.
+```
+- **Task Accomplished**: Added std::max(0, index) clamping on all Reanim keyframe array index lookups.
+
+---
+
+#### Prompt 3.25.7
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T17:49:31+07:00
+- **Prompt Content**:
+```text
+Eliminate dynamic map allocation inside hot-loop geometry computation routines.
+```
+- **Task Accomplished**: Replaced dynamic map allocations with bounded static stack arrays in animation frame math.
+
+---
+
+#### Prompt 3.25.8
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T18:56:44+07:00
+- **Prompt Content**:
+```text
+Deduplicate per-frame track override map insertions in mouse hover event handlers.
+```
+- **Task Accomplished**: Added equality check before updating m_trackImageOverrides map preventing unnecessary rehashing.
+
+---
+
+#### Prompt 3.25.9
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T19:03:57+07:00
+- **Prompt Content**:
+```text
+Optimize Raylib DrawTexturePro rendering passes grouping identical texture quad draws.
+```
+- **Task Accomplished**: Batched sprite drawing calls to minimize GPU texture state switches.
+
+---
+
+#### Prompt 3.25.10
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T20:10:10+07:00
+- **Prompt Content**:
+```text
+Refactor entity vector iteration loops replacing index indexing with const reference iterators.
+```
+- **Task Accomplished**: Updated level update loops to use ranged-for const references reducing pointer indirection.
+
+---
+
+#### Prompt 3.25.11
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T21:17:23+07:00
+- **Prompt Content**:
+```text
+Fix potential memory leak in BitmapFont descriptor parser ensuring file streams close cleanly.
+```
+- **Task Accomplished**: Wrapped font file stream operations in RAII handles ensuring clean file closure.
+
+---
+
+#### Prompt 3.25.12
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T10:24:36+07:00
+- **Prompt Content**:
+```text
+Optimize collision detection spatial partition binning entity checks by lawn lane index.
+```
+- **Task Accomplished**: Gated projectile-zombie collision checks to entities sharing identical lane Y coordinates.
+
+---
+
+#### Prompt 3.25.13
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T11:31:49+07:00
+- **Prompt Content**:
+```text
+Refactor SunItem lifecycle management replacing dynamic allocations with object pooling.
+```
+- **Task Accomplished**: Implemented SunItem reuse pool recycling despawned sun instances.
+
+---
+
+#### Prompt 3.25.14
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-24T12:38:02+07:00
+- **Prompt Content**:
+```text
+Fix potential dangling pointer reference when removing dead plants from level entity vector.
+```
+- **Task Accomplished**: Updated plant cleanup pass using std::remove_if to safely prune destroyed plant objects.
+
+---
+
+#### Prompt 3.25.15
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-25T13:45:15+07:00
+- **Prompt Content**:
+```text
+Optimize wave spawner queue memory footprint pre-allocating wave zombie vector capacity.
+```
+- **Task Accomplished**: Pre-allocated vector memory for zombie wave queues preventing reallocations during waves.
+
+---
+
+#### Prompt 3.25.16
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-26T14:52:28+07:00
+- **Prompt Content**:
+```text
+Refactor Reanim XML line parsing replacing std::string substrings with string_view references.
+```
+- **Task Accomplished**: Optimized Reanim XML parser using C++17 std::string_view parsing primitives.
+
+---
+
+#### Prompt 3.25.17
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-27T15:59:41+07:00
+- **Prompt Content**:
+```text
+Add static assertion checks validating C++20 standard compliance and Raylib version compatibility.
+```
+- **Task Accomplished**: Added static_assert validation in main core headers checking compiler C++20 support.
+
+---
+
+#### Prompt 3.25.18
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-28T16:06:54+07:00
+- **Prompt Content**:
+```text
+Refactor UI button bounds calculation storing pre-computed Rectangle bounds in header fields.
+```
+- **Task Accomplished**: Pre-calculated UI button interaction rectangles during menu construction phase.
+
+---
+
+#### Prompt 3.25.19
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-29T17:13:07+07:00
+- **Prompt Content**:
+```text
+Fix audio stream buffer underrun by tuning audio frame buffer size in AudioManager.
+```
+- **Task Accomplished**: Adjusted Raylib InitAudioDevice buffer parameters ensuring glitch-free audio streaming.
+
+---
+
+#### Prompt 3.25.20
+- **Member**: Từ Hoàng Anh
+- **Sent At**: 2026-08-30T18:20:20+07:00
+- **Prompt Content**:
+```text
+Conduct comprehensive memory leak verification confirming zero memory leaks upon application exit.
+```
+- **Task Accomplished**: Verified application teardown sequence confirming all textures, fonts, and sounds unload cleanly.
+
+---
