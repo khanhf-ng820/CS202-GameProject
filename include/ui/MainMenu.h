@@ -56,8 +56,6 @@ private:
     Texture2D m_almanacBtnHl;
     Texture2D m_almanacShadow;
     Texture2D m_keyShadow;
-    Texture2D m_zenGardenBtn;
-    Texture2D m_zenGardenBtnHl;
     Texture2D m_bgTex;
 
     bool isGraveButtonHovered(Vector2 mousePos, Rectangle bounds, const std::string& texName);
