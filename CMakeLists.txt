@@ -20,6 +20,48 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}")
 include(FetchContent)
 
 # ---------------------------------------------------------
+# Asset Package Retrieval (Automatic Asset Download)
+# ---------------------------------------------------------
+set(ASSETS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/assets")
+set(ASSETS_URL "https://github.com/khanhf-ng820/CS202-GameProject/releases/download/v1.0-assets/assets.zip")
+
+if(NOT EXISTS "${ASSETS_DIR}")
+    message(STATUS "==========================================================")
+    message(STATUS "Assets folder not found. Downloading game assets package...")
+    message(STATUS "URL: ${ASSETS_URL}")
+    message(STATUS "==========================================================")
+
+    set(TEMP_ASSETS_ZIP "${CMAKE_BINARY_DIR}/assets_temp.zip")
+
+    # 1. Download the assets zip with progress display
+    file(DOWNLOAD 
+        "${ASSETS_URL}" 
+        "${TEMP_ASSETS_ZIP}"
+        SHOW_PROGRESS
+        STATUS DOWNLOAD_STATUS
+        TLS_VERIFY ON
+    )
+
+    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+    list(GET DOWNLOAD_STATUS 1 ERROR_MSG)
+
+    if(NOT STATUS_CODE EQUAL 0)
+        message(FATAL_ERROR "Failed to download assets: ${ERROR_MSG}\nPlease ensure you have an active internet connection or manually extract assets into ${ASSETS_DIR}.")
+    endif()
+
+    # 2. Extract into the project root directory
+    message(STATUS "Extracting game assets into project source directory...")
+    file(ARCHIVE_EXTRACT
+        INPUT "${TEMP_ASSETS_ZIP}"
+        DESTINATION "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+
+    # 3. Clean up the temporary zip
+    file(REMOVE "${TEMP_ASSETS_ZIP}")
+    message(STATUS "Game assets successfully installed!")
+endif()
+
+# ---------------------------------------------------------
 # Dependency: raylib
 # ---------------------------------------------------------
 set(BUILD_EXAMPLES OFF CACHE BOOL "Disable raylib examples" FORCE)
