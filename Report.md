@@ -1237,3 +1237,9 @@ To ensure efficient development and maintain a clear separation of concerns, the
 - **Level Design & Wave Engine:** Structured the main 5x9 lawn grid, wave spawning timers, sun currency collection (`SunItem`), and Night Mode environmental mechanics.
 
 - **Game Balancing & Visual Polish:** Implemented zombie limb dismemberment physics, custom cloud environmental shaders/animations, quiz dialogs, and game difficulty tuning.
+
+# Project Resources
+
+- Demo video: [YouTube Demo Video](https://youtu.be/97fJ6doDHdQ)
+- GitHub repository: [CS202 Game Project](https://github.com/khanhf-ng820/CS202-GameProject)
+- Work distribution sheet: [Work Distribution Sheet](https://docs.google.com/spreadsheets/d/1Gdbg5CkyEm50gdGvNHR7rK6dCerKZTqORMJKWjMAijY/edit?gid=1781385760#gid=1781385760)
